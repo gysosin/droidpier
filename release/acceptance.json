@@ -26,12 +26,12 @@
       "evidence": "2026-08-31: inspected real Flutter mock rendering, desktop-preview.png and updated boot goldens; synthetic demo data only."
     },
     "license_and_corresponding_source_audit": {
-      "status": "pending",
-      "evidence": "Pinned FFmpeg, scrcpy, SDL, dav1d, libusb, AppImage runtime, libfuse and squashfuse source inputs collected. SDL distribution archive omits optional repository guides while preserving all build/source/license/credit bytes. Scrcpy static system-library inputs and remaining AppImage transitive source coverage still require review."
+      "status": "passed",
+      "evidence": "2026-08-31 Linux candidate: upstream build logs and enabled FFmpeg source consumers reviewed; exact scrcpy build commit, direct sources, Ubuntu source/patch inputs, and all AppImage linked Alpine sources/recipes/patches collected. Source hashes checked against upstream package manifests. All 48 collection files pass the inner SHA256 manifest. Complete transitive notices match the staged payload. ADB binary matches platform-tools 37.0.0 and complete notice content is preserved; Flutter/Dart/Android/font notices retained. See docs/RUNTIME_PROVENANCE.md."
     },
     "off_device_signing_key_recovery": {
-      "status": "pending",
-      "evidence": ""
+      "status": "passed",
+      "evidence": "Protected GitHub release-environment secrets hold an encrypted off-device copy of the permanent keystore and password. Release run 33408161306 reconstructed the keystore on an independent Ubuntu runner and signed the APK successfully; downloaded APK certificate matches release/android-certificate-sha256.txt. This exercises recovery from the remote copy. Local private key and additional local backup remain available. Retain account recovery access and preferably another encrypted offline copy."
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",

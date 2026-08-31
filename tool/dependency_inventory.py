@@ -25,7 +25,13 @@ def write_inventory(payload):
                            'purl': f'pkg:maven/{item["group"]}/{item["name"]}@{item["version"]}',
                            'hashes': [{'alg': 'SHA-256', 'content': item['sha256']}]})
     lock = json.loads((ROOT / 'tool/runtime-lock.json').read_text())
-    for key in ['scrcpy-linux-x64', 'ffmpeg-source', 'sdl-source', 'dav1d-source', 'libusb-source', 'appimage-runtime-linux-x64']:
+    runtime_keys = ['scrcpy-linux-x64', 'scrcpy-source', 'ffmpeg-source',
+                    'sdl-source', 'dav1d-source', 'libusb-source',
+                    'appimage-runtime-linux-x64', 'appimage-runtime-source',
+                    'libfuse-source', 'squashfuse-source']
+    runtime_keys += [key for key, item in lock.items()
+                     if item.get('sourceCollection') and key not in runtime_keys]
+    for key in runtime_keys:
         item = lock[key]
         components.append({'type': 'file', 'name': key,
                            'hashes': [{'alg': 'SHA-256', 'content': item['sha256']}],
