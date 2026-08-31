@@ -27,7 +27,7 @@
     },
     "license_and_corresponding_source_audit": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Pinned FFmpeg, scrcpy, SDL, dav1d, libusb, AppImage runtime, libfuse and squashfuse source inputs collected. SDL distribution archive omits optional repository guides while preserving all build/source/license/credit bytes. Scrcpy static system-library inputs and remaining AppImage transitive source coverage still require review."
     },
     "off_device_signing_key_recovery": {
       "status": "pending",
@@ -39,7 +39,7 @@
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "2026-08-31: clean Ubuntu 24.04 container installed the DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
     },
     "debian_12_install_upgrade_uninstall": {
       "status": "pending",
@@ -47,7 +47,7 @@
     },
     "debian_13_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "2026-08-31: clean Debian 13 container installed the DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
     },
     "mint_22_install_upgrade_uninstall": {
       "status": "pending",

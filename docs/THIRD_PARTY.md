@@ -40,6 +40,11 @@ configuration to rebuild or relink it under its license. Do not assume a link to
 a current upstream branch satisfies the requirement. `tool/prepare_sources.py`
 collects pinned sources and build recipes, but publication remains blocked until
 its contents match the actual shipped binaries and all notices are verified.
+The SDL distribution source archive retains implementation, build files, API docs,
+credits and licenses while omitting optional top-level repository guides. The
+collection documents this repackaging and includes its own checksums alongside
+the original upstream checksum. Pinned libfuse and squashfuse sources accompany
+the AppImage runtime source and its existing libfuse patch.
 
 System libraries required from the user's distribution are declared package
 requirements, rather than copied without their notices and source obligations.
