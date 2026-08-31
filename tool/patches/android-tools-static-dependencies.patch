@@ -1,29 +1,16 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,5 +1,9 @@
- cmake_minimum_required(VERSION 3.12.0)
- project(android-tools)
+@@ -2,0 +3,4 @@
 +
 +# DroidPier static dependency selection; platform/compiler runtime stays shared.
 +set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 +find_library(DROIDPIER_ZLIB_STATIC NAMES z REQUIRED)
- 
- # To ease installation of utility files such as bash completions, etc.
- # See: https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html
 --- a/vendor/CMakeLists.adb.txt
 +++ b/vendor/CMakeLists.adb.txt
-@@ -215,12 +215,12 @@
- 	crypto
- 	ssl
- 	protobuf::libprotobuf
+@@ -218 +217,0 @@
 -	PkgConfig::libbrotlicommon
- 	PkgConfig::libbrotlidec
- 	PkgConfig::libbrotlienc
+@@ -220,0 +220 @@
 +	PkgConfig::libbrotlicommon
- 	PkgConfig::liblz4
- 	Threads::Threads
+@@ -223 +223 @@
 -	z
 +	${DROIDPIER_ZLIB_STATIC}
- 	PkgConfig::libzstd)
- 
- if(ANDROID_TOOLS_USE_BUNDLED_LIBUSB)
