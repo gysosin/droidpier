@@ -116,7 +116,7 @@ Description: Android desktop workspace
 Version: {v['rpmVersion']}
 Release: {v['rpmRelease']}
 Summary: Android desktop workspace
-License: Apache-2.0 AND LGPL-2.1-or-later AND MIT AND BSD-3-Clause AND OFL-1.1
+License: Apache-2.0 AND LGPL-2.1-or-later AND MIT AND BSD-2-Clause AND BSD-3-Clause AND Zlib AND OFL-1.1
 URL: https://github.com/gysosin/droidpier
 BuildArch: x86_64
 Requires: gtk3, libstdc++, mesa-libGLU, libEGL.so.1()(64bit), libGLESv2.so.2()(64bit), libGL.so.1()(64bit), systemd-libs, glibc >= 2.35
