@@ -1,0 +1,51 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: source-and-linux
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          channel: stable
+          flutter-version: 3.47.1
+          cache: true
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libglu1-mesa
+          sdkmanager "platforms;android-35" "platforms;android-36" "build-tools;35.0.0"
+      - name: Check public source and metadata
+        run: |
+          python3 tool/verify_source.py
+          git diff --check
+          for script in tool/*.sh; do bash -n "$script"; done
+          python3 -m compileall -q tool
+      - name: Analyze and test shared packages
+        run: |
+          for package in packages/open_dex_api packages/open_dex_core packages/open_dex_protocol plugins/open_dex_platform; do
+            (cd "$package" && dart pub get && dart analyze && dart test)
+          done
+      - name: Build, test and lint Android
+        run: android/gradlew -p android agentJar :companion:assembleDebug :companion:lintDebug test --no-daemon
+      - name: Analyze, test and build desktop
+        working-directory: apps/desktop
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build linux --release --no-tree-shake-icons

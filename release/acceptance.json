@@ -1,0 +1,105 @@
+{
+  "version": "0.1.0-beta.1",
+  "checks": {
+    "source_privacy_audit": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "fresh_checkout_build": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "analysis_and_tests": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "android_release_manifest": {
+      "status": "passed",
+      "evidence": "2026-08-31: signed release APK passes apksigner verification, package ID unchanged, minSdk26, versionCode1, DroidPier Companion launcher label. Production manifest excludes StreamProbeActivity."
+    },
+    "android_screen_visual_review": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "desktop_screen_visual_review": {
+      "status": "passed",
+      "evidence": "2026-08-31: inspected real Flutter mock rendering, desktop-preview.png and updated boot goldens; synthetic demo data only."
+    },
+    "license_and_corresponding_source_audit": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "off_device_signing_key_recovery": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "ubuntu_22_04_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "ubuntu_24_04_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "debian_12_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "debian_13_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "mint_22_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "fedora_supported_releases_install_upgrade_uninstall": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "arch_appimage_archive": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "opensuse_appimage_archive": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "usb_authorization_and_denial": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "wireless_pairing": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "disconnect_reconnect_device_removal": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "apps_input_resize_orientation": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "clipboard_notifications_permissions": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "owned_process_display_cleanup": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "android_signed_upgrade_and_debug_conflict": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "restricted_apps_unsupported_android": {
+      "status": "pending",
+      "evidence": ""
+    },
+    "assets_checksums_notices_links": {
+      "status": "pending",
+      "evidence": ""
+    }
+  }
+}

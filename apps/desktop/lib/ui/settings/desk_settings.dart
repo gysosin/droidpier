@@ -1,0 +1,483 @@
+import 'package:flutter/material.dart';
+
+import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
+import '../theme/dex_theme.dart';
+import '../theme/dex_tokens.dart';
+import '../theme/wallpapers.dart';
+import '../widgets/bench_backdrop.dart';
+
+/// Settings for the desk itself.
+///
+/// Modelled on the reference's Settings surface, which groups display options
+/// and desktop-mode behaviour. Only the rows this UI can genuinely act on are
+/// present: a switch that does nothing when flipped is worse than an absent
+/// one, and this project has already shipped that mistake once with the
+/// permission buttons.
+///
+/// The settings still missing — resolution, brightness, keep-phone-screen-on,
+/// phone-as-second-surface — need backend commands and an external-display
+/// concept that `OpenDexFacade` does not have. They wait on the facade rather
+/// than being mocked up here; see `docs/ARCHITECTURE.md`.
+class DeskSettings extends StatelessWidget {
+  const DeskSettings({
+    required this.snapEnabled,
+    required this.onSnapChanged,
+    required this.themeMode,
+    required this.onThemeChanged,
+    required this.wallpaperIndex,
+    required this.onWallpaperChanged,
+    required this.onDisconnect,
+    this.onOpenPermissions,
+    this.onManagePhones,
+    this.deviceLabel,
+    super.key,
+  });
+
+  final bool snapEnabled;
+  final ValueChanged<bool> onSnapChanged;
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeChanged;
+  final int wallpaperIndex;
+  final ValueChanged<int> onWallpaperChanged;
+  final VoidCallback onDisconnect;
+
+  /// The tray no longer carries these; Settings is the hub. Null hides the row
+  /// (e.g. in the golden harness).
+  final VoidCallback? onOpenPermissions;
+  final VoidCallback? onManagePhones;
+  final String? deviceLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final TextTheme t = Theme.of(context).textTheme;
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: BenchBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(DexSpace.xxl),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text('Settings', style: t.headlineMedium),
+                    const SizedBox(height: DexSpace.xs),
+                    Text(
+                      'How the desk behaves. Your phone’s own settings stay on '
+                      'the phone.',
+                      style: t.bodyLarge?.copyWith(color: c.muted),
+                    ),
+                    const SizedBox(height: DexSpace.xl),
+                    _Group(
+                      title: 'Appearance',
+                      colors: c,
+                      children: <Widget>[
+                        _ChoiceRow(
+                          title: 'Theme',
+                          detail: 'Dark reduces glare on external panels.',
+                          colors: c,
+                          value: themeMode,
+                          onChanged: onThemeChanged,
+                        ),
+                        const SizedBox(height: DexSpace.md),
+                        _WallpaperRow(
+                          title: 'Wallpaper',
+                          detail: 'The desk background.',
+                          colors: c,
+                          selected: wallpaperIndex,
+                          onSelected: onWallpaperChanged,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: DexSpace.lg),
+                    _Group(
+                      title: 'Desktop mode',
+                      colors: c,
+                      children: <Widget>[
+                        _SwitchRow(
+                          title: 'Window snapping',
+                          detail: 'Halves and quarters at screen edges.',
+                          value: snapEnabled,
+                          onChanged: onSnapChanged,
+                          colors: c,
+                        ),
+                      ],
+                    ),
+                    if (onManagePhones != null ||
+                        onOpenPermissions != null) ...<Widget>[
+                      const SizedBox(height: DexSpace.lg),
+                      _Group(
+                        title: 'Phone',
+                        colors: c,
+                        children: <Widget>[
+                          if (onManagePhones != null)
+                            _ActionRow(
+                              title: 'Manage phones',
+                              detail: 'Switch phone or pair a new one.',
+                              action: 'Open',
+                              onPressed: onManagePhones!,
+                              colors: c,
+                            ),
+                          if (onManagePhones != null &&
+                              onOpenPermissions != null)
+                            Divider(
+                              height: 1,
+                              thickness: DexStroke.hairline,
+                              color: c.line,
+                            ),
+                          if (onOpenPermissions != null)
+                            _ActionRow(
+                              title: 'Permissions',
+                              detail: 'What the phone has granted the desktop.',
+                              action: 'Open',
+                              onPressed: onOpenPermissions!,
+                              colors: c,
+                            ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: DexSpace.lg),
+                    _Group(
+                      title: 'Connection',
+                      colors: c,
+                      children: <Widget>[
+                        _ActionRow(
+                          title: 'Disconnect',
+                          detail: deviceLabel == null
+                              ? 'End the session.'
+                              : 'End the session with $deviceLabel. The apps '
+                                    'keep running on the phone.',
+                          action: 'Disconnect',
+                          onPressed: onDisconnect,
+                          colors: c,
+                          danger: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Group extends StatelessWidget {
+  const _Group({
+    required this.title,
+    required this.children,
+    required this.colors,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title.toUpperCase(),
+          style: DexTheme.data(
+            colors,
+            size: 10,
+            color: colors.muted,
+          ).copyWith(letterSpacing: 1.4),
+        ),
+        const SizedBox(height: DexSpace.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(DexRadius.card),
+            border: Border.all(color: colors.line, width: DexStroke.hairline),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+}
+
+class _RowShell extends StatelessWidget {
+  const _RowShell({
+    required this.title,
+    required this.detail,
+    required this.trailing,
+    required this.colors,
+  });
+
+  final String title;
+  final String detail;
+  final Widget trailing;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.all(DexSpace.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(title, style: t.bodyLarge),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  style: t.bodyMedium?.copyWith(color: colors.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: DexSpace.md),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.title,
+    required this.detail,
+    required this.value,
+    required this.onChanged,
+    required this.colors,
+  });
+
+  final String title;
+  final String detail;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RowShell(
+      title: title,
+      detail: detail,
+      colors: colors,
+      trailing: Semantics(
+        toggled: value,
+        label: title,
+        child: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: colors.signal,
+        ),
+      ),
+    );
+  }
+}
+
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({
+    required this.title,
+    required this.detail,
+    required this.value,
+    required this.onChanged,
+    required this.colors,
+  });
+
+  final String title;
+  final String detail;
+  final ThemeMode value;
+  final ValueChanged<ThemeMode> onChanged;
+  final DexColors colors;
+
+  static const Map<ThemeMode, String> _labels = <ThemeMode, String>{
+    ThemeMode.system: 'System',
+    ThemeMode.light: 'Light',
+    ThemeMode.dark: 'Dark',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return _RowShell(
+      title: title,
+      detail: detail,
+      colors: colors,
+      trailing: Wrap(
+        spacing: DexSpace.xs,
+        children: <Widget>[
+          for (final MapEntry<ThemeMode, String> e in _labels.entries)
+            ChoiceChip(
+              label: Text(e.value),
+              selected: e.key == value,
+              onSelected: (_) => onChanged(e.key),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
+    required this.title,
+    required this.detail,
+    required this.action,
+    required this.onPressed,
+    required this.colors,
+    this.danger = false,
+  });
+
+  final String title;
+  final String detail;
+  final String action;
+  final VoidCallback onPressed;
+  final DexColors colors;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RowShell(
+      title: title,
+      detail: detail,
+      colors: colors,
+      trailing: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: danger ? colors.fault : colors.text,
+          side: BorderSide(
+            color: danger ? colors.fault : colors.line,
+            width: DexStroke.hairline,
+          ),
+        ),
+        child: Text(action),
+      ),
+    );
+  }
+}
+
+/// A row of wallpaper swatches; the selected one carries a ring.
+class _WallpaperRow extends StatelessWidget {
+  const _WallpaperRow({
+    required this.title,
+    required this.detail,
+    required this.colors,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String title;
+  final String detail;
+  final DexColors colors;
+  final int selected;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(title, style: t.titleSmall),
+        const SizedBox(height: 2),
+        Text(detail, style: t.bodySmall?.copyWith(color: colors.muted)),
+        const SizedBox(height: DexSpace.md),
+        Wrap(
+          spacing: DexSpace.md,
+          runSpacing: DexSpace.md,
+          children: <Widget>[
+            // Index 0 is the theme's own wallpaper; its swatch previews the
+            // current theme colours so it reads right in light and dark.
+            _Swatch(
+              choice: DexWallpaperChoice(
+                name: 'Default',
+                colors: DexGlass.of(context).wallpaper,
+              ),
+              selected: selected <= 0,
+              colors: colors,
+              onTap: () => onSelected(0),
+            ),
+            for (int i = 0; i < kWallpaperChoices.length; i++)
+              _Swatch(
+                choice: kWallpaperChoices[i],
+                selected: i + 1 == selected,
+                colors: colors,
+                onTap: () => onSelected(i + 1),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.choice,
+    required this.selected,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final DexWallpaperChoice choice;
+  final bool selected;
+  final DexColors colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${choice.name} wallpaper',
+      child: Tooltip(
+        message: choice.name,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(DexRadius.card),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 76,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(DexRadius.card),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: choice.colors,
+                  ),
+                  border: Border.all(
+                    color: selected ? colors.signal : colors.line,
+                    width: selected ? 2.5 : DexStroke.hairline,
+                  ),
+                ),
+                child: selected
+                    ? Icon(Icons.check, color: Colors.white, size: 20)
+                    : null,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                choice.name,
+                style: t.bodySmall?.copyWith(
+                  color: selected ? colors.text : colors.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

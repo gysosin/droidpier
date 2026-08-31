@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible DroidPier problem.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never include device serials, pairing codes, credentials, clipboard content, or private notifications. Use private vulnerability reporting for security issues.
+  - type: input
+    id: version
+    attributes:
+      label: DroidPier version
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Desktop OS and architecture
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and phone model (no serial number)
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps, expected result, and actual result
+    validations:
+      required: true

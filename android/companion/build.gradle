@@ -1,0 +1,64 @@
+plugins {
+    id "com.android.application"
+}
+
+def releaseVersion = new Properties()
+rootProject.file('../version.properties').withInputStream { releaseVersion.load(it) }
+def signingStore = System.getenv('DROIDPIER_KEYSTORE')
+
+android {
+    namespace = "io.github.shrey113.openandroiddex.companion"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "io.github.shrey113.openandroiddex.companion"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = releaseVersion.getProperty('androidVersionCode').toInteger()
+        versionName = releaseVersion.getProperty('version')
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (signingStore) {
+            release {
+                storeFile = file(signingStore)
+                storePassword = System.getenv('DROIDPIER_STORE_PASSWORD')
+                keyAlias = System.getenv('DROIDPIER_KEY_ALIAS') ?: 'droidpier'
+                keyPassword = System.getenv('DROIDPIER_KEY_PASSWORD') ?: System.getenv('DROIDPIER_STORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (signingStore) signingConfig = signingConfigs.release
+            minifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name == 'assembleRelease' } && !signingStore) {
+        throw new GradleException('Release signing is required. Set DROIDPIER_KEYSTORE and signing passwords outside Git.')
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:1.17.0"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+
+    testImplementation "junit:junit:4.13.2"
+    androidTestImplementation "androidx.test.ext:junit:1.3.0"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.7.0"
+}

@@ -1,0 +1,46 @@
+name: open_android_dex
+description: DroidPier desktop workspace for Android.
+publish_to: none
+version: 0.1.0-beta.1+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  open_dex_api:
+    path: ../../packages/open_dex_api
+  open_dex_core:
+    path: ../../packages/open_dex_core
+  open_dex_platform:
+    path: ../../plugins/open_dex_platform
+  open_dex_protocol:
+    path: ../../packages/open_dex_protocol
+  open_dex_texture:
+    path: ../../plugins/open_dex_texture
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/fonts/OFL.txt
+  fonts:
+    - family: InstrumentSans
+      fonts:
+        - asset: assets/fonts/InstrumentSans.ttf
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk.ttf
+    - family: PublicSans
+      fonts:
+        - asset: assets/fonts/PublicSans.ttf
+    - family: IBMPlexMono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+        - asset: assets/fonts/IBMPlexMono-Medium.ttf
+          weight: 500

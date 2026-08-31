@@ -1,0 +1,67 @@
+{
+  "scrcpy-linux-x64": {
+    "url": "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-linux-x86_64-v4.1.tar.gz",
+    "sha256": "ad56ae8bfeedf41e824945c11dbf55fcb092b3e615b9b486f48a50e30d389635",
+    "file": "scrcpy-linux-x86_64-v4.1.tar.gz"
+  },
+  "scrcpy-windows-x64": {
+    "url": "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip",
+    "sha256": "5b12172b3264b2889f4583ee64752ce832e29bc8b1089dca81093459697165db",
+    "file": "scrcpy-win64-v4.1.zip"
+  },
+  "scrcpy-macos-arm64": {
+    "url": "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-macos-aarch64-v4.1.tar.gz",
+    "sha256": "20fd47c9014dd5e0fa77091f3cb7adbda8445a360c4584aeaa0150b5b3988ff3",
+    "file": "scrcpy-macos-aarch64-v4.1.tar.gz"
+  },
+  "scrcpy-macos-x64": {
+    "url": "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-macos-x86_64-v4.1.tar.gz",
+    "sha256": "ee2a7223bc8dbdc4f482db1134bcf441178dafb833492b71ca4c22090c58ce72",
+    "file": "scrcpy-macos-x86_64-v4.1.tar.gz"
+  },
+  "ffmpeg-source": {
+    "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+    "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+    "file": "ffmpeg-8.1.2.tar.xz"
+  },
+  "scrcpy-source": {
+    "url": "https://api.github.com/repos/Genymobile/scrcpy/tarball/v4.1",
+    "sha256": "09092dc3ba187c2eb3b23665f7297e5172c747a9a497ff3d65f9b93593aa9147",
+    "file": "scrcpy-v4.1-source.tar.gz"
+  },
+  "sdl-source": {
+    "url": "https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.12.tar.gz",
+    "sha256": "b68381f06a7580e63400b3b6eb547ec57d8c3ebde70f9f40e0aba530ba05da27",
+    "file": "sdl-3.4.12.tar.gz"
+  },
+  "dav1d-source": {
+    "url": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz",
+    "sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
+    "file": "dav1d-1.5.3.tar.gz"
+  },
+  "libusb-source": {
+    "url": "https://github.com/libusb/libusb/archive/refs/tags/v1.0.30.tar.gz",
+    "sha256": "2ae28adb0bb9558c86135c4e1c11b320b0805461e207a64a6e520a114094bf07",
+    "file": "libusb-1.0.30.tar.gz"
+  },
+  "appimagetool-linux-x64": {
+    "url": "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage",
+    "sha256": "a6d71e2b6cd66f8e8d16c37ad164658985e0cf5fcaa950c90a482890cb9d13e0",
+    "file": "appimagetool-x86_64.AppImage"
+  },
+  "appimage-runtime-linux-x64": {
+    "url": "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64",
+    "file": "appimage-runtime-x86_64",
+    "sha256": "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf"
+  },
+  "adb-linux-source-notices": {
+    "url": "https://dl.google.com/android/repository/platform-tools_r37.0.0-linux.zip",
+    "file": "platform-tools-37.0.0-linux.zip",
+    "sha256": "198ae156ab285fa555987219af237b31102fefe8b9d2bc274708a8d4f2865a07"
+  },
+  "appimage-runtime-source": {
+    "url": "https://api.github.com/repos/AppImage/type2-runtime/tarball/75849dce7cc37e4319b633df1f116ca895c71a12",
+    "file": "appimage-runtime-75849dce-source.tar.gz",
+    "sha256": "b3720459e448b48a48d23563b5f2d5b9e464447971be3061d52358565b43f478"
+  }
+}

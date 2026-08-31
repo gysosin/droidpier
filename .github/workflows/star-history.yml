@@ -1,0 +1,46 @@
+name: Aggregate star history
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: aggregate-star-history
+  cancel-in-progress: false
+jobs:
+  chart:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 1
+      - name: Read the daily aggregate and update the separate metrics branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/droidpier-metrics"
+          mkdir -p "$metrics"
+          metrics_parent=""
+          if git fetch origin metrics --depth=1; then
+            metrics_parent=$(git rev-parse FETCH_HEAD)
+            git archive "$metrics_parent" | tar -x -C "$metrics"
+          fi
+          python3 tool/star_history.py "$metrics"
+          test -f "$metrics/stars.json" || exit 0
+          git -C "$metrics" init -b metrics
+          git -C "$metrics" config user.name 'DroidPier metrics'
+          git -C "$metrics" config user.email 'gysosin@users.noreply.github.com'
+          # Only aggregate records and the rendered chart enter this independent history.
+          git -C "$metrics" add stars.json star-history.svg
+          tree=$(git -C "$metrics" write-tree)
+          if test -n "$metrics_parent"; then
+            git -C "$metrics" fetch "$GITHUB_WORKSPACE" "$metrics_parent"
+            parent=$(git -C "$metrics" rev-parse FETCH_HEAD)
+            commit=$(printf '%s\n' 'Update daily aggregate stars' | git -C "$metrics" commit-tree "$tree" -p "$parent")
+          else
+            commit=$(printf '%s\n' 'Start daily aggregate stars' | git -C "$metrics" commit-tree "$tree")
+          fi
+          git -C "$metrics" remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          git -C "$metrics" -c "http.https://github.com/.extraheader=$(git config --get http.https://github.com/.extraheader)" push origin "$commit:refs/heads/metrics"

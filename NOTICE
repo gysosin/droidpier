@@ -1,0 +1,18 @@
+DroidPier
+Copyright 2026 DroidPier Contributors
+Original project copyright: 2026 Open Android DEX Contributors.
+
+This product uses scrcpy, Copyright (C) 2018 Genymobile and
+Copyright (C) 2018-2026 Romain Vimont, under Apache License 2.0.
+https://github.com/Genymobile/scrcpy
+
+FFmpeg is licensed under LGPL-2.1-or-later in the selected build configuration.
+Matching source and build instructions accompany binary releases.
+https://ffmpeg.org
+
+Instrument Sans, Space Grotesk, Public Sans, and IBM Plex Mono are bundled
+under SIL Open Font License 1.1. Individual copyright and license notices
+are included in licenses/fonts (resources/licenses/fonts in desktop packages).
+
+DroidPier is independent of Samsung, Google and the upstream projects.
+Third-party names and trademarks belong to their respective owners.

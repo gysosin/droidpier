@@ -1,0 +1,39 @@
+plugins {
+    id "java"
+}
+
+def androidSdk = gradle.ext.openDexAndroidSdk
+def androidJar = file("${androidSdk}/platforms/android-35/android.jar")
+def windowsHost = System.getProperty("os.name").toLowerCase().contains("windows")
+def d8 = file("${androidSdk}/build-tools/35.0.0/${windowsHost ? 'd8.bat' : 'd8'}")
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    compileOnly files(androidJar)
+    testImplementation "junit:junit:4.13.2"
+}
+
+tasks.register("dexAgent", Exec) {
+    dependsOn tasks.jar
+    inputs.file(tasks.named("jar").flatMap { it.archiveFile })
+    outputs.dir(layout.buildDirectory.dir("dex"))
+    doFirst {
+        layout.buildDirectory.dir("dex").get().asFile.mkdirs()
+        commandLine d8,
+            "--min-api", "26",
+            "--output", layout.buildDirectory.dir("dex").get().asFile,
+            tasks.named("jar").get().archiveFile.get().asFile
+    }
+}
+
+tasks.register("agentJar", Zip) {
+    dependsOn tasks.named("dexAgent")
+    from layout.buildDirectory.dir("dex")
+    include "classes.dex"
+    archiveFileName = "open-dex-agent.jar"
+    destinationDirectory = layout.buildDirectory.dir("outputs")
+}

@@ -1,0 +1,11 @@
+{
+  "name": "DroidPier",
+  "short_name": "DroidPier",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#111315",
+  "theme_color": "#111315",
+  "description": "DroidPier desktop UI preview",
+  "orientation": "landscape-primary",
+  "prefer_related_applications": false
+}

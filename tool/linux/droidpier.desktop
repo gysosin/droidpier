@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=DroidPier
+GenericName=Android desktop workspace
+Comment=Your Android. A bigger workspace.
+Exec=droidpier
+Icon=droidpier
+Terminal=false
+Categories=Utility;RemoteAccess;
+StartupNotify=true
+StartupWMClass=io.github.shrey113.open_android_dex

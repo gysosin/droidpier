@@ -1,0 +1,20 @@
+name: open_dex_platform
+description: Native process and ADB integration for DroidPier.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.13.1 <4.0.0'
+
+dependencies:
+  crypto: ^3.0.7
+  open_dex_api:
+    path: ../../packages/open_dex_api
+  open_dex_core:
+    path: ../../packages/open_dex_core
+  open_dex_protocol:
+    path: ../../packages/open_dex_protocol
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

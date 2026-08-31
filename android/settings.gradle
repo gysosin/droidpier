@@ -1,0 +1,50 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+def localPropertiesFile = new File(settingsDir, "local.properties")
+def localProperties = new java.util.Properties()
+if (localPropertiesFile.isFile()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+
+def sdkCandidates = [
+    System.getenv("ANDROID_SDK_ROOT"),
+    System.getenv("ANDROID_HOME"),
+    localProperties.getProperty("sdk.dir"),
+    new File(System.getProperty("user.home"), "Android/Sdk").absolutePath,
+]
+def androidSdk = sdkCandidates.find { candidate ->
+    candidate && new File(candidate, "platforms/android-35/android.jar").isFile()
+}
+if (androidSdk == null) {
+    throw new GradleException(
+        "Android SDK platform 35 was not found. Set ANDROID_SDK_ROOT to a valid SDK."
+    )
+}
+
+// AGP resolves the companion SDK independently of the custom agent task. If
+// the environment is set-but-invalid, persist the validated fallback in the
+// standard, gitignored local.properties so both modules use the same SDK.
+if (localProperties.getProperty("sdk.dir") != androidSdk) {
+    localProperties.setProperty("sdk.dir", androidSdk)
+    localPropertiesFile.withOutputStream {
+        localProperties.store(it, "Generated from the first valid Android SDK candidate")
+    }
+}
+gradle.ext.openDexAndroidSdk = androidSdk
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "open-android-dex-android"
+include(":companion", ":agent")

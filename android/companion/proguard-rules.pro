@@ -1,0 +1,2 @@
+-keep class io.github.shrey113.openandroiddex.companion.** { *; }
+-dontwarn org.codehaus.mojo.animal_sniffer.**
