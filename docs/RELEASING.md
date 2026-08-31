@@ -28,6 +28,10 @@ publication, including missing corresponding source or signing-key recovery.
 
 Never silently replace public release binaries. Corrections require a new version.
 The source tag must resolve to the commit used to build the artifacts.
+The publication workflow also requires the draft to target its exact checked-out
+commit. If code or acceptance evidence changes after a candidate build, rebuild
+and review the private draft for that commit before publication. A published
+version must never be deleted or replaced to work around this check.
 
 ## Android signing
 
