@@ -111,6 +111,8 @@ Clipboard and remote input also move sensitive content between your devices.
 
 ### Restricted settings and Play Protect
 
+<img src="https://raw.githubusercontent.com/gysosin/droidpier/main/docs/images/companion-permissions.png" width="320" alt="DroidPier Companion notification permissions and restricted-settings help on a clean Android emulator" />
+
 Connection-notification permission lets DroidPier show its own status on the
 phone. Notification-listener access lets it forward other apps' notifications;
 that separate access is optional. The beta.2 setup screen distinguishes granted

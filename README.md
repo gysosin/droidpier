@@ -51,7 +51,7 @@ releases. [Licenses and source details](docs/THIRD_PARTY.md)
 
 **Known limits:** audio is not forwarded to computer speakers; media controls do
 not imply audio playback. DRM-protected and secondary-display-restricted apps may
-not work. Android behavior varies by device, OS version, and manufacturer. A
+not work. Android behavior varies by device, OS version, and manufacturer.
 60 FPS is not restored: the direct Linux pipeline measured roughly 39–47 displayed
 FPS on the tested computer/phone. Results vary with workload and hardware. See [compatibility](docs/COMPATIBILITY.md).
 
