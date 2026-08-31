@@ -17,7 +17,7 @@ def main():
         raise SystemExit('A release keystore and password are required; see docs/RELEASING.md.')
     gradle = ROOT / 'android' / ('gradlew.bat' if os.name == 'nt' else 'gradlew')
     subprocess.run([str(gradle), '-p', str(ROOT / 'android'), 'agentJar',
-                    ':companion:assembleRelease', ':companion:writeDependencyInventory', 'test', '--no-daemon'], env=env, check=True)
+                    ':companion:assembleRelease', ':companion:writeDependencyInventory', ':companion:lintDebug', ':companion:lintRelease', 'test', '--no-daemon'], env=env, check=True)
     version = release_version()['version']
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
