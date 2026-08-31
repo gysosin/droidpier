@@ -173,7 +173,9 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Open'), findsNWidgets(2));
 
     // Permissions, from Settings (scroll it into view first — the panel scrolls).
-    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Open').last);
+    await tester.ensureVisible(
+      find.widgetWithText(OutlinedButton, 'Open').last,
+    );
     await settle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Open').last);
     await settle();
@@ -190,13 +192,17 @@ void main() {
     await settle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Open').first);
     await settle();
-    expect(find.text('Choose a phone'), findsOneWidget);
+    // One surface now: the phone list and the three ways to add one over
+    // Wi-Fi, rather than a dialog that opens a second dialog.
+    expect(find.text('Connect a phone'), findsOneWidget);
+    expect(find.text('Add over Wi-Fi'), findsOneWidget);
 
-    // And back out of it without connecting — Escape must reach it.
+    // And back out of it without connecting — Escape must reach it, and one
+    // press must be enough because there is only one layer.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
     expect(
-      find.text('Choose a phone'),
+      find.text('Connect a phone'),
       findsNothing,
       reason: 'no screen is a dead end',
     );

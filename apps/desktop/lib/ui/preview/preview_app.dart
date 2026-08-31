@@ -4,12 +4,11 @@ import 'package:open_dex_core/open_dex_core.dart';
 
 import '../apps/app_drawer.dart';
 import '../boot/boot_screen.dart';
-import '../devices/device_selection_dialog.dart';
+import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
 import '../recovery/recovery_overlay.dart';
 import '../shell/app_shell.dart';
 import '../widgets/link_rail.dart';
-import '../wireless/wireless_pairing_dialog.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -62,24 +61,16 @@ class _PreviewAppState extends State<PreviewApp> {
           onConnect: () => _select(MockScenario.ready),
           onRetry: () => _select(MockScenario.recovering),
         );
-      case _Surface.devices:
+      case _Surface.connect:
         return Center(
-          child: DeviceSelectionDialog(
-            status: state.deviceStatus,
-            devices: state.devices,
+          child: ConnectionScreen.forFacade(
+            facade: _facade,
+            snapshot: state,
             selectedId: _selectedDeviceId ?? state.selectedDevice?.id,
             onSelect: (String id) => setState(() => _selectedDeviceId = id),
-            onRefresh: () => _facade.discoverDevices(),
-            onPairWireless: () => setState(() => _surface = _Surface.wireless),
-            onConnect: () => _select(MockScenario.ready),
-          ),
-        );
-      case _Surface.wireless:
-        return Center(
-          child: WirelessPairingDialog.forFacade(
-            facade: _facade,
-            devices: state.devices,
-            onClose: () => setState(() => _surface = _Surface.devices),
+            onRefreshDevices: () => _facade.discoverDevices(),
+            onConnectSelected: () => _select(MockScenario.ready),
+            onClose: () => setState(() => _surface = _Surface.desktop),
           ),
         );
       case _Surface.apps:
@@ -243,4 +234,4 @@ class _PreviewBar extends StatelessWidget {
 }
 
 /// Which product surface the harness is showing.
-enum _Surface { desktop, boot, devices, wireless, apps, permissions, recovery }
+enum _Surface { desktop, boot, connect, apps, permissions, recovery }

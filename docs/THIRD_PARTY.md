@@ -8,6 +8,8 @@ See [LICENSE](../LICENSE), [NOTICE](../NOTICE) and the texts in [licenses](../li
 | --- | --- | --- |
 | Flutter engine and Dart runtime | `tool/flutter-sdk.version`, Flutter framework lock | BSD-style notices generated in the Flutter bundle |
 | Dart packages | Each `pubspec.lock` | Package licenses included by Flutter; retain `NOTICES.Z` |
+| multicast_dns | 0.3.3+1 | BSD-3-Clause; local DNS-SD discovery |
+| qr_flutter / qr | 4.1.0 / 3.0.2 | BSD-3-Clause; local QR generation |
 | AndroidX | Android Gradle dependency resolution | Apache-2.0; Google AndroidX |
 | OkHttp / Okio | Android Gradle dependency resolution | Apache-2.0; Square |
 | Kotlin standard library | Android Gradle dependency resolution | Apache-2.0; JetBrains |

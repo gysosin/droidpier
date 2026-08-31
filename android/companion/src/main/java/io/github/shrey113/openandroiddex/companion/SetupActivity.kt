@@ -2,6 +2,9 @@ package io.github.shrey113.openandroiddex.companion
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
+import android.content.ComponentName
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
@@ -55,10 +58,12 @@ class SetupActivity : Activity() {
             accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         }
         text("Connect from your computer", 20f, true)
-        text("1. Download DroidPier on your computer.\n\n2. Enable Developer options and USB debugging on this phone. Connect a USB data cable and approve the computer's authorization prompt.\n\n3. Select this phone in DroidPier. For wireless use on Android 11 or later, open Wireless debugging and enter its pairing details on the computer.")
+        text("1. Download DroidPier on your computer.\n\n2. Enable Developer options and USB debugging on this phone. Connect a USB data cable and approve the computer's authorization prompt.\n\n3. Select this phone in DroidPier. For wireless use on Android 11 or later, open Wireless debugging and choose pairing by QR code or pairing code. Scan the QR code shown by DroidPier on the computer, or enter the phone’s pairing details manually.")
         button("Open developer settings") { openSettings(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS) }
         text("Permissions", 20f, true)
         permissions = text("")
+        text("Connection notification", 18f, true)
+        text("Shows DroidPier’s own connection status on this phone. This does not grant access to notifications from other apps.")
         button("Allow connection notifications") {
             if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
@@ -66,7 +71,13 @@ class SetupActivity : Activity() {
                 openSettings(Settings.ACTION_APP_NOTIFICATION_SETTINGS, true)
             }
         }
-        button("Open notification access") { openSettings(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS) }
+        text("Phone notification access", 18f, true)
+        button("Open notification access") { openNotificationAccess() }
+        if (Build.VERSION.SDK_INT >= 33) {
+            text("If Android says ‘Restricted setting’, first review whether you trust this APK. In DroidPier’s App info, open the top-right menu and choose ‘Allow restricted settings’ if your device offers it. Then return here to grant notification access. Work or managed phones may prohibit this access.")
+        }
+        button("Open app info") { openAppInfo() }
+        text("Keep Play Protect enabled. If Google has not seen this app before, let it scan the APK. Release signing protects updates; it does not mean Google has approved the app. Download only from the project’s GitHub releases.")
         text("Notification access is optional. It lets DroidPier show and control phone notifications on your connected computer. Only approve computers you trust.")
         disconnect = button("Disconnect desktop") { CompanionConnection.disconnect() }
         text("Your connection stays local", 20f, true)
@@ -97,8 +108,8 @@ class SetupActivity : Activity() {
         refresh()
     }
 
-    override fun onResume() { super.onResume(); CompanionConnection.observe(observer) }
-    override fun onPause() { CompanionConnection.remove(observer); super.onPause() }
+    override fun onResume() { super.onResume(); CompanionConnection.observe(observer); NotificationCommandBridge.observe(observer) }
+    override fun onPause() { CompanionConnection.remove(observer); NotificationCommandBridge.remove(observer); super.onPause() }
 
     private fun refresh() {
         status.text = when (CompanionConnection.state) {
@@ -109,17 +120,48 @@ class SetupActivity : Activity() {
             CompanionConnection.State.DISCONNECTING -> "Disconnecting…"
         }
         disconnect.isEnabled = CompanionConnection.canDisconnect
-        val listeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners").orEmpty()
-        val access = listeners.split(':').any { it.substringBefore('/') == packageName }
-        val notifications = Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        permissions.text = "Connection notifications: ${if (notifications) "allowed" else "not allowed"}\nPhone notification access: ${if (access) "allowed" else "not allowed"}"
+        val manager = getSystemService(NotificationManager::class.java)
+        val component = ComponentName(this, NotificationBridgeService::class.java)
+        val access = if (Build.VERSION.SDK_INT >= 27) {
+            manager?.isNotificationListenerAccessGranted(component) == true
+        } else {
+            Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+                .orEmpty().split(':').any { ComponentName.unflattenFromString(it) == component }
+        }
+        val notifications = manager?.areNotificationsEnabled() == true &&
+            (Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+        val accessStatus = when {
+            !access -> "not allowed · optional"
+            NotificationCommandBridge.isConnected -> "allowed · listener connected"
+            else -> "allowed · waiting for Android to connect the listener"
+        }
+        permissions.text = "Connection notification: ${if (notifications) "allowed" else "not allowed"}\nPhone notification access: $accessStatus"
+    }
+
+    private fun openNotificationAccess() {
+        if (Build.VERSION.SDK_INT >= 30 && launchSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                    ComponentName(this, NotificationBridgeService::class.java).flattenToString()))) return
+        if (!launchSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) openAppInfo()
+    }
+
+    private fun openAppInfo() {
+        if (!launchSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))) {
+            launchSettings(Intent(Settings.ACTION_SETTINGS))
+        }
     }
 
     private fun openSettings(action: String, forApp: Boolean = false) {
         val intent = Intent(action)
         if (forApp) intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-        if (intent.resolveActivity(packageManager) != null) startActivity(intent)
-        else startActivity(Intent(Settings.ACTION_SETTINGS))
+        if (!launchSettings(intent)) openAppInfo()
+    }
+
+    private fun launchSettings(intent: Intent): Boolean {
+        if (intent.resolveActivity(packageManager) == null) return false
+        return try { startActivity(intent); true }
+        catch (_: ActivityNotFoundException) { false }
+        catch (_: SecurityException) { false }
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()

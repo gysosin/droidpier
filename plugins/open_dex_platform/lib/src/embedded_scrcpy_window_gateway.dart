@@ -27,9 +27,17 @@ class EmbeddedScrcpyWindowGateway
     this.processStopTimeout = const Duration(seconds: 3),
     this.surfaceRetireDelay = const Duration(milliseconds: 34),
     this.taskMonitorInterval = const Duration(seconds: 5),
+    this.telemetryInterval = const Duration(seconds: 1),
     this.pixelSize = const WindowPixelSize(width: 1280, height: 896),
     this.onDisplayCreated,
   }) {
+    if (telemetryInterval <= Duration.zero) {
+      throw ArgumentError.value(
+        telemetryInterval,
+        'telemetryInterval',
+        'must be greater than zero',
+      );
+    }
     if (taskMonitorInterval <= Duration.zero) {
       throw ArgumentError.value(
         taskMonitorInterval,
@@ -58,6 +66,7 @@ class EmbeddedScrcpyWindowGateway
   final Duration processStopTimeout;
   final Duration surfaceRetireDelay;
   final Duration taskMonitorInterval;
+  final Duration telemetryInterval;
   final WindowPixelSize pixelSize;
   final Future<void> Function(DeviceSummary device, int displayId)?
   onDisplayCreated;
@@ -113,6 +122,7 @@ class EmbeddedScrcpyWindowGateway
       );
     }
     _sessions[resolvedSessionId] = started.session;
+    _startTextureTelemetry(started.session);
     _ensureTaskMonitor();
     return started.backend;
   }
@@ -324,6 +334,7 @@ class EmbeddedScrcpyWindowGateway
       throw _closed();
     }
     _sessions[sessionId] = replacement.session;
+    _startTextureTelemetry(replacement.session);
     _ensureTaskMonitor();
     _retire(current);
     return replacement.backend;
@@ -569,6 +580,7 @@ class EmbeddedScrcpyWindowGateway
   }
 
   Future<void> _disposeSession(_EmbeddedSession session) async {
+    session.telemetryTimer?.cancel();
     await session.inputDispatcher.close();
     await _closePointerProcess(session);
     for (final subscription in session.subscriptions) {
@@ -581,6 +593,48 @@ class EmbeddedScrcpyWindowGateway
     await _stopProcess(session.decoder);
     await _stopProcess(session.scrcpy);
     await _deleteSessionDirectory(session.directory);
+  }
+
+  void _startTextureTelemetry(_EmbeddedSession session) {
+    WindowTextureStats? previous;
+    final clock = Stopwatch()..start();
+    var previousMicros = 0;
+    var sampling = false;
+    Future<void> sample() async {
+      if (sampling || !identical(_sessions[session.id], session)) return;
+      sampling = true;
+      try {
+        final stats = await textureHost.stats(session.textureId);
+        if (!identical(_sessions[session.id], session) || _telemetry.isClosed) {
+          return;
+        }
+        final now = clock.elapsedMicroseconds;
+        final before = previous;
+        final seconds = (now - previousMicros) / Duration.microsecondsPerSecond;
+        previous = stats;
+        previousMicros = now;
+        if (before == null || seconds <= 0) return;
+        _telemetry.add(
+          WindowBackendTelemetry(
+            sessionId: session.id,
+            presentedFramesPerSecond:
+                (stats.presentedFrames - before.presentedFrames) / seconds,
+            droppedFramesPerSecond:
+                (stats.droppedFrames - before.droppedFrames) / seconds,
+          ),
+        );
+      } on Object {
+        // Closing or replacing a texture invalidates an outstanding sample.
+      } finally {
+        sampling = false;
+      }
+    }
+
+    unawaited(sample());
+    session.telemetryTimer = Timer.periodic(
+      telemetryInterval,
+      (_) => unawaited(sample()),
+    );
   }
 
   Future<void> _sendPersistentPointerCommand(
@@ -921,6 +975,7 @@ class _EmbeddedSession {
   final List<StreamSubscription<String>> subscriptions;
   final _InputDispatcher inputDispatcher;
   ManagedProcess? pointerProcess;
+  Timer? telemetryTimer;
   int? displayId;
   int? taskId;
   WindowPixelSize? taskPixelSize;

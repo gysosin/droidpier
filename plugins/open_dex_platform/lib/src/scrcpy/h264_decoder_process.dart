@@ -92,6 +92,20 @@ class SystemH264DecoderCapabilityProbe implements H264DecoderCapabilityProbe {
           !_h264Decoder.hasMatch('${decoders.stdout}\n${decoders.stderr}')) {
         return false;
       }
+      // An H.264 decoder and a capable GPU do not mean this FFmpeg binary
+      // includes VA-API. The bundled software-only build has neither the
+      // driver dependency nor that hardware backend.
+      final accelerators = await executor.run(ffmpegPath, const [
+        '-hide_banner',
+        '-hwaccels',
+      ]);
+      if (!accelerators.succeeded ||
+          !RegExp(
+            r'^\s*vaapi\s*$',
+            multiLine: true,
+          ).hasMatch('${accelerators.stdout}\n${accelerators.stderr}')) {
+        return false;
+      }
       final profiles = await executor.run(vainfoPath, const [
         '--display',
         'drm',

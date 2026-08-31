@@ -263,11 +263,10 @@ void main() {
       ),
     );
 
-    expect(
-      calls,
-      <String>['select:a', 'connect'],
-      reason: 'disconnecting is deliberate; only the person may undo it',
-    );
+    expect(calls, <String>[
+      'select:a',
+      'connect',
+    ], reason: 'disconnecting is deliberate; only the person may undo it');
   });
 
   testWidgets('a hand-picked phone stands auto-connect down for good', (
@@ -317,11 +316,10 @@ void main() {
       ),
     );
 
-    expect(
-      calls,
-      <String>['select:a', 'connect'],
-      reason: 'the person chose once; the app does not choose again for them',
-    );
+    expect(calls, <String>[
+      'select:a',
+      'connect',
+    ], reason: 'the person chose once; the app does not choose again for them');
   });
 }
 
@@ -436,6 +434,18 @@ class _RecordingFacade implements OpenDexFacade {
 
   @override
   Future<void> dispose() async => _controller.close();
+
+  @override
+  Future<VoidResult> startWirelessDiscovery() async =>
+      const CommandSuccess(null);
+
+  @override
+  Future<VoidResult> stopWirelessDiscovery() async =>
+      const CommandSuccess(null);
+
+  @override
+  Future<VoidResult> cancelWirelessPairing() async =>
+      const CommandSuccess(null);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

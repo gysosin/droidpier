@@ -1,5 +1,23 @@
 # Linux runtime provenance
 
+## Android update identity
+
+The official companion retains the application ID
+`io.github.shrey113.openandroiddex.companion`. The release certificate SHA-256 is:
+
+```text
+c7398c50671e0919461b38433a9bec4440817246d9e447b81c49a901d74b0a22
+```
+
+This fingerprint was verified from the published beta.1 APK. Official updates
+must use the same signing identity and increasing Android version codes. Compare
+an APK with `apksigner verify --print-certs path/to/companion.apk`; verify its file
+hash against `SHA256SUMS` from the same official release as well. No private key
+or password is distributed. Signing identifies the publisher of an update; it
+is not a Play Protect endorsement and does not guarantee warning-free installs.
+
+
+
 This record covers the Linux x86-64 candidate for 0.1.0-beta.1. Source collection
 is separate from device compatibility validation. The release acceptance record
 remains the authority for whether a candidate may be published.

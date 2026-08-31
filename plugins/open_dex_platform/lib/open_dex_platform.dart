@@ -16,3 +16,5 @@ export 'src/scrcpy/scrcpy_control_messages.dart';
 export 'src/scrcpy/direct_scrcpy_window_gateway.dart';
 export 'src/scrcpy/scrcpy_video_stream.dart';
 export 'src/scrcpy/display_orientation.dart';
+
+export 'src/wireless_discovery.dart';

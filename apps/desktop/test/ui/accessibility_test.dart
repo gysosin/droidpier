@@ -6,7 +6,7 @@ import 'package:open_android_dex/ui/apps/app_drawer.dart';
 import 'package:open_android_dex/ui/desk/control_center.dart';
 import 'package:open_android_dex/ui/desk/taskbar_bar.dart';
 import 'package:open_android_dex/ui/workspace/window_model.dart';
-import 'package:open_android_dex/ui/devices/device_selection_dialog.dart';
+import 'package:open_android_dex/ui/connect/phone_list.dart';
 import 'package:open_android_dex/ui/permissions/permission_panel.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
 
@@ -176,7 +176,7 @@ void main() {
       WidgetTester tester,
     ) async {
       Widget dialog(String? selected) => _wrap(
-        DeviceSelectionDialog(
+        PhoneList(
           status: LoadStatus.ready,
           devices: const <DeviceSummary>[
             DeviceSummary(
@@ -317,10 +317,7 @@ void main() {
       // Closing a window is a long-press (right-click no longer closes), so the
       // spoken label has to say so — a screen reader user cannot discover a
       // tooltip.
-      expect(
-        find.bySemanticsLabel(RegExp('hold to close')),
-        findsWidgets,
-      );
+      expect(find.bySemanticsLabel(RegExp('hold to close')), findsWidgets);
       // A failed window says so to a screen reader, not only by colour.
       expect(
         find.bySemanticsLabel(RegExp('Focus Camera — failed')),

@@ -19,19 +19,19 @@ Your apps run on your phone. Your computer provides the workspace.
 
 ## Download
 
-**0.1.0-beta.1 is an experimental Linux/Android preview.** These downloads are for
-early testing. Physical-phone workflows and the full Linux desktop/distribution
-matrix are not yet validated. Read the release notes before installing; package
+**0.1.0-beta.2 is an experimental Linux/Android preview.** These downloads are for
+early testing. USB and direct-stream window workflows were exercised on one Android 13 phone;
+wireless pairing and the full Linux desktop/distribution matrix remain unverified. Read the release notes before installing; package
 availability is not a support guarantee. Windows and macOS remain in development.
 
 [Download published releases](https://github.com/gysosin/droidpier/releases)
 
 | Platform | Package | Status |
 | --- | --- | --- |
-| Ubuntu / Debian / Linux Mint, x86-64 | [DEB](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.1/droidpier-0.1.0-beta.1-linux-amd64.deb) | Experimental; Mint untested |
-| Fedora, x86-64 | [RPM](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.1/droidpier-0.1.0-beta.1-linux-x86_64.rpm) | Experimental |
-| Other compatible Linux desktops, x86-64 | [AppImage](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.1/droidpier-0.1.0-beta.1-linux-x86_64.AppImage) / [archive](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.1/droidpier-0.1.0-beta.1-linux-x86_64.tar.gz) | Experimental; see minimum requirements |
-| Android | [Companion APK](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.1/droidpier-companion-0.1.0-beta.1.apk) | Experimental; Android 15 emulator tested |
+| Ubuntu / Debian / Linux Mint, x86-64 | [DEB](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-amd64.deb) | Experimental; Mint untested |
+| Fedora, x86-64 | [RPM](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.rpm) | Experimental |
+| Other compatible Linux desktops, x86-64 | [AppImage](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.AppImage) / [archive](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.tar.gz) | Experimental; see minimum requirements |
+| Android | [Companion APK](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-companion-0.1.0-beta.2.apk) | Experimental; Android 15 emulator tested |
 | Windows x64 | Installer / portable ZIP | In development |
 | macOS Apple Silicon / Intel | Separate DMGs | In development |
 
@@ -52,7 +52,8 @@ releases. [Licenses and source details](docs/THIRD_PARTY.md)
 **Known limits:** audio is not forwarded to computer speakers; media controls do
 not imply audio playback. DRM-protected and secondary-display-restricted apps may
 not work. Android behavior varies by device, OS version, and manufacturer. A
-60 FPS target is not a performance guarantee. See [compatibility](docs/COMPATIBILITY.md).
+60 FPS is not restored: the direct Linux pipeline measured roughly 39–47 displayed
+FPS on the tested computer/phone. Results vary with workload and hardware. See [compatibility](docs/COMPATIBILITY.md).
 
 ## First connection
 
@@ -66,10 +67,10 @@ not work. Android behavior varies by device, OS version, and manufacturer. A
 6. Open an app from the desktop app drawer.
 
 For wireless use on Android 11 or later, enable **Wireless debugging** while both
-devices are on a trusted network. Enter the phone's pairing address, port, and
-code in DroidPier, then connect using its separate connection port. Do not expose
-ADB to the public internet. Automatic mDNS discovery is not included in this Linux
-build. [Detailed setup and troubleshooting](docs/USER_GUIDE.md)
+devices are on a trusted network. Use **Nearby**, scan the computer's **QR code**
+from the phone, or choose **Manual** pairing. Pairing and connection ports differ.
+Discovery cannot find phones on isolated or multicast-blocked networks, and does
+not authenticate them automatically. Do not expose ADB to the public internet. [Detailed setup and troubleshooting](docs/USER_GUIDE.md)
 
 ## Privacy and security
 

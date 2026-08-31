@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import 'backend_ports.dart';
+import 'wireless_coordinator.dart';
 
 class OpenDexController implements OpenDexFacade {
   OpenDexController({
@@ -14,6 +15,7 @@ class OpenDexController implements OpenDexFacade {
     NotificationGateway? notificationGateway,
     WirelessDeviceGateway? wirelessDeviceGateway,
     ClipboardGateway? clipboardGateway,
+    WirelessDiscoveryGateway? wirelessDiscoveryGateway,
     int reconnectAttempts = 3,
     Duration reconnectDelay = const Duration(seconds: 1),
     Duration surfaceRetireDelay = const Duration(milliseconds: 34),
@@ -43,6 +45,17 @@ class OpenDexController implements OpenDexFacade {
         'must be at least 1',
       );
     }
+    final wireless = _wirelessDeviceGateway;
+    if (wireless != null) {
+      _wireless = WirelessCoordinator(
+        gateway: wireless,
+        discovery: wirelessDiscoveryGateway,
+        onDiscovery: (state) =>
+            _emit(_snapshot.copyWith(wirelessDiscovery: state)),
+        onPairing: (state) => _emit(_snapshot.copyWith(wirelessPairing: state)),
+        onConnected: _acceptWirelessDevice,
+      );
+    }
     _windowExits = windowGateway?.exits.listen(_handleWindowExit);
     _windowTelemetry = windowGateway?.telemetry.listen(_handleWindowTelemetry);
     if (windowGateway is WindowSurfaceUpdateGateway) {
@@ -52,6 +65,7 @@ class OpenDexController implements OpenDexFacade {
     }
   }
 
+  WirelessCoordinator? _wireless;
   final DeviceGateway _deviceGateway;
   final List<BootComponent> _components;
   final WindowGateway? _windowGateway;
@@ -320,6 +334,7 @@ class OpenDexController implements OpenDexFacade {
   @override
   Future<VoidResult> disconnect() async {
     final device = _snapshot.selectedDevice;
+    _emit(_snapshot.copyWith(clipboard: const ClipboardState()));
     final closingWindows = [..._snapshot.windows];
     if (closingWindows.isNotEmpty) {
       _emit(
@@ -745,7 +760,13 @@ class OpenDexController implements OpenDexFacade {
   @override
   Future<VoidResult> setClipboardText(String text) async {
     final gateway = _clipboardGateway;
-    if (gateway == null) return _unsupported('clipboard');
+    if (gateway == null ||
+        !_snapshot.boot.isReady ||
+        _snapshot.agentStatus != AgentConnectionStatus.connected ||
+        !_snapshot.clipboard.syncEnabled ||
+        _snapshot.clipboard.availability != ClipboardAvailability.available) {
+      return _unsupported('clipboard');
+    }
     if (text.length > 65536) {
       return const CommandFailure(
         OpenDexError(
@@ -770,6 +791,11 @@ class OpenDexController implements OpenDexFacade {
   Future<VoidResult> setClipboardSync(bool enabled) async {
     final gateway = _clipboardGateway;
     if (gateway == null) return _unsupported('clipboard');
+    if (enabled &&
+        (!_snapshot.boot.isReady ||
+            _snapshot.agentStatus != AgentConnectionStatus.connected)) {
+      return _unsupported('clipboard');
+    }
     try {
       gateway.setSyncEnabled(enabled);
       _emit(_snapshot.copyWith(clipboard: gateway.clipboard));
@@ -779,6 +805,23 @@ class OpenDexController implements OpenDexFacade {
     } on Object catch (error) {
       return CommandFailure(_unexpected(error));
     }
+  }
+
+  @override
+  Future<VoidResult> pauseClipboardSync() async {
+    final result = await setClipboardSync(false);
+    if (_snapshot.boot.isReady &&
+        _snapshot.clipboard.availability == ClipboardAvailability.available) {
+      _emit(
+        _snapshot.copyWith(
+          clipboard: const ClipboardState(
+            availability: ClipboardAvailability.available,
+            message: ClipboardState.desktopFailureMessage,
+          ),
+        ),
+      );
+    }
+    return result;
   }
 
   @override
@@ -1003,56 +1046,58 @@ class OpenDexController implements OpenDexFacade {
   }
 
   @override
+  Future<VoidResult> startWirelessDiscovery() async =>
+      await _wireless?.start() ?? _unsupported('wireless-discovery');
+  @override
+  Future<VoidResult> stopWirelessDiscovery() async =>
+      await _wireless?.stop() ?? const CommandSuccess(null);
+  @override
+  Future<VoidResult> startQrPairing() async =>
+      await _wireless?.startQr() ?? _unsupported('wireless-pairing');
+  @override
+  Future<VoidResult> cancelWirelessPairing() async =>
+      await _wireless?.cancel() ?? const CommandSuccess(null);
+
+  @override
   Future<VoidResult> pairWirelessDevice({
     required String host,
     required int pairingPort,
     required String pairingCode,
-  }) async {
-    final gateway = _wirelessDeviceGateway;
-    if (gateway == null) return _unsupported('wireless-pairing');
-    try {
-      await gateway.pair(
+  }) async =>
+      await _wireless?.pairManual(
         host: host,
-        pairingPort: pairingPort,
-        pairingCode: pairingCode,
-      );
-      return const CommandSuccess(null);
-    } on BackendFailure catch (failure) {
-      return CommandFailure(failure.error);
-    } on Object catch (error) {
-      return CommandFailure(_unexpected(error));
-    }
-  }
+        port: pairingPort,
+        code: pairingCode,
+      ) ??
+      _unsupported('wireless-pairing');
 
   @override
   Future<CommandResult<DeviceSummary>> connectWirelessDevice({
     required String host,
     required int port,
-  }) async {
-    final gateway = _wirelessDeviceGateway;
-    if (gateway == null) return _unsupported('wireless-connection');
-    try {
-      final device = await gateway.connect(host: host, port: port);
-      final devices = [
-        for (final existing in _snapshot.devices)
-          if (existing.id != device.id) existing,
-        device,
-      ];
-      _emit(
-        _snapshot.copyWith(
-          deviceStatus: LoadStatus.ready,
-          devices: devices,
-          selectedDevice: _snapshot.boot.isReady
-              ? _snapshot.selectedDevice
-              : device,
+  }) async =>
+      await _wireless?.connect(host: host, port: port) ??
+      const CommandFailure(
+        OpenDexError(
+          code: OpenDexErrorCode.capabilityUnavailable,
+          message: 'Wireless connections are unavailable.',
         ),
       );
-      return CommandSuccess(device);
-    } on BackendFailure catch (failure) {
-      return CommandFailure(failure.error);
-    } on Object catch (error) {
-      return CommandFailure(_unexpected(error));
-    }
+
+  void _acceptWirelessDevice(DeviceSummary device) {
+    _emit(
+      _snapshot.copyWith(
+        deviceStatus: LoadStatus.ready,
+        devices: [
+          for (final existing in _snapshot.devices)
+            if (existing.id != device.id) existing,
+          device,
+        ],
+        selectedDevice: _snapshot.boot.isReady
+            ? _snapshot.selectedDevice
+            : device,
+      ),
+    );
   }
 
   @override
@@ -1090,6 +1135,7 @@ class OpenDexController implements OpenDexFacade {
   }
 
   Future<VoidResult> _performReconnect() async {
+    _emit(_snapshot.copyWith(clipboard: const ClipboardState()));
     final previousDevice = _snapshot.selectedDevice;
     if (previousDevice == null) {
       const error = OpenDexError(
@@ -1241,6 +1287,7 @@ class OpenDexController implements OpenDexFacade {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    await _wireless?.stop();
     await disconnect();
     await _windowExits?.cancel();
     await _windowTelemetry?.cancel();
@@ -1288,7 +1335,9 @@ class OpenDexController implements OpenDexFacade {
     final window = _window(update.sessionId);
     if (window == null) return;
     final displayRate =
-        update.presentedFramesPerSecond ?? update.producedFramesPerSecond;
+        update.presentedFramesPerSecond ??
+        window.presentedFramesPerSecond ??
+        update.producedFramesPerSecond;
     final windows = [
       for (final candidate in _snapshot.windows)
         candidate.id == update.sessionId

@@ -30,76 +30,98 @@ class DesktopClipboardCoordinator {
   }) : hostClipboard = hostClipboard ?? const SystemHostClipboardGateway();
 
   static const maximumTextLength = 65536;
-
   final OpenDexFacade facade;
   final HostClipboardGateway hostClipboard;
   final Duration pollInterval;
-
   StreamSubscription<OpenDexSnapshot>? _subscription;
   Timer? _timer;
-  bool _syncEnabled = false;
-  bool _synchronizing = false;
+  bool _enabled = false;
+  bool _busy = false;
+  bool _disposed = false;
+  int _generation = 0;
+  String? _deviceId;
   String? _lastDeviceText;
+  String? _pendingDeviceText;
 
   void start() {
-    if (_subscription != null) return;
+    if (_subscription != null || _disposed) return;
     _acceptSnapshot(facade.snapshot);
     _subscription = facade.states.listen(_acceptSnapshot);
     _timer = Timer.periodic(pollInterval, (_) => unawaited(synchronizeOnce()));
   }
 
+  bool _valid(int generation) =>
+      !_disposed &&
+      _enabled &&
+      generation == _generation &&
+      facade.snapshot.boot.isReady &&
+      facade.snapshot.agentStatus == AgentConnectionStatus.connected &&
+      facade.snapshot.clipboard.availability ==
+          ClipboardAvailability.available &&
+      facade.snapshot.clipboard.syncEnabled;
+
   Future<void> synchronizeOnce() async {
-    if (!_syncEnabled || _synchronizing) return;
-    _synchronizing = true;
+    if (_busy || !_valid(_generation)) return;
+    final generation = _generation;
+    _busy = true;
     try {
       final hostText = await hostClipboard.readText();
-      if (hostText == null || hostText.length > maximumTextLength) return;
-      if (hostText != facade.snapshot.clipboard.text) {
-        await facade.setClipboardText(hostText);
+      if (!_valid(generation)) return;
+      final deviceText = _pendingDeviceText;
+      if (deviceText != null) {
+        _pendingDeviceText = null;
+        if (hostText != deviceText) await hostClipboard.writeText(deviceText);
+      } else if (hostText != null &&
+          hostText.length <= maximumTextLength &&
+          hostText != facade.snapshot.clipboard.text) {
+        final result = await facade.setClipboardText(hostText);
+        if (_valid(generation) && result is CommandFailure<void>) {
+          _enabled = false;
+          await facade.setClipboardSync(false);
+        }
       }
     } on Object {
-      // Host clipboard access can be unavailable in headless sessions.
+      if (_valid(generation)) {
+        _enabled = false;
+        await facade.pauseClipboardSync();
+      }
     } finally {
-      _synchronizing = false;
+      _busy = false;
     }
   }
 
   void _acceptSnapshot(OpenDexSnapshot snapshot) {
-    final enabled = snapshot.clipboard.syncEnabled;
-    final deviceText = snapshot.clipboard.kind == ClipboardKind.text
+    final enabled =
+        snapshot.boot.isReady &&
+        snapshot.agentStatus == AgentConnectionStatus.connected &&
+        snapshot.clipboard.availability == ClipboardAvailability.available &&
+        snapshot.clipboard.syncEnabled;
+    final deviceId = snapshot.selectedDevice?.id;
+    if (!enabled || deviceId != _deviceId) {
+      _generation++;
+      _lastDeviceText = null;
+      _pendingDeviceText = null;
+    }
+    final wasEnabled = _enabled;
+    _enabled = enabled;
+    _deviceId = deviceId;
+    if (!enabled) return;
+    final text = snapshot.clipboard.kind == ClipboardKind.text
         ? snapshot.clipboard.text
         : null;
-    if (!enabled) {
-      _syncEnabled = false;
-      _lastDeviceText = null;
-      return;
+    if (wasEnabled && text != null && text != _lastDeviceText) {
+      _pendingDeviceText = text;
     }
-    if (!_syncEnabled) {
-      _syncEnabled = true;
-      _lastDeviceText = deviceText;
-      unawaited(synchronizeOnce());
-      return;
-    }
-    if (deviceText == null || deviceText == _lastDeviceText) return;
-    _lastDeviceText = deviceText;
-    unawaited(_copyDeviceToHost(deviceText));
-  }
-
-  Future<void> _copyDeviceToHost(String text) async {
-    if (_synchronizing) return;
-    _synchronizing = true;
-    try {
-      if (await hostClipboard.readText() != text) {
-        await hostClipboard.writeText(text);
-      }
-    } on Object {
-      // Retain the last safe facade state and retry on a later change.
-    } finally {
-      _synchronizing = false;
-    }
+    _lastDeviceText = text;
+    unawaited(synchronizeOnce());
   }
 
   Future<void> dispose() async {
+    _disposed = true;
+    _enabled = false;
+    _generation++;
+    _pendingDeviceText = null;
+    _lastDeviceText = null;
     _timer?.cancel();
     _timer = null;
     await _subscription?.cancel();

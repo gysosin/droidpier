@@ -63,7 +63,7 @@ jobs:
       - name: Install package tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev build-essential dpkg-dev rpm file libfuse2 libglu1-mesa
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev build-essential nasm dpkg-dev rpm file libfuse2 libglu1-mesa
           sudo apt-get install -y libprotobuf-dev protobuf-compiler libbrotli-dev liblz4-dev libzstd-dev libpcre2-dev zlib1g-dev libgtest-dev patch
       - name: Build and package
         env:

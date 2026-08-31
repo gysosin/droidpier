@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_android_dex/ui/apps/app_drawer.dart';
-import 'package:open_android_dex/ui/devices/device_selection_dialog.dart';
+import 'package:open_android_dex/ui/connect/phone_list.dart';
 import 'package:open_android_dex/ui/permissions/permission_panel.dart';
 import 'package:open_android_dex/ui/recovery/recovery_overlay.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
@@ -220,39 +220,40 @@ void main() {
       );
     });
 
-    testWidgets('devices, mixed states, $mode', (WidgetTester tester) async {
+    testWidgets('phones, mixed states, $mode', (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(900, 700));
       await tester.pumpWidget(
         _harness(
           Center(
-            child: DeviceSelectionDialog(
+            child: PhoneList(
               status: LoadStatus.ready,
               devices: const <DeviceSummary>[
                 DeviceSummary(
-                  id: 'f086a7b',
+                  id: 'demo-usb-phone',
                   name: 'Redmi Note 7 Pro',
                   connectionKind: DeviceConnectionKind.usb,
                   status: DeviceStatus.authorized,
                   androidVersion: '13',
                 ),
                 DeviceSummary(
-                  id: '192.168.1.42:5555',
+                  id: '192.0.2.42:5555',
                   name: 'Pixel 7a',
                   connectionKind: DeviceConnectionKind.wifi,
                   status: DeviceStatus.unauthorized,
                   androidVersion: '14',
                 ),
                 DeviceSummary(
-                  id: 'RFCT80ZZZZZ',
+                  id: 'demo-offline-phone',
                   name: 'Galaxy S21',
                   connectionKind: DeviceConnectionKind.usb,
                   status: DeviceStatus.offline,
                 ),
               ],
-              selectedId: 'f086a7b',
+              selectedId: 'demo-usb-phone',
               onSelect: (_) {},
               onRefresh: () {},
               onConnect: () {},
+              onDisconnect: (_) {},
             ),
           ),
           theme,
@@ -260,8 +261,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 600));
       await expectLater(
-        find.byType(DeviceSelectionDialog),
-        matchesGoldenFile('goldens/devices_$mode.png'),
+        find.byType(PhoneList),
+        matchesGoldenFile('goldens/phones_$mode.png'),
       );
     });
 

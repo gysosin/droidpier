@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import 'process_executor.dart';
@@ -8,12 +11,14 @@ class AdbException implements Exception {
     required this.message,
     this.exitCode,
     this.timedOut = false,
+    this.cancelled = false,
   });
 
   final String operation;
   final String message;
   final int? exitCode;
   final bool timedOut;
+  final bool cancelled;
 
   @override
   String toString() => 'AdbException($operation): $message';
@@ -71,6 +76,22 @@ class AdbClient {
       localPath,
       remotePath,
     ]);
+  }
+
+  Future<void> stopServiceIfRunning(String deviceId, String component) async {
+    try {
+      await shell(deviceId, ['am', 'stopservice', '-n', component]);
+    } on AdbException catch (error) {
+      // Android 13 and some OEM builds return 255 for an already stopped service.
+      // Only that exact benign outcome is idempotent; permission failures matter.
+      if (!error.timedOut &&
+          RegExp(
+            r'(^|\n)(Service not stopped: was not running\.|Service stopped)(\r?\n|$)',
+          ).hasMatch(error.message)) {
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<void> install(String deviceId, String apkPath) async {
@@ -159,43 +180,111 @@ class AdbClient {
     ]);
   }
 
-  Future<void> connectWireless(String address) async {
-    if (!_wirelessAddress.hasMatch(address)) {
-      throw const AdbException(
+  Future<void> connectWireless(
+    String address, {
+    ProcessCancellation? cancellation,
+  }) async {
+    _validateWireless(address);
+    final output = await _checked(
+      'connect wireless device',
+      ['connect', address],
+      operationTimeout: const Duration(seconds: 30),
+      cancellation: cancellation,
+    );
+    if (!RegExp(
+      r'(^|\n)(already )?connected to ',
+      caseSensitive: false,
+    ).hasMatch(output.stdout.trim())) {
+      throw AdbException(
         operation: 'connect wireless device',
-        message: 'Wireless address must use host:port format.',
+        message: output.stdout.trim(),
       );
     }
-    await _checked('connect wireless device', ['connect', address]);
   }
 
   Future<void> pairWireless(String address, String pairingCode) async {
-    if (!_wirelessAddress.hasMatch(address)) {
-      throw const AdbException(
-        operation: 'pair wireless device',
-        message: 'Wireless address must use host:port format.',
-      );
-    }
     if (!_pairingCode.hasMatch(pairingCode)) {
       throw const AdbException(
         operation: 'pair wireless device',
         message: 'The pairing code must contain six digits.',
       );
     }
-    await _checked('pair wireless device', [
-      'pair',
-      address,
-    ], input: '$pairingCode\n');
+    await pairWirelessSecret(address, pairingCode);
+  }
+
+  Future<String?> pairWirelessSecret(
+    String address,
+    String secret, {
+    ProcessCancellation? cancellation,
+  }) async {
+    _validateWireless(address);
+    if (secret.isEmpty ||
+        secret.length > 256 ||
+        secret.contains(RegExp(r'[\x00-\x20;:]'))) {
+      throw const AdbException(
+        operation: 'pair wireless device',
+        message: 'The pairing secret is invalid.',
+      );
+    }
+    final output = await _checked(
+      'pair wireless device',
+      ['pair', address],
+      input: '$secret\n',
+      operationTimeout: const Duration(seconds: 30),
+      cancellation: cancellation,
+    );
+    if (!RegExp(r'(^|\n|Enter pairing code: )Successfully paired(?: to |\s|$)')
+        .hasMatch(output.stdout.trim())) {
+      throw AdbException(
+        operation: 'pair wireless device',
+        message: output.stdout.replaceAll(secret, '[redacted]').trim(),
+      );
+    }
+    return RegExp(r'\[guid=([^\]\s]+)\]').firstMatch(output.stdout)?.group(1);
   }
 
   Future<void> disconnectWireless(String address) async {
-    if (!_wirelessAddress.hasMatch(address)) {
+    _validateWireless(address);
+    await _checked('disconnect wireless device', ['disconnect', address]);
+  }
+
+  static void _validateWireless(String address) {
+    if (!_wirelessAddress.hasMatch(address) ||
+        int.parse(address.split(':').last) < 1 ||
+        int.parse(address.split(':').last) > 65535) {
       throw const AdbException(
-        operation: 'disconnect wireless device',
-        message: 'Wireless address must use host:port format.',
+        operation: 'connect wireless device',
+        message: 'Wireless address must use a valid host:port format.',
       );
     }
-    await _checked('disconnect wireless device', ['disconnect', address]);
+  }
+
+  /// Reuse only a byte-identical installed APK; package/version alone is not enough.
+  Future<bool> installIfNeeded(
+    String deviceId,
+    String apkPath,
+    String packageName,
+  ) async {
+    try {
+      final paths = await shell(deviceId, ['pm', 'path', packageName]);
+      final candidates = paths
+          .split('\n')
+          .where((p) => p.startsWith('package:'));
+      if (candidates.length == 1) {
+        final remote = candidates.single.substring(8).trim();
+        if (RegExp(r'^/data/app/[A-Za-z0-9_./=+~-]+\.apk$').hasMatch(remote)) {
+          final sum = await shell(deviceId, ['sha256sum', remote]);
+          final expected = await sha256.bind(File(apkPath).openRead()).first;
+          if (sum.split(RegExp(r'\s+')).first == expected.toString()) {
+            return false;
+          }
+        }
+      }
+    } on AdbException {
+      // Unsupported checksum commands or unreadable package paths require normal installation.
+    }
+    await install(deviceId, apkPath);
+    return true;
   }
 
   Future<ProcessOutput> _checked(
@@ -203,17 +292,30 @@ class AdbClient {
     List<String> arguments, {
     Duration? operationTimeout,
     String? input,
+    ProcessCancellation? cancellation,
   }) async {
-    final output = await _executor.run(
-      executable,
-      arguments,
-      timeout: operationTimeout ?? timeout,
-      input: input,
-    );
+    final executor = _executor;
+    final output = executor is CancellableProcessExecutor
+        ? await (executor as CancellableProcessExecutor).runCancellable(
+            executable,
+            arguments,
+            timeout: operationTimeout ?? timeout,
+            input: input,
+            cancellation: cancellation,
+          )
+        : await executor.run(
+            executable,
+            arguments,
+            timeout: operationTimeout ?? timeout,
+            input: input,
+          );
     if (!output.succeeded) {
-      final diagnostic = output.stderr.trim().isNotEmpty
+      final rawDiagnostic = output.stderr.trim().isNotEmpty
           ? output.stderr.trim()
           : output.stdout.trim();
+      final diagnostic = input == null
+          ? rawDiagnostic
+          : rawDiagnostic.replaceAll(input.trim(), '[redacted]');
       throw AdbException(
         operation: operation,
         message: output.timedOut
@@ -223,6 +325,7 @@ class AdbClient {
             : diagnostic,
         exitCode: output.exitCode,
         timedOut: output.timedOut,
+        cancelled: output.cancelled,
       );
     }
     return output;
@@ -302,7 +405,7 @@ class AdbClient {
   }
 
   static final _wirelessAddress = RegExp(
-    r'^(?:\[[0-9a-fA-F:]+\]|[A-Za-z0-9.-]+):[0-9]{1,5}$',
+    r'^(?:\[[0-9a-fA-F:]+(?:%[A-Za-z0-9_.-]+)?\]|[A-Za-z0-9.-]+):[0-9]{1,5}$',
   );
   static final _pairingCode = RegExp(r'^\d{6}$');
   static final _abstractSocket = RegExp(r'^[A-Za-z0-9._-]{1,108}$');

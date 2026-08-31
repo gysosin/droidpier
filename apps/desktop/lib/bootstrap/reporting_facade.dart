@@ -95,11 +95,14 @@ class ReportingOpenDexFacade implements OpenDexFacade {
 
   @override
   Future<VoidResult> setClipboardText(String text) =>
-      _report(delegate.setClipboardText(text));
+      delegate.setClipboardText(text);
 
   @override
   Future<VoidResult> setClipboardSync(bool enabled) =>
       _report(delegate.setClipboardSync(enabled));
+
+  @override
+  Future<VoidResult> pauseClipboardSync() => delegate.pauseClipboardSync();
 
   @override
   Future<VoidResult> setVolume(String stream, int value) =>
@@ -130,32 +133,40 @@ class ReportingOpenDexFacade implements OpenDexFacade {
   );
 
   @override
-  Future<VoidResult> dismissAllNotifications() => _report(
-    delegate.dismissAllNotifications(),
-    reportCapabilityGaps: false,
-  );
+  Future<VoidResult> dismissAllNotifications() =>
+      _report(delegate.dismissAllNotifications(), reportCapabilityGaps: false);
 
   @override
   Future<VoidResult> reconnect() => _report(delegate.reconnect());
+
+  @override
+  Future<VoidResult> startWirelessDiscovery() =>
+      delegate.startWirelessDiscovery();
+  @override
+  Future<VoidResult> stopWirelessDiscovery() =>
+      delegate.stopWirelessDiscovery();
+  @override
+  Future<VoidResult> startQrPairing() => delegate.startQrPairing();
+  @override
+  Future<VoidResult> cancelWirelessPairing() =>
+      delegate.cancelWirelessPairing();
 
   @override
   Future<VoidResult> pairWirelessDevice({
     required String host,
     required int pairingPort,
     required String pairingCode,
-  }) => _report(
-    delegate.pairWirelessDevice(
-      host: host,
-      pairingPort: pairingPort,
-      pairingCode: pairingCode,
-    ),
+  }) => delegate.pairWirelessDevice(
+    host: host,
+    pairingPort: pairingPort,
+    pairingCode: pairingCode,
   );
 
   @override
   Future<CommandResult<DeviceSummary>> connectWirelessDevice({
     required String host,
     required int port,
-  }) => _report(delegate.connectWirelessDevice(host: host, port: port));
+  }) => delegate.connectWirelessDevice(host: host, port: port);
 
   @override
   Future<VoidResult> forgetWirelessDevice(String deviceId) =>
