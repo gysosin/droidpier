@@ -63,5 +63,15 @@
     "url": "https://api.github.com/repos/AppImage/type2-runtime/tarball/75849dce7cc37e4319b633df1f116ca895c71a12",
     "file": "appimage-runtime-75849dce-source.tar.gz",
     "sha256": "b3720459e448b48a48d23563b5f2d5b9e464447971be3061d52358565b43f478"
+  },
+  "libfuse-source": {
+    "url": "https://github.com/libfuse/libfuse/releases/download/fuse-3.15.0/fuse-3.15.0.tar.xz",
+    "file": "fuse-3.15.0.tar.xz",
+    "sha256": "70589cfd5e1cff7ccd6ac91c86c01be340b227285c5e200baa284e401eea2ca0"
+  },
+  "squashfuse-source": {
+    "url": "https://github.com/vasi/squashfuse/archive/0.5.2.tar.gz",
+    "file": "squashfuse-0.5.2.tar.gz",
+    "sha256": "db0238c5981dabbd80ee09ae15387f390091668ca060a7bc38047912491443d3"
   }
 }
