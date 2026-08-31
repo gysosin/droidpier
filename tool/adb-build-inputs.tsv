@@ -1,0 +1,6 @@
+libbrotli-dev:amd64	brotli	1.0.9-2build6
+libgtest-dev:amd64	googletest	1.11.0-3
+liblz4-dev:amd64	lz4	1.9.3-2build2
+libprotobuf-dev:amd64	protobuf	3.12.4-1ubuntu7.22.04.6
+libzstd-dev:amd64	libzstd	1.4.8+dfsg-3build1
+zlib1g-dev:amd64	zlib	1:1.2.11.dfsg-2ubuntu9.2

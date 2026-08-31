@@ -16,13 +16,18 @@ See [LICENSE](../LICENSE), [NOTICE](../NOTICE) and the texts in [licenses](../li
 | SDL | scrcpy's pinned build inputs | zlib license |
 | dav1d | scrcpy's pinned build inputs | BSD-2-Clause |
 | libusb | scrcpy's pinned build inputs | LGPL-2.1-or-later |
-| ADB | Upstream runtime manifest | Apache/BSD and additional component notices; audit the shipped binary |
+| ADB | Pinned android-tools source and `tool/adb-build-inputs.tsv` | Apache/BSD/MIT and LGPL libusb; sources and `licenses/adb/` notices included |
 | Instrument Sans, Space Grotesk, Public Sans, IBM Plex Mono | Bundled font files | SIL Open Font License 1.1; individual notices in `licenses/fonts/` |
 | AppImage runtime | Pinned runtime asset | See its included upstream license/source notices |
+| musl, zstd, zlib, mimalloc | AppImage upstream build and Alpine package recipes | MIT, BSD-3-Clause, Zlib; complete texts in `licenses/` |
+| libfuse / squashfuse | AppImage upstream build | LGPL/GPL component distinctions and BSD-2-Clause; complete texts in `licenses/` |
 
-This inventory describes intended inputs; it is not a declaration that every
-binary has completed redistribution review. The acceptance record must say when
-the full transitive dependency audit is complete. The release includes both a file SBOM (payload hashes) and a component SBOM
+[Runtime provenance](RUNTIME_PROVENANCE.md) records the exact upstream build
+commits, source inputs, package patches and scope of the transitive review.
+
+The acceptance record identifies the candidate whose dependency/source review
+has completed. Review does not transfer third-party copyrights or change their
+license terms. The release includes both a file SBOM (payload hashes) and a component SBOM
 (resolved Dart/Android dependencies and pinned runtime inputs). These inventories
 do not replace the full license and corresponding-source review.
 
@@ -33,7 +38,8 @@ archives, patches (including an explicit statement when there are none), and bui
 instructions must be attached to the same GitHub Release as the executables.
 `tool/build_ffmpeg.sh` disables GPL, nonfree and automatic external-library
 selection. The desktop invokes FFmpeg as a separate process. The official scrcpy
-bundle also contains linked third-party code and requires its own complete audit.
+bundle also contains linked third-party code, covered in the runtime provenance
+record and matching source collection.
 
 For each shipped static component, provide sufficient matching source and build
 configuration to rebuild or relink it under its license. Do not assume a link to

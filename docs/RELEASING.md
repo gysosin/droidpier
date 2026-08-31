@@ -5,8 +5,18 @@
 The initial target is `v0.1.0-beta.1`: Linux x86-64 and Android only.
 Windows and macOS remain in development until native rendering and real-device
 acceptance pass. A successful build is not permission to declare compatibility.
-Record evidence in `release/acceptance.json`. Unknown or pending entries block
-publication, including missing corresponding source or signing-key recovery.
+Record evidence in `release/acceptance.json`. The default `verified-beta` channel
+requires every entry to pass. Missing corresponding source, signing-key recovery,
+privacy review, artifact verification or automated checks always block publication.
+
+An explicitly selected `experimental-preview` channel can publish a prerelease
+before the physical-device and complete distribution matrix finishes. It requires
+all mandatory source, signing, visual, upgrade, checksum and automated checks to
+pass, and rejects failed/unknown results. Untested coverage remains `pending` and
+must be disclosed prominently in the release notes and download table. This does
+not establish support for those platforms. Both channels retain protected release
+approval, exact source-commit targeting, immutable published assets, and a required
+channel selection matching the version-controlled acceptance record.
 
 1. Update `version.properties` and the matching desktop pubspec version. Increase
    Android versionCode for every published APK, even prereleases.
@@ -24,7 +34,7 @@ publication, including missing corresponding source or signing-key recovery.
 7. Inspect safe screenshots of the actual desktop and companion. Review download
    links, known issues and upgrade warnings.
 8. Create a draft prerelease for the exact tested commit. Verify all files and
-   `SHA256SUMS`. Publish only after every applicable acceptance item passes.
+   `SHA256SUMS`. Publish only after the chosen channel's required acceptance passes.
 
 Never silently replace public release binaries. Corrections require a new version.
 The source tag must resolve to the commit used to build the artifacts.

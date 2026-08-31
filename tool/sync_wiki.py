@@ -15,6 +15,7 @@ PAGES = {
     'Window-manager': 'docs/WINDOW_MANAGER.md',
     'Releasing': 'docs/RELEASING.md',
     'Third-party-software': 'docs/THIRD_PARTY.md',
+    'Runtime-provenance': 'docs/RUNTIME_PROVENANCE.md',
     'Roadmap': 'docs/ROADMAP.md',
     'Maintainers': 'docs/MAINTAINERS.md',
     'Contributing': 'CONTRIBUTING.md',

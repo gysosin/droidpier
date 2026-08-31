@@ -25,9 +25,10 @@
     "file": "ffmpeg-8.1.2.tar.xz"
   },
   "scrcpy-source": {
-    "url": "https://api.github.com/repos/Genymobile/scrcpy/tarball/v4.1",
-    "sha256": "09092dc3ba187c2eb3b23665f7297e5172c747a9a497ff3d65f9b93593aa9147",
-    "file": "scrcpy-v4.1-source.tar.gz"
+    "url": "https://api.github.com/repos/Genymobile/scrcpy/tarball/fa57d7c6b47139797a8e103f87719740718887d4",
+    "file": "scrcpy-fa57d7c6-source.tar.gz",
+    "sha256": "af80aac4bfd457ddd07d8f60bf1ca7d9e9f59f35b7f6a02d8e66eb96db9ccc18",
+    "sourceCollection": true
   },
   "sdl-source": {
     "url": "https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.12.tar.gz",
@@ -73,5 +74,325 @@
     "url": "https://github.com/vasi/squashfuse/archive/0.5.2.tar.gz",
     "file": "squashfuse-0.5.2.tar.gz",
     "sha256": "db0238c5981dabbd80ee09ae15387f390091668ca060a7bc38047912491443d3"
+  },
+  "v4l-utils_1.22.1-2build1-description": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/v4l-utils_1.22.1-2build1.dsc",
+    "file": "v4l-utils_1.22.1-2build1.dsc",
+    "sha256": "02c929a36bb2a346e05568c93114954f5bfcf6dece62505e95e0f69aa61e0b21",
+    "sourceCollection": true
+  },
+  "v4l-utils_1.22.1.orig.tar.bz2": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/v4l-utils_1.22.1.orig.tar.bz2",
+    "file": "v4l-utils_1.22.1.orig.tar.bz2",
+    "sha256": "65c6fbe830a44ca105c443b027182c1b2c9053a91d1e72ad849dfab388b94e31",
+    "sourceCollection": true
+  },
+  "v4l-utils_1.22.1.orig.tar.bz2.asc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/v4l-utils_1.22.1.orig.tar.bz2.asc",
+    "file": "v4l-utils_1.22.1.orig.tar.bz2.asc",
+    "sha256": "eee608e914cdf5b322b53d49d48aeae003855d068ee8d9c8d706fd058cabe2af",
+    "sourceCollection": true
+  },
+  "v4l-utils_1.22.1-2build1.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/v/v4l-utils/v4l-utils_1.22.1-2build1.debian.tar.xz",
+    "file": "v4l-utils_1.22.1-2build1.debian.tar.xz",
+    "sha256": "5fde906bfb3e0a2c68517afd9d02d1480fdc9c36dfd7fa2f883afb7335a85b1f",
+    "sourceCollection": true
+  },
+  "zlib_1.2.11.dfsg-2ubuntu9.2-description": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.11.dfsg-2ubuntu9.2.dsc",
+    "file": "zlib_1.2.11.dfsg-2ubuntu9.2.dsc",
+    "sha256": "ac50a5e5803c128eaef7eceda71fa13ffab3ed1e949008be244d8754d9c59e47",
+    "sourceCollection": true
+  },
+  "zlib_1.2.11.dfsg.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.11.dfsg.orig.tar.gz",
+    "file": "zlib_1.2.11.dfsg.orig.tar.gz",
+    "sha256": "80c481411a4fe8463aeb8270149a0e80bb9eaf7da44132b6e16f2b5af01bc899",
+    "sourceCollection": true
+  },
+  "zlib_1.2.11.dfsg-2ubuntu9.2.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.11.dfsg-2ubuntu9.2.debian.tar.xz",
+    "file": "zlib_1.2.11.dfsg-2ubuntu9.2.debian.tar.xz",
+    "sha256": "5678d0b3d1e609297e5a3dedfcb3474bab1cafe82c0c29aec2cef01e49a88d39",
+    "sourceCollection": true
+  },
+  "libjpeg-turbo_2.1.2-0ubuntu1-description": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo_2.1.2-0ubuntu1.dsc",
+    "file": "libjpeg-turbo_2.1.2-0ubuntu1.dsc",
+    "sha256": "c351c2dbc18346c95ad473d58452cd73ae1e8401c5e8f627e0ab3611bd89bf3c",
+    "sourceCollection": true
+  },
+  "libjpeg-turbo_2.1.2.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo_2.1.2.orig.tar.gz",
+    "file": "libjpeg-turbo_2.1.2.orig.tar.gz",
+    "sha256": "e7fdc8a255c45bc8fbd9aa11c1a49c23092fcd7379296aeaeb14d3343a3d1bed",
+    "sourceCollection": true
+  },
+  "libjpeg-turbo_2.1.2-0ubuntu1.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo_2.1.2-0ubuntu1.debian.tar.xz",
+    "file": "libjpeg-turbo_2.1.2-0ubuntu1.debian.tar.xz",
+    "sha256": "1cdfbd71818526459bf73ffe42bd0e4927f75681384c87ec01569fdcb1bf2529",
+    "sourceCollection": true
+  },
+  "alpine-musl-recipe": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/APKBUILD",
+    "file": "alpine-musl-APKBUILD",
+    "sha256": "3ded84b16ddfc4866ad69057d767d5539f8c390e07f42949f716e023b73bde25",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/APKBUILD"
+  },
+  "alpine-musl-source": {
+    "url": "https://musl.libc.org/releases/musl-1.2.5.tar.gz",
+    "file": "musl-1.2.5.tar.gz",
+    "sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+    "sourceCollection": true
+  },
+  "alpine-musl-handle-aux-at_base.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/handle-aux-at_base.patch",
+    "file": "alpine-musl-handle-aux-at_base.patch",
+    "sha256": "2a65e03b94217063d72fe998e5fb2e25cd01716078a3ba1b0ab574ab205111e6",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/handle-aux-at_base.patch"
+  },
+  "alpine-musl-isatty-glibc-align.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/isatty-glibc-align.patch",
+    "file": "alpine-musl-isatty-glibc-align.patch",
+    "sha256": "1321d542b40921a4c248bb2d15dbd03fcbbf008c8725eb2043d3cab62faeba48",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/isatty-glibc-align.patch"
+  },
+  "alpine-musl-ldso-fix-non-functional-fix-to-early-dynamic-PAGE_SI.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/ldso-fix-non-functional-fix-to-early-dynamic-PAGE_SI.patch",
+    "file": "alpine-musl-ldso-fix-non-functional-fix-to-early-dynamic-PAGE_SI.patch",
+    "sha256": "7f5806124d4a89536e53a07bfe95fcd0a8f1b7a27fc0dfc89c78c724dea1c924",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/ldso-fix-non-functional-fix-to-early-dynamic-PAGE_SI.patch"
+  },
+  "alpine-musl-loongarch64-Add-lsx-and-lasx-vector-structure-defini.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/loongarch64-Add-lsx-and-lasx-vector-structure-defini.patch",
+    "file": "alpine-musl-loongarch64-Add-lsx-and-lasx-vector-structure-defini.patch",
+    "sha256": "28efacd507c01b89e1725ed33723f3f9fdfe6cb83eb78ffea1e2acb7fda8a52c",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/loongarch64-Add-lsx-and-lasx-vector-structure-defini.patch"
+  },
+  "alpine-musl-loongarch64-add-TLSDESC-support.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/loongarch64-add-TLSDESC-support.patch",
+    "file": "alpine-musl-loongarch64-add-TLSDESC-support.patch",
+    "sha256": "1efb4604e0b28b84e10faf37d17bad448510e73f6a3db89c8be47d38b9e85138",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/loongarch64-add-TLSDESC-support.patch"
+  },
+  "alpine-musl-loongarch64-add-fpu-and-simd-context-to-signal.h.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/loongarch64-add-fpu-and-simd-context-to-signal.h.patch",
+    "file": "alpine-musl-loongarch64-add-fpu-and-simd-context-to-signal.h.patch",
+    "sha256": "d73f85a90fe52930dd8b5d16cb7f3369a994918c0e41ae3c3dc9a25df4b45099",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/loongarch64-add-fpu-and-simd-context-to-signal.h.patch"
+  },
+  "alpine-musl-loongarch64-add-bits-hwcap.h.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/loongarch64-add-bits-hwcap.h.patch",
+    "file": "alpine-musl-loongarch64-add-bits-hwcap.h.patch",
+    "sha256": "8849080b49dff046b1f29db24e54ffe6262b5884078091994db77efdafca2505",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/loongarch64-add-bits-hwcap.h.patch"
+  },
+  "alpine-musl-CVE-2025-26519.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/CVE-2025-26519.patch",
+    "file": "alpine-musl-CVE-2025-26519.patch",
+    "sha256": "ab382da2bb5e1cc32d8904be28fb13f8ad3ce813967bd4bf7f5b1c6baee33e17",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/CVE-2025-26519.patch"
+  },
+  "alpine-musl-CVE-2026-6042.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/CVE-2026-6042.patch",
+    "file": "alpine-musl-CVE-2026-6042.patch",
+    "sha256": "1d0be2e72b9d5bd16546b923aa8af861d271322f01644716a81823bec4065c99",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/CVE-2026-6042.patch"
+  },
+  "alpine-musl-CVE-2026-40200.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/CVE-2026-40200.patch",
+    "file": "alpine-musl-CVE-2026-40200.patch",
+    "sha256": "1ee29f64f9ca8e8ad7c349779d661ff6b52126a27575d3586981357a52c406fb",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/CVE-2026-40200.patch"
+  },
+  "alpine-musl-ldconfig": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/ldconfig",
+    "file": "alpine-musl-ldconfig",
+    "sha256": "b4a2c06db38742e8c42c3c9838b285a7d8cdac6c091ff3df5ff9a15f1e41b9c7",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/ldconfig"
+  },
+  "alpine-musl-__stack_chk_fail_local.c": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/__stack_chk_fail_local.c",
+    "file": "alpine-musl-__stack_chk_fail_local.c",
+    "sha256": "299a7d75a09de3e2e11e7fb4acc3182e4a14e868093d2f30938fce9bfcff13da",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/__stack_chk_fail_local.c"
+  },
+  "alpine-musl-getconf.c": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/getconf.c",
+    "file": "alpine-musl-getconf.c",
+    "sha256": "d87d0cbb3690ae2c5d8cc218349fd8278b93855dd625deaf7ae50e320aad247c",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/getconf.c"
+  },
+  "alpine-musl-getent.c": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/getent.c",
+    "file": "alpine-musl-getent.c",
+    "sha256": "b25f32d306d542246e9358ef65cd67c12b3e3a77656bc467853d3b0c76b5fbbd",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/getent.c"
+  },
+  "alpine-musl-iconv.c": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/8999cf56154b9bd09c995f293d8dfd3aa8001e3a/main/musl/iconv.c",
+    "file": "alpine-musl-iconv.c",
+    "sha256": "f79a2930a2e5bb0624321589edf8b889d1e9b603e01e6b7ae214616605b3fdd7",
+    "sourceCollection": true,
+    "sourcePath": "alpine/musl/iconv.c"
+  },
+  "alpine-zlib-recipe": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/2b38f55109add14f4f99a974c2fdf421b6b9e9e9/main/zlib/APKBUILD",
+    "file": "alpine-zlib-APKBUILD",
+    "sha256": "e9ad3aa7ecf048f4bfa26b946275bee347f75254385320e90eecd3fd6651bcf4",
+    "sourceCollection": true,
+    "sourcePath": "alpine/zlib/APKBUILD"
+  },
+  "alpine-zlib-source": {
+    "url": "https://zlib.net/fossils/zlib-1.3.2.tar.gz",
+    "file": "zlib-1.3.2.tar.gz",
+    "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+    "sourceCollection": true
+  },
+  "alpine-zstd-recipe": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/5c2ddf18f193dafdd25ae7391d96c7e30766eecd/main/zstd/APKBUILD",
+    "file": "alpine-zstd-APKBUILD",
+    "sha256": "7344ccab938fb86eb3eb437f1caa11c99ceca58c475b31458d3ab04cce2e2388",
+    "sourceCollection": true,
+    "sourcePath": "alpine/zstd/APKBUILD"
+  },
+  "alpine-zstd-source": {
+    "url": "https://github.com/facebook/zstd/archive/v1.5.6.tar.gz",
+    "file": "zstd-1.5.6.tar.gz",
+    "sha256": "30f35f71c1203369dc979ecde0400ffea93c27391bfd2ac5a9715d2173d92ff7",
+    "sourceCollection": true
+  },
+  "alpine-mimalloc2-recipe": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/5a1a5dc3216a69e3cd66a57ee07cb5ef01b8be39/community/mimalloc2/APKBUILD",
+    "file": "alpine-mimalloc2-APKBUILD",
+    "sha256": "bb2618381e98ef508b41697d9177b7d1fef6f61bf38543aa055b9e0002c3c54b",
+    "sourceCollection": true,
+    "sourcePath": "alpine/mimalloc2/APKBUILD"
+  },
+  "alpine-mimalloc2-source": {
+    "url": "https://github.com/microsoft/mimalloc/archive/v2.1.7/mimalloc-2.1.7.tar.gz",
+    "file": "mimalloc-2.1.7.tar.gz",
+    "sha256": "0eed39319f139afde8515010ff59baf24de9e47ea316a315398e8027d198202d",
+    "sourceCollection": true
+  },
+  "alpine-mimalloc2-cmake-add-insecure-suffix.patch": {
+    "url": "https://raw.githubusercontent.com/alpinelinux/aports/5a1a5dc3216a69e3cd66a57ee07cb5ef01b8be39/community/mimalloc2/cmake-add-insecure-suffix.patch",
+    "file": "alpine-mimalloc2-cmake-add-insecure-suffix.patch",
+    "sha256": "bbf09f82b9a187399f33f6cc4136bd088f475d769f385aa1f08d0850473b04ae",
+    "sourceCollection": true,
+    "sourcePath": "alpine/mimalloc2/cmake-add-insecure-suffix.patch"
+  },
+  "adb-source": {
+    "url": "https://github.com/nmeum/android-tools/releases/download/37.0.0/android-tools-37.0.0.tar.xz",
+    "file": "android-tools-37.0.0.tar.xz",
+    "sha256": "2725d09f892a3a38e534429f47a321f58ecf6a3169caa42c915fb2cb7d46be0e",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9-2build6.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9-2build6.dsc",
+    "file": "brotli_1.0.9-2build6.dsc",
+    "sha256": "acd215cccf71c8d077d03b9550d7a23c1963c31c42f3062076cdb5f69ac86c6f",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9.orig.tar.gz",
+    "file": "brotli_1.0.9.orig.tar.gz",
+    "sha256": "f9e8d81d0405ba66d181529af42a3354f838c939095ff99930da6aa9cdf6fe46",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9-2build6.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9-2build6.debian.tar.xz",
+    "file": "brotli_1.0.9-2build6.debian.tar.xz",
+    "sha256": "18bade39edd19e24c6a115b0053f84ebb909a9386c9a657ee6768b49a2af9974",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3-2build2.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3-2build2.dsc",
+    "file": "lz4_1.9.3-2build2.dsc",
+    "sha256": "24f317883fddecd5488241a836a951e83dbd7070b667e34eed4319d2090244a9",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3.orig.tar.gz",
+    "file": "lz4_1.9.3.orig.tar.gz",
+    "sha256": "030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3-2build2.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3-2build2.debian.tar.xz",
+    "file": "lz4_1.9.3-2build2.debian.tar.xz",
+    "sha256": "46e79943d637f60be3a8c1e5edaba8890599e0fdcc2a58462e4eb194f1e56352",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4-1ubuntu7.22.04.6.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4-1ubuntu7.22.04.6.dsc",
+    "file": "protobuf_3.12.4-1ubuntu7.22.04.6.dsc",
+    "sha256": "8bfe7301ec96685c19e20d0a76098bb242a3c329837d6295e97a5cfbf350a496",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4.orig.tar.gz",
+    "file": "protobuf_3.12.4.orig.tar.gz",
+    "sha256": "512e5a674bf31f8b7928a64d8adf73ee67b8fe88339ad29adaa3b84dbaa570d8",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz",
+    "file": "protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz",
+    "sha256": "5a3a914378e278a948b61194ef39ccd4be71fdc05801c72426efb902d9aa1e16",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg-3build1.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg-3build1.dsc",
+    "file": "libzstd_1.4.8+dfsg-3build1.dsc",
+    "sha256": "d4f80bb9278967f55a38c50c7e2bb8102328c7d2955bdcd9b7dedc70cd4a8c9e",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg.orig.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg.orig.tar.xz",
+    "file": "libzstd_1.4.8+dfsg.orig.tar.xz",
+    "sha256": "1e8ce5c4880a6d5bd8d3186e4186607dd19b64fc98a3877fc13aeefd566d67c5",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg-3build1.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg-3build1.debian.tar.xz",
+    "file": "libzstd_1.4.8+dfsg-3build1.debian.tar.xz",
+    "sha256": "60d554776b4fbee2aa81eb9990cbe156636b1ec4e4213b73fd190057680241ba",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0-3.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0-3.dsc",
+    "file": "googletest_1.11.0-3.dsc",
+    "sha256": "d7a122eb82167b6219bd85d0ea3a0cf472fd32accd05ced0457a411513060749",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0.orig.tar.gz",
+    "file": "googletest_1.11.0.orig.tar.gz",
+    "sha256": "58dd00393b46704f744f45b1398a6e2c93ad64f9bf811ce34af27b1c63effec0",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0-3.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0-3.debian.tar.xz",
+    "file": "googletest_1.11.0-3.debian.tar.xz",
+    "sha256": "8889ec225a7d4a4ca7b38b03aa792f0548b31ef04a0cd0c0c6aaa64392d20d0f",
+    "sourceCollection": true
   }
 }

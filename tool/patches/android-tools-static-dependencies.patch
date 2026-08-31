@@ -1,0 +1,16 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,0 +3,4 @@
++
++# DroidPier static dependency selection; platform/compiler runtime stays shared.
++set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
++find_library(DROIDPIER_ZLIB_STATIC NAMES z REQUIRED)
+--- a/vendor/CMakeLists.adb.txt
++++ b/vendor/CMakeLists.adb.txt
+@@ -218 +217,0 @@
+-	PkgConfig::libbrotlicommon
+@@ -220,0 +220 @@
++	PkgConfig::libbrotlicommon
+@@ -223 +223 @@
+-	z
++	${DROIDPIER_ZLIB_STATIC}

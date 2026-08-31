@@ -3,7 +3,8 @@
 Your Android. A bigger workspace.
 
 Start with the [user guide](USER_GUIDE.md), then check [compatibility](COMPATIBILITY.md).
-The first Linux/Android beta is being prepared. A build is not a tested release.
+The first Linux/Android download is an experimental preview. Physical-phone and
+complete distribution validation remain pending; see the release notes.
 
 | Topic | Guide |
 | --- | --- |

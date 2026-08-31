@@ -11,6 +11,7 @@ fi
 if [[ ! -x "${DROIDPIER_FFMPEG:-${repository_dir}/.tools/droidpier-runtime/ffmpeg/install/bin/ffmpeg}" ]]; then
   bash "${repository_dir}/tool/build_ffmpeg.sh"
 fi
+bash "${repository_dir}/tool/build_adb.sh"
 (
   cd "${repository_dir}/apps/desktop"
   "${flutter_bin}" pub get

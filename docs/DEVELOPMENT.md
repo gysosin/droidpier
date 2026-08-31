@@ -6,6 +6,9 @@ The toolchain is Flutter 3.47.1 / Dart 3.13.1 (see `tool/flutter-sdk.version`), 
 the checked-in Gradle wrapper, Android platforms 35 and 36, and build-tools 35.0.0.
 Linux packaging uses Ubuntu 22.04 with clang, CMake, Ninja, pkg-config, GTK 3
 headers, liblzma development files, Python 3, RPM, dpkg-deb, and AppImage tooling.
+The source-built ADB also needs protobuf/compiler, brotli, lz4, zstd, PCRE2,
+zlib and Google Test development packages, plus `patch`. Its matching Ubuntu
+source-package versions are recorded in `tool/adb-build-inputs.tsv`.
 The container recipe is `tool/linux/Dockerfile`. Configure the Android SDK with
 `ANDROID_HOME` or an ignored `android/local.properties` file.
 
