@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from version import ROOT, release_version
+from verify_android import verify
 
 
 def main():
@@ -22,7 +23,9 @@ def main():
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
     target = dist / f'droidpier-companion-{version}.apk'
-    shutil.copy2(ROOT / 'android/companion/build/outputs/apk/release/companion-release.apk', target)
+    apk = ROOT / 'android/companion/build/outputs/apk/release/companion-release.apk'
+    verify(apk)
+    shutil.copy2(apk, target)
     shutil.copy2(ROOT / 'android/agent/build/outputs/open-dex-agent.jar', dist / 'open-dex-agent.jar')
     shutil.copy2(ROOT / 'android/companion/build/outputs/release-dependencies.json', dist / 'android-dependencies.json')
     print(f'Signed companion: {target.name}')
