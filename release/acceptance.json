@@ -35,7 +35,7 @@
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Clean Ubuntu 22.04 container: install and launch as non-root under Xvfb passed after adding EGL/GLES runtime dependencies; uninstall passed. Full desktop VM and upgrade matrix pending."
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
@@ -75,7 +75,7 @@
     },
     "disconnect_reconnect_device_removal": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Android 15 emulator: authenticated hello, capability negotiation, user Disconnect request/ACK, and no immediate automatic reconnect passed. Physical device removal/recovery still pending."
     },
     "apps_input_resize_orientation": {
       "status": "pending",
@@ -91,7 +91,7 @@
     },
     "android_signed_upgrade_and_debug_conflict": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Android 15 emulator: signed-to-signed APK replacement retained permission state. Installing debug APK over release correctly failed with INSTALL_FAILED_UPDATE_INCOMPATIBLE and left the release installed. Increasing-version-code upgrade remains pending."
     },
     "restricted_apps_unsupported_android": {
       "status": "pending",

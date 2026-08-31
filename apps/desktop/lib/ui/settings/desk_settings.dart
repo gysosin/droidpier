@@ -160,6 +160,47 @@ class DeskSettings extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: DexSpace.lg),
+                    _Group(
+                      title: 'About',
+                      colors: c,
+                      children: <Widget>[
+                        _NoteRow(
+                          title: 'DroidPier',
+                          detail: 'Desktop workspace for Android.',
+                          colors: c,
+                        ),
+                        Divider(
+                          height: 1,
+                          thickness: DexStroke.hairline,
+                          color: c.line,
+                        ),
+                        _NoteRow(
+                          title: 'Licenses',
+                          detail:
+                              'Original code is Apache-2.0. Bundled components '
+                              'keep their own terms: FFmpeg '
+                              '(LGPL-2.1-or-later), scrcpy (Apache-2.0), '
+                              'bundled fonts (OFL-1.1). Full texts and '
+                              'third-party notices ship with the app in',
+                          mono: 'resources/licenses',
+                          colors: c,
+                        ),
+                        Divider(
+                          height: 1,
+                          thickness: DexStroke.hairline,
+                          color: c.line,
+                        ),
+                        _NoteRow(
+                          title: 'Scope',
+                          detail:
+                              'Desktop audio forwarding is not implemented; '
+                              'sound stays on the phone. Windows and macOS '
+                              'builds are in development.',
+                          colors: c,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -245,6 +286,69 @@ class _RowShell extends StatelessWidget {
           ),
           const SizedBox(width: DexSpace.md),
           trailing,
+        ],
+      ),
+    );
+  }
+}
+
+/// A row that only states something. No control, because there is nothing here
+/// the desk can act on — the same reason the permission buttons were removed.
+///
+/// [mono] is appended to [detail] as a final span in the data face, for a path
+/// or other literal that should not read as prose.
+class _NoteRow extends StatelessWidget {
+  const _NoteRow({
+    required this.title,
+    required this.detail,
+    required this.colors,
+    this.mono,
+  });
+
+  final String title;
+  final String detail;
+  final String? mono;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final TextStyle? body = t.bodyMedium?.copyWith(color: colors.muted);
+    return Padding(
+      padding: const EdgeInsets.all(DexSpace.md),
+      // Expanded, as in _RowShell: a bare Column shrink-wraps and _Group's
+      // Column then centres it, which reads as a different surface entirely.
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(title, style: t.bodyLarge),
+                const SizedBox(height: 2),
+                if (mono == null)
+                  Text(detail, style: body)
+                else
+                  Text.rich(
+                    TextSpan(
+                      style: body,
+                      children: <InlineSpan>[
+                        TextSpan(text: '$detail '),
+                        TextSpan(
+                          text: mono,
+                          style: DexTheme.data(
+                            colors,
+                            size: 12,
+                            color: colors.text,
+                          ),
+                        ),
+                        const TextSpan(text: '.'),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
