@@ -31,6 +31,7 @@ internal class CompanionSocket(
     @Volatile private var stopped = false
     @Volatile private var disconnectRequestId: String? = null
 
+    @Synchronized
     fun connect() {
         if (stopped) return
         reconnectTask?.cancel(false)
@@ -45,6 +46,7 @@ internal class CompanionSocket(
         socket?.send(ProtocolEnvelope.create(type, data).toString())
     }
 
+    @Synchronized
     override fun onOpen(webSocket: WebSocket, response: Response) {
         if (stopped || webSocket !== socket) { webSocket.cancel(); return }
         connected = true
@@ -75,6 +77,7 @@ internal class CompanionSocket(
         NotificationCommandBridge.publishActive()
     }
 
+    @Synchronized
     override fun onMessage(webSocket: WebSocket, text: String) {
         if (stopped || webSocket !== socket) return
         val message = runCatching { JSONObject(text) }.getOrNull() ?: return
@@ -130,6 +133,7 @@ internal class CompanionSocket(
         )
     }
 
+    @Synchronized
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         if (stopped || webSocket !== socket) return
         Log.w(TAG, "Desktop socket failure: ${t.javaClass.simpleName}")
@@ -141,6 +145,7 @@ internal class CompanionSocket(
         webSocket.close(code, null)
     }
 
+    @Synchronized
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         if (stopped || webSocket !== socket) return
         Log.i(TAG, "Desktop socket closed: $code")
@@ -148,6 +153,7 @@ internal class CompanionSocket(
         scheduleReconnect()
     }
 
+    @Synchronized
     private fun scheduleReconnect() {
         if (stopped) return
         connected = false
@@ -159,6 +165,7 @@ internal class CompanionSocket(
         reconnectTask = scheduler.schedule(::connect, delaySeconds.toLong(), TimeUnit.SECONDS)
     }
 
+    @Synchronized
     fun close() {
         stopped = true
         connected = false
@@ -172,6 +179,7 @@ internal class CompanionSocket(
         CompanionConnection.update(CompanionConnection.State.DISCONNECTED)
     }
 
+    @Synchronized
     private fun requestDisconnect() {
         if (stopped || !connected || disconnectRequestId != null) return
         val envelope = ProtocolEnvelope.create("companion.disconnect.request")
@@ -182,9 +190,11 @@ internal class CompanionSocket(
         }
         CompanionConnection.update(CompanionConnection.State.DISCONNECTING)
         disconnectTask = scheduler.schedule({
-            if (!stopped && connected && disconnectRequestId != null) {
-                disconnectRequestId = null
-                CompanionConnection.update(CompanionConnection.State.CONNECTED, ::requestDisconnect)
+            synchronized(this) {
+                if (!stopped && connected && disconnectRequestId != null) {
+                    disconnectRequestId = null
+                    CompanionConnection.update(CompanionConnection.State.CONNECTED, ::requestDisconnect)
+                }
             }
         }, 10, TimeUnit.SECONDS)
     }

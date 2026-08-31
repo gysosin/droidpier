@@ -28,6 +28,10 @@ publication, including missing corresponding source or signing-key recovery.
 
 Never silently replace public release binaries. Corrections require a new version.
 The source tag must resolve to the commit used to build the artifacts.
+The publication workflow also requires the draft to target its exact checked-out
+commit. If code or acceptance evidence changes after a candidate build, rebuild
+and review the private draft for that commit before publication. A published
+version must never be deleted or replaced to work around this check.
 
 ## Android signing
 
@@ -35,6 +39,11 @@ The source tag must resolve to the commit used to build the artifacts.
 `DROIDPIER_KEY_ALIAS` (default `droidpier`) and `DROIDPIER_KEY_PASSWORD` (defaults
 to store password). For local maintainer use it can read a private keystore and
 password from `~/.local/share/droidpier/signing/`. Restrict file permissions.
+
+The build automatically verifies the APK against the permanent certificate,
+release version, application ID, minimum SDK and production manifest before
+copying it into the release payload. Run `python3 tool/verify_android.py PATH.apk`
+to repeat those checks on a candidate using Android build-tools 35.0.0.
 
 Keep at least one encrypted, independently stored backup and test recovery.
 A second copy on the build computer does not protect against losing that computer.

@@ -36,7 +36,9 @@ void main() {
   setUpAll(_loadFonts);
 
   testWidgets('desk settings, dark', (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 760));
+    // Tall enough for the whole panel including About. At 760 the About group
+    // fell below the fold, so the golden baselined a section it never showed.
+    await tester.binding.setSurfaceSize(const Size(900, 1040));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(

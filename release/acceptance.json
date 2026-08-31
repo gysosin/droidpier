@@ -3,15 +3,15 @@
   "checks": {
     "source_privacy_audit": {
       "status": "passed",
-      "evidence": "Fresh public main clone contains one initial commit, no private guidance/transcripts, no previous development history, local tools, reference repository, signing keys or generated binaries. Public source scan passed."
+      "evidence": "Public history begins at audited parentless commit 760e1ec. Current source scan excludes private guidance, development transcripts, old history, local tools, reference material, signing keys and generated binaries. Final merged-tree clone audit is recorded in the release review."
     },
     "fresh_checkout_build": {
-      "status": "pending",
-      "evidence": ""
+      "status": "passed",
+      "evidence": "GitHub Ubuntu 22.04 fresh checkout CI run 33404994041 passed Android and Linux desktop builds using pinned provisioned SDKs, without ignored local SDK paths or reference repositories."
     },
     "analysis_and_tests": {
-      "status": "pending",
-      "evidence": "Local Dart API/core/protocol/platform suites passed, including 26 controller and 63 platform tests. Desktop analysis and 224 Flutter tests passed on host and Ubuntu 22.04. Android release/debug/tests/lint passed. Hosted CI retry pending SDK setup correction."
+      "status": "passed",
+      "evidence": "GitHub CI run 33404994041 passed all shared Dart analysis/tests, Android debug build/tests/lint, Flutter analysis, 224 desktop tests and Linux release build. Local signed Android build also passed debug/release lint and tests."
     },
     "android_release_manifest": {
       "status": "passed",
@@ -35,7 +35,7 @@
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Final DEB: clean Ubuntu 22.04 container installed declared runtime dependencies, launched as non-root under Xvfb, and uninstalled successfully. Final AppImage extraction fallback also launched as non-root. No development SDKs installed. Full desktop VM and upgrade matrix pending."
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
@@ -43,7 +43,7 @@
     },
     "debian_12_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "2026-08-31: clean Debian 12 container installed the final DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
     },
     "debian_13_install_upgrade_uninstall": {
       "status": "pending",
@@ -75,7 +75,7 @@
     },
     "disconnect_reconnect_device_removal": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Android 15 emulator: authenticated hello, capability negotiation, user Disconnect request/ACK, and no immediate automatic reconnect passed. Physical device removal/recovery still pending."
     },
     "apps_input_resize_orientation": {
       "status": "pending",
@@ -90,8 +90,8 @@
       "evidence": ""
     },
     "android_signed_upgrade_and_debug_conflict": {
-      "status": "pending",
-      "evidence": ""
+      "status": "passed",
+      "evidence": "2026-08-31 Android 15 emulator: signed versionCode 1 to 2 upgrade preserved notification permission denial. Installing debug APK over release correctly failed with INSTALL_FAILED_UPDATE_INCOMPATIBLE and left the signed release intact. Production APK remains versionCode 1."
     },
     "restricted_apps_unsupported_android": {
       "status": "pending",
@@ -99,7 +99,7 @@
     },
     "assets_checksums_notices_links": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Final local candidates and SHA256SUMS verified; every DEB/RPM/AppImage/archive contains a companion APK byte-identical to the standalone release. Permanent certificate, Android metadata and production manifest verified; debug key rejected. Complete transitive notices/source review and hosted draft asset verification remain pending."
     }
   }
 }

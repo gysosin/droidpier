@@ -7,6 +7,7 @@ from version import ROOT, release_version
 
 def write_inventory(payload):
     version = release_version()['version']
+    flutter_version = (ROOT / 'tool/flutter-sdk.version').read_text().strip()
     graph = json.loads((ROOT / 'apps/desktop/.dart_tool/package_graph.json').read_text())
     packages = {p['name']: p for p in graph['packages']}
     visited = set()
@@ -15,7 +16,7 @@ def write_inventory(payload):
         visited.add(name)
         for dep in packages[name].get('dependencies', []): visit(dep)
     for root in graph['roots']: visit(root)
-    components = [{'type': 'library', 'name': name, 'version': packages[name]['version'],
+    components = [{'type': 'library', 'name': name, 'version': flutter_version if name == 'flutter' else packages[name]['version'],
                    'purl': f'pkg:pub/{name}@{packages[name]["version"]}'}
                   for name in sorted(visited) if name not in graph['roots']]
     for item in json.loads((payload / 'android-dependencies.json').read_text()):

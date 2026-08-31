@@ -38,10 +38,6 @@ capture*.jsonl
 src-recovered/
 extracted/
 
-# Local development configuration
-.agents/
-.claude/
-skills-lock.json
 
 # Machine-local SDKs, reference repositories, and consolidation backups
 /.tools/
@@ -57,18 +53,6 @@ skills-lock.json
 .env.*
 !*.env.example
 
-# Private local development guidance
-AGENTS.md
-CLAUDE.md
-GEMINI.md
-.codex/
-.cursor/
-.aider*
-/START_HERE.md
-/docs/PROJECT_SPEC.md
-/docs/DESIGN.md
-/docs/PERFORMANCE_PLAN.md
-/docs/WORKSPACE_LAYOUT.md
 
 # Python caches
 __pycache__/

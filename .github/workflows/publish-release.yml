@@ -21,6 +21,7 @@ jobs:
           set -euo pipefail
           version="$(python3 tool/version.py)"
           test "$(gh release view "v$version" --json isDraft --jq .isDraft)" = true
+          test "$(gh release view "v$version" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           gh release download "v$version" --dir dist
           python3 tool/check_artifacts.py
           gh release edit "v$version" --draft=false --prerelease
