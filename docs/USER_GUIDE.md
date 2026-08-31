@@ -2,10 +2,11 @@
 
 ## Download status
 
-The first beta is being prepared. Download only from
-[GitHub Releases](https://github.com/gysosin/droidpier/releases) when a release
-is published. Check the release's compatibility table before installing.
-Windows and macOS are in development; there are no supported downloads yet.
+The Linux/Android experimental preview is available from
+[GitHub Releases](https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.1).
+Physical-phone workflows and the full distribution matrix are still unverified.
+Check the release notes before installing. Windows and macOS remain in development
+and have no downloads in this release.
 Linux builds target x86-64, glibc 2.35 or newer, GTK 3, and a working OpenGL driver.
 Musl-based distributions such as Alpine are not supported by these binaries.
 
