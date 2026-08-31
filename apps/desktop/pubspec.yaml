@@ -1,12 +1,13 @@
 name: open_android_dex
 description: DroidPier desktop workspace for Android.
 publish_to: none
-version: 0.1.0-beta.1+1
+version: 0.1.0-beta.2+2
 
 environment:
   sdk: ^3.13.1
 
 dependencies:
+  qr_flutter: 4.1.0
   flutter:
     sdk: flutter
   open_dex_api:

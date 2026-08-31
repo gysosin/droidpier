@@ -2,11 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:open_android_dex/bootstrap/window_backend_selection.dart';
 
 void main() {
-  test('defaults to the legacy backend', () {
-    expect(resolveWindowBackend(const {}), WindowBackendSelection.legacy);
+  test('defaults to the direct backend', () {
+    expect(resolveWindowBackend(const {}), WindowBackendSelection.direct);
     expect(
       resolveWindowBackend(const {'OPEN_DEX_WINDOW_BACKEND': ''}),
-      WindowBackendSelection.legacy,
+      WindowBackendSelection.direct,
     );
   });
 

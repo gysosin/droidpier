@@ -78,6 +78,7 @@ OpenDexFacade _createFacade({
   };
   return OpenDexController(
     deviceGateway: AdbDeviceGateway(adb),
+    wirelessDiscoveryGateway: MdnsWirelessDiscovery(),
     components: [
       agent,
       companion,

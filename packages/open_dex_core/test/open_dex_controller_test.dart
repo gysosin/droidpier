@@ -195,6 +195,12 @@ void main() {
       windows.addTelemetry(controller.snapshot.windows.single.id, 60);
       expect(controller.snapshot.telemetry.framesPerSecond?.value, 60);
       expect(controller.snapshot.windows.single.producedFramesPerSecond, 60);
+      windows.addTelemetry(launchedId, 60, presented: 9);
+      expect(controller.snapshot.telemetry.framesPerSecond?.value, 9);
+      // A later encoder/decoder sample must not replace the measured rate
+      // displayed by the native texture with the faster source rate.
+      windows.addTelemetry(launchedId, 60);
+      expect(controller.snapshot.telemetry.framesPerSecond?.value, 9);
       windows.onClose = (_) => expect(controller.snapshot.windows, isEmpty);
       await controller.closeWindow(controller.snapshot.windows.single.id);
       expect(controller.snapshot.windows, isEmpty);
@@ -707,26 +713,52 @@ void main() {
     expect(notifications.dismissed, isEmpty);
   });
 
-  test('writes clipboard text and toggles sync through its gateway', () async {
-    final clipboard = FakeClipboardGateway();
-    final controller = OpenDexController(
-      deviceGateway: FakeDeviceGateway(),
-      clipboardGateway: clipboard,
-    );
-    addTearDown(controller.dispose);
-
-    final written = await controller.setClipboardText('shared text');
-    final disabled = await controller.setClipboardSync(false);
-
-    expect(written.isSuccess, isTrue);
-    expect(disabled.isSuccess, isTrue);
-    expect(controller.snapshot.clipboard.text, 'shared text');
-    expect(controller.snapshot.clipboard.syncEnabled, isFalse);
-
-    final tooLarge = await controller.setClipboardText('x' * 65537);
-    expect(tooLarge.isSuccess, isFalse);
-    expect(clipboard.writes, 1);
-  });
+  test(
+    'clipboard access requires a connected device and explicit opt-in',
+    () async {
+      final clipboard = FakeClipboardGateway();
+      final controller = OpenDexController(
+        deviceGateway: FakeDeviceGateway(),
+        clipboardGateway: clipboard,
+        components: [
+          FakeBootComponent('agent'),
+          FakeBootComponent('companion'),
+          FakeBootComponent('applications'),
+        ],
+      );
+      addTearDown(controller.dispose);
+      expect(
+        (await controller.setClipboardText('before connection')).isSuccess,
+        isFalse,
+      );
+      expect((await controller.setClipboardSync(true)).isSuccess, isFalse);
+      expect(clipboard.writes, 0);
+      await controller.discoverDevices();
+      await controller.connectSelectedDevice();
+      expect(
+        (await controller.setClipboardText('before consent')).isSuccess,
+        isFalse,
+      );
+      await controller.setClipboardSync(true);
+      expect(
+        (await controller.setClipboardText('shared text')).isSuccess,
+        isTrue,
+      );
+      expect(controller.snapshot.clipboard.text, 'shared text');
+      expect(
+        (await controller.setClipboardText('x' * 65537)).isSuccess,
+        isFalse,
+      );
+      expect(clipboard.writes, 1);
+      await controller.disconnect();
+      expect(controller.snapshot.clipboard.syncEnabled, isFalse);
+      expect(
+        (await controller.setClipboardText('after disconnect')).isSuccess,
+        isFalse,
+      );
+      expect(clipboard.writes, 1);
+    },
+  );
 }
 
 class FakeDeviceGateway implements DeviceGateway {
@@ -865,11 +897,16 @@ class FakeWindowGateway
 
   void emitSurface(WindowBackendSession session) => _surfaces.add(session);
 
-  void addTelemetry(String sessionId, double framesPerSecond) {
+  void addTelemetry(
+    String sessionId,
+    double framesPerSecond, {
+    double? presented,
+  }) {
     _telemetry.add(
       WindowBackendTelemetry(
         sessionId: sessionId,
         producedFramesPerSecond: framesPerSecond,
+        presentedFramesPerSecond: presented,
       ),
     );
   }
@@ -1008,7 +1045,9 @@ class FakeNotificationGateway implements NotificationGateway {
 
 class FakeClipboardGateway implements ClipboardGateway {
   @override
-  ClipboardState clipboard = const ClipboardState();
+  ClipboardState clipboard = const ClipboardState(
+    availability: ClipboardAvailability.available,
+  );
   int writes = 0;
 
   @override
@@ -1017,6 +1056,7 @@ class FakeClipboardGateway implements ClipboardGateway {
       kind: clipboard.kind,
       text: clipboard.text,
       syncEnabled: enabled,
+      availability: ClipboardAvailability.available,
     );
   }
 
@@ -1027,6 +1067,7 @@ class FakeClipboardGateway implements ClipboardGateway {
       kind: text.isEmpty ? ClipboardKind.empty : ClipboardKind.text,
       text: text.isEmpty ? null : text,
       syncEnabled: clipboard.syncEnabled,
+      availability: ClipboardAvailability.available,
     );
   }
 }

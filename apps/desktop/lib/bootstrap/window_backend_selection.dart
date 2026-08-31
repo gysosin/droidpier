@@ -6,8 +6,7 @@ WindowBackendSelection resolveWindowBackend(
 }) {
   final value = environment['OPEN_DEX_WINDOW_BACKEND']?.trim().toLowerCase();
   return switch (value) {
-    null ||
-    '' => linux ? WindowBackendSelection.legacy : WindowBackendSelection.direct,
+    null || '' => WindowBackendSelection.direct,
     'legacy' =>
       linux
           ? WindowBackendSelection.legacy

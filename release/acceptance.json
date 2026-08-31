@@ -1,34 +1,34 @@
 {
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "publicationChannel": "experimental-preview",
   "checks": {
     "source_privacy_audit": {
       "status": "passed",
-      "evidence": "Public history begins at audited parentless commit 760e1ec. Current source scan excludes private guidance, development transcripts, old history, local tools, reference material, signing keys and generated binaries. Final merged-tree clone audit is recorded in the release review."
+      "evidence": "Audited the beta.2 public file set and fresh public branch clone. No private instruction files, development transcripts, local paths, device identifiers, secrets, SDKs, captures or backup/reference trees are included. User-facing names are DroidPier; compatibility package/protocol identifiers remain unchanged. Source/link checks and whitespace validation pass."
     },
     "fresh_checkout_build": {
       "status": "passed",
-      "evidence": "GitHub Ubuntu 22.04 fresh checkout CI run 33404994041 passed Android and Linux desktop builds using pinned provisioned SDKs, without ignored local SDK paths or reference repositories."
+      "evidence": "GitHub CI run 33432229401 built commit 5758253510b36c25aca3e5f6697caee7f1e2bfac from a fresh Ubuntu 22.04 checkout, including ADB, Android and the release desktop. Subsequent release-evidence changes are documentation only; the final PR must also pass the required source-and-linux check before merge, followed by rebuilding packages from merged main."
     },
     "analysis_and_tests": {
       "status": "passed",
-      "evidence": "GitHub CI run 33404994041 passed all shared Dart analysis/tests, Android debug build/tests/lint, Flutter analysis, 224 desktop tests and Linux release build. Local signed Android build also passed debug/release lint and tests."
+      "evidence": "Required source-and-linux CI run 33432229401 passed source checks, tool tests, analysis/tests for all shared packages, Android build/lint/tests and Flutter analysis/tests/release build. Locally, 248 desktop tests, 78 platform tests and 32 core tests passed; Android release lint/tests and production manifest/signature verification passed. Shell syntax and git diff --check pass."
     },
     "android_release_manifest": {
       "status": "passed",
-      "evidence": "2026-08-31: signed release APK passes apksigner verification, package ID unchanged, minSdk26, versionCode1, DroidPier Companion launcher label. Production manifest excludes StreamProbeActivity."
+      "evidence": "Signed beta.2 APK verified with apksigner/aapt: permanent certificate matches beta.1 and the checked-in fingerprint; application ID unchanged, versionCode 2, versionName 0.1.0-beta.2, minimum SDK 26, not debuggable and no StreamProbeActivity in the production manifest."
     },
     "android_screen_visual_review": {
       "status": "passed",
-      "evidence": "2026-08-31: actual signed APK rendered on dedicated Android 15 emulator. Status-bar contrast, safe insets, permission denial state, authenticated status, and explicit disconnect reviewed. Screenshot: docs/images/companion-setup.png."
+      "evidence": "Inspected the actual signed beta.2 companion on a clean Android 15/API 35 emulator. Version, setup, QR/manual instructions, optional notification access, listener-connected state, restricted-settings help and app-info shortcut render correctly. Safe emulator screenshots are included in docs/images."
     },
     "desktop_screen_visual_review": {
       "status": "passed",
-      "evidence": "2026-08-31: inspected real Flutter mock rendering, desktop-preview.png and updated boot goldens; synthetic demo data only."
+      "evidence": "Inspected actual main.dart debug desktop with USB device integration and the unified connection UI; reviewed rendered connection and settings controls. Direct-pipeline Settings/Calculator windows, input and resizing were exercised on the physical Android 13 test phone. Golden regression coverage uses synthetic data and does not replace this actual-screen review."
     },
     "license_and_corresponding_source_audit": {
       "status": "passed",
-      "evidence": "2026-08-31 final Linux candidate: ADB is now built from pinned android-tools 37.0.0 with its vendored libusb/Android/BoringSSL/fmt sources and reviewed Ubuntu static dependency inputs; the Google prebuilt ADB is not shipped. Scrcpy and AppImage upstream build provenance, linked source consumers, Alpine recipes and patches reviewed. All 67 corresponding-source files pass the inner checksum manifest. Complete packaged notices and actual source-built ADB bytes verified. See docs/RUNTIME_PROVENANCE.md."
+      "evidence": "Reviewed matching source and recipes for the pinned ADB/scrcpy/AppImage dependencies and the rebuilt FFmpeg 8.1.2 decoder. The decoder disables autodetected external libraries, GPL and nonfree components and enables x86 assembly. Its actual configure arguments and binary match the packaged payload. Verified inner source checksums for 29 source archives, required notices, Flutter notices and new multicast_dns/qr/qr_flutter licenses and component SBOM entries. Source archives contain no private development instruction files."
     },
     "off_device_signing_key_recovery": {
       "status": "passed",
@@ -36,71 +36,71 @@
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31 final DEB with source-built ADB: clean Ubuntu 22.04 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
+      "evidence": "Clean Ubuntu 22.04 container passed DEB install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch, bundled ADB startup, AppImage extraction/run fallback and uninstall without development SDKs. Full compositor/USB/physical-device acceptance remains pending."
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31 final DEB with source-built ADB: clean Ubuntu 24.04 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
+      "evidence": "Clean Ubuntu 24.04 container passed DEB install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch, bundled ADB startup, AppImage extraction/run fallback and uninstall without development SDKs. Full compositor/USB/physical-device acceptance remains pending."
     },
     "debian_12_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31 final DEB with source-built ADB: clean Debian 12 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
+      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
     },
     "debian_13_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31 final DEB with source-built ADB: clean Debian 13 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
+      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
     },
     "mint_22_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
     },
     "fedora_supported_releases_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Clean Fedora 44 container passed RPM install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch and uninstall without development SDKs. Other Fedora versions and full compositor/USB/physical-device acceptance remain pending."
     },
     "arch_appimage_archive": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
     },
     "opensuse_appimage_archive": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
     },
     "usb_authorization_and_denial": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Authorized USB startup and authenticated companion handshake exercised on Redmi Note 7 Pro / Android 13. Fresh authorization denial coverage remains pending."
     },
     "wireless_pairing": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Discovery parsing, expiry, socket lifecycle, operation cancellation, QR payload/session handling and pairing response regression tests pass. Physical manual-code/QR pairing, multicast-blocked networks and the full IPv4/IPv6 device matrix remain unverified."
     },
     "disconnect_reconnect_device_removal": {
       "status": "pending",
-      "evidence": "Android 15 emulator: authenticated hello, capability negotiation, user Disconnect request/ACK, and no immediate automatic reconnect passed. Physical device removal/recovery still pending."
+      "evidence": "Physical USB reconnect and session relaunch exercised with the direct backend. Full device-removal, Wi-Fi and multi-device race acceptance remains pending."
     },
     "apps_input_resize_orientation": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Two simultaneous embedded direct-stream apps (Settings and Calculator), keyboard/pointer input, portrait/landscape resize, close and relaunch exercised on Redmi Note 7 Pro / Android 13. Broader application/device matrix remains pending."
     },
     "clipboard_notifications_permissions": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Regression tests cover opt-in, disconnected/unsupported clipboard states and stale-work cancellation. Android 15 emulator tests cover connection-notification grant, listener grant/connected state, revocation and refresh. Physical synthetic bidirectional clipboard and restricted/managed-device cases remain pending."
     },
     "owned_process_display_cleanup": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Direct-stream USB window close/relaunch and owned-process/display cleanup exercised on the Android 13 test phone. Full failure-path and cross-platform matrix remains pending."
     },
     "android_signed_upgrade_and_debug_conflict": {
       "status": "passed",
-      "evidence": "2026-08-31 Android 15 emulator: signed versionCode 1 to 2 upgrade preserved notification permission denial. Installing debug APK over release correctly failed with INSTALL_FAILED_UPDATE_INCOMPATIBLE and left the signed release intact. Production APK remains versionCode 1."
+      "evidence": "On a dedicated Android 15 emulator, installed the official beta.1 release APK, granted connection notifications through Android UI, then upgraded with adb install -r to the signed beta.2 APK. First installation time and granted notification permission were preserved. Installing a separately built versionCode-2 debug APK was rejected with INSTALL_FAILED_UPDATE_INCOMPATIBLE and left the signed installation intact. Notification-listener grant/connected state, revocation/status refresh and app-info settings were also tested through Android UI."
     },
     "restricted_apps_unsupported_android": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Restricted/DRM application and unsupported/manufacturer Android behavior remain unverified; no compatibility claim is made."
     },
     "assets_checksums_notices_links": {
       "status": "passed",
-      "evidence": "2026-08-31 final experimental candidate: all nine hosted private-draft asset digests match the local packages and SHA256SUMS. Required asset names, source archive and all notices verified. Standalone signed APK is byte-identical inside DEB, RPM, AppImage and archive; certificate, version and production manifest verified, including the downloaded hosted APK. Stable public download paths are recorded in README; public accessibility is checked immediately after publication."
+      "evidence": "All nine required candidate release assets are present and pass SHA-256 verification. Extracted DEB, RPM, AppImage and portable archive companion APKs match the standalone signed beta.2 APK byte-for-byte. File/component SBOMs, notices, exact dependency sources and public document links are checked. Publication additionally requires rebuilding/rechecking assets against the final merged commit and verifying the hosted draft; downloaded public assets are checked again before local installation."
     }
   }
 }

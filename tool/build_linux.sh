@@ -8,8 +8,11 @@ version_code="$(python3 "${repository_dir}/tool/version.py" androidVersionCode)"
 if [[ -z "${DROIDPIER_ANDROID_PAYLOAD_DIR:-}" ]]; then
   python3 "${repository_dir}/tool/build_android.py"
 fi
-if [[ ! -x "${DROIDPIER_FFMPEG:-${repository_dir}/.tools/droidpier-runtime/ffmpeg/install/bin/ffmpeg}" ]]; then
+if [[ -z "${DROIDPIER_FFMPEG:-}" ]]; then
   bash "${repository_dir}/tool/build_ffmpeg.sh"
+elif [[ ! -x "$DROIDPIER_FFMPEG" ]]; then
+  echo 'DROIDPIER_FFMPEG must name an executable decoder.' >&2
+  exit 1
 fi
 bash "${repository_dir}/tool/build_adb.sh"
 (

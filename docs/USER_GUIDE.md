@@ -3,8 +3,9 @@
 ## Download status
 
 The Linux/Android experimental preview is available from
-[GitHub Releases](https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.1).
-Physical-phone workflows and the full distribution matrix are still unverified.
+[GitHub Releases](https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2).
+USB/direct-stream workflows have been exercised on one Android 13 phone; the full
+physical-device and distribution matrix is still unverified.
 Check the release notes before installing. Windows and macOS remain in development
 and have no downloads in this release.
 Linux builds target x86-64, glibc 2.35 or newer, GTK 3, and a working OpenGL driver.
@@ -66,6 +67,27 @@ Never paste a real pairing code in an issue. Wireless debugging can be disabled
 on the phone after use. Older Android versions may need an initial USB connection
 and are not advertised as validated wireless configurations.
 
+### Beta.2 connection screen
+
+These controls are new in beta.2 and are not present in beta.1 downloads.
+**Connect a phone** brings USB, already-connected phones, and three Wi-Fi options
+into one screen:
+
+- **Nearby:** shows advertised Android pairing/debugging services. Select a phone
+  before pairing or connecting; being visible does not mean it is authenticated.
+  Wireless debugging must be enabled. Guest isolation, blocked multicast, and
+  different networks can hide phones. Manual entry remains available.
+- **QR code:** on the phone choose **Wireless debugging → Pair device with QR
+  code**, then scan the computer's QR. Codes are generated locally, expire after
+  two minutes, and are discarded on cancellation or success. Do not share a QR.
+- **Manual:** use the pairing screen's address, pairing port, and six-digit code
+  (including any leading zero). After pairing, DroidPier looks for the matching
+  debugging endpoint. If it cannot find one, enter the connection port from the
+  main Wireless debugging screen. This is often a different port.
+
+**Disconnect** drops this computer's active transport. It does not remove Android's
+saved pairing trust; remove that separately in Wireless debugging when wanted.
+
 ## Companion status and permissions
 
 <img src="https://raw.githubusercontent.com/gysosin/droidpier/main/docs/images/companion-setup.png" width="320" alt="DroidPier Companion setup on a clean Android emulator" />
@@ -86,6 +108,35 @@ The separate notification-access shortcut opens Android's listener settings.
 Denying either permission must not grant it implicitly. Notification access can
 expose message contents; grant it only if you want notifications on the desktop.
 Clipboard and remote input also move sensitive content between your devices.
+
+### Restricted settings and Play Protect
+
+<img src="https://raw.githubusercontent.com/gysosin/droidpier/main/docs/images/companion-permissions.png" width="320" alt="DroidPier Companion notification permissions and restricted-settings help on a clean Android emulator" />
+
+Connection-notification permission lets DroidPier show its own status on the
+phone. Notification-listener access lets it forward other apps' notifications;
+that separate access is optional. The beta.2 setup screen distinguishes granted
+access from an actually connected listener, and refreshes after returning from Settings.
+
+If Android reports **Restricted setting**, review the APK's origin. If you trust
+it, open its **App info** and use **Allow restricted settings** in the app-specific
+menu when offered, then return to notification access. Managed devices may forbid
+this. Do not use ADB to grant access or disable Android protections. See
+[Android's restricted-settings help](https://support.google.com/android/answer/12623953).
+
+Keep Play Protect enabled and allow its scan. An unknown-app scan prompt does not
+itself say the app is harmful. Permanent signing preserves update identity; it
+cannot guarantee warning-free sideloading. Verify the release checksum and
+[signing provenance](RUNTIME_PROVENANCE.md). If Play Protect explicitly identifies
+harmful behavior, stop installation and report the exact warning without private data.
+
+### Clipboard sharing
+
+Sharing starts off at startup and after disconnecting. Turn it on explicitly only
+for a connected, supported phone. Unsupported access shows an explanation beside
+the control. If sharing pauses after an error, resolve the cause and use **Retry**;
+background polling must not repeatedly display warnings. Never use private text
+for debugging clipboard synchronization.
 
 ## Upgrades and development APK migration
 

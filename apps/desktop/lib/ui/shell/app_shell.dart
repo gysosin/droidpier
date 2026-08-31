@@ -11,7 +11,7 @@ import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
 import '../theme/dex_colors.dart';
-import '../devices/device_selection_dialog.dart';
+import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
 import '../motion/sustained.dart';
 import '../recovery/recovery_overlay.dart';
@@ -23,7 +23,6 @@ import '../workspace/window_input.dart';
 import '../workspace/window_switcher.dart';
 import '../workspace/window_model.dart';
 import '../workspace/workspace.dart';
-import '../wireless/wireless_pairing_dialog.dart';
 
 /// The whole product, composed.
 ///
@@ -120,8 +119,11 @@ class _AppShellState extends State<AppShell> {
   /// leaves it.
   String? _fullscreenId;
   bool _permissionsOpen = false;
-  bool _deviceDialogOpen = false;
-  bool _wirelessOpen = false;
+
+  /// The one connection surface. It used to be two — a phone list with a
+  /// pairing dialog stacked over it — which meant Escape peeled layers and the
+  /// way to *get* a phone was hidden behind the question of which one to use.
+  bool _connectOpen = false;
   String? _selectedDeviceId;
 
   OpenDexSnapshot get _s => widget.snapshot;
@@ -541,8 +543,7 @@ class _AppShellState extends State<AppShell> {
     Size workspace,
     WindowGeometry current,
   ) {
-    final double aspect =
-        surface.pixelSize.width / surface.pixelSize.height;
+    final double aspect = surface.pixelSize.width / surface.pixelSize.height;
     // 0.78, not the full height: leave room for the floating dock band at the
     // bottom so a tall portrait window is not forced taller than the work area
     // (which would push its title bar off the top).
@@ -679,12 +680,6 @@ class _AppShellState extends State<AppShell> {
         setState(() => _switcherOpen = false);
         return true;
       }
-      // Innermost surface first: the pairing dialog stacks over the phone
-      // list, so Escape peels one layer rather than closing both.
-      if (_wirelessOpen) {
-        setState(() => _wirelessOpen = false);
-        return true;
-      }
       if (_drawerOpen || _permissionsOpen || _settingsOpen) {
         setState(() {
           _drawerOpen = false;
@@ -693,8 +688,10 @@ class _AppShellState extends State<AppShell> {
         });
         return true;
       }
-      if (_deviceDialogOpen) {
-        setState(() => _deviceDialogOpen = false);
+      // One layer, so one Escape. Closing it also stops discovery and cancels
+      // any pairing — see [ConnectionScreen.dispose].
+      if (_connectOpen) {
+        setState(() => _connectOpen = false);
         return true;
       }
     }
@@ -711,11 +708,7 @@ class _AppShellState extends State<AppShell> {
   /// accepting letters the moment an app window existed.
   bool _forwardKeyToWindow(KeyEvent event) {
     // Any desk surface that is open owns the keyboard.
-    if (_drawerOpen ||
-        _settingsOpen ||
-        _permissionsOpen ||
-        _deviceDialogOpen ||
-        _wirelessOpen) {
+    if (_drawerOpen || _settingsOpen || _permissionsOpen || _connectOpen) {
       return false;
     }
     // A focused text field anywhere in our own chrome owns it too.
@@ -757,7 +750,9 @@ class _AppShellState extends State<AppShell> {
   /// a missing browser must not crash the desk.
   Future<void> _openUrl(String url) async {
     try {
-      await Process.start('xdg-open', <String>[url], mode: ProcessStartMode.detached);
+      await Process.start('xdg-open', <String>[
+        url,
+      ], mode: ProcessStartMode.detached);
     } on ProcessException {
       // No handler for the scheme; nothing sensible to do from the desk.
     }
@@ -868,9 +863,10 @@ class _AppShellState extends State<AppShell> {
       colors: widget.wallpaperIndex <= 0
           ? null
           : kWallpaperChoices[(widget.wallpaperIndex - 1).clamp(
-              0,
-              kWallpaperChoices.length - 1,
-            )].colors,
+                  0,
+                  kWallpaperChoices.length - 1,
+                )]
+                .colors,
       child: Material(color: Colors.transparent, child: _content(context)),
     );
   }
@@ -884,7 +880,7 @@ class _AppShellState extends State<AppShell> {
         children: <Widget>[
           BootScreen(
             boot: _s.boot,
-            onConnect: () => setState(() => _deviceDialogOpen = true),
+            onConnect: () => setState(() => _connectOpen = true),
             onRetry: () {
               // The person is driving now, so auto-connect stands down for
               // good — including after a later disconnect returns us here.
@@ -892,8 +888,7 @@ class _AppShellState extends State<AppShell> {
               widget.facade.retryBoot();
             },
           ),
-          if (_deviceDialogOpen) _deviceDialog(),
-          if (_wirelessOpen) _wirelessDialog(),
+          if (_connectOpen) _connectionScreen(),
         ],
       );
     }
@@ -925,8 +920,7 @@ class _AppShellState extends State<AppShell> {
             onDisconnect: () => widget.facade.disconnect(),
           ),
         ),
-        if (_deviceDialogOpen) _deviceDialog(),
-        if (_wirelessOpen) _wirelessDialog(),
+        if (_connectOpen) _connectionScreen(),
         // Above the dialogs: Alt+Tab is held down, so it is the most immediate
         // thing on screen for as long as it is up.
         if (_switcherOpen) _switcher(),
@@ -1046,7 +1040,7 @@ class _AppShellState extends State<AppShell> {
           deviceLabel: _s.selectedDevice?.name,
           onManagePhones: () => setState(() {
             _settingsOpen = false;
-            _deviceDialogOpen = true;
+            _connectOpen = true;
           }),
           onOpenPermissions: () => setState(() {
             _settingsOpen = false;
@@ -1081,19 +1075,25 @@ class _AppShellState extends State<AppShell> {
     return null;
   }
 
-  Widget _deviceDialog() {
+  /// Choosing a phone and adding one, on the same surface.
+  ///
+  /// Opening it starts Wi-Fi discovery and closing it stops discovery and
+  /// cancels any pairing; both happen inside [ConnectionScreen] itself, so
+  /// every route in and out — the boot screen, Settings, Escape, the Close
+  /// button — is covered by the widget's own lifecycle rather than by the
+  /// shell remembering to pair the calls.
+  Widget _connectionScreen() {
     return Material(
       color: Colors.black54,
       child: Center(
-        child: DeviceSelectionDialog(
-          status: _s.deviceStatus,
-          devices: _s.devices,
+        child: ConnectionScreen.forFacade(
+          facade: widget.facade,
+          snapshot: _s,
           selectedId: _selectedDeviceId ?? _s.selectedDevice?.id,
           onSelect: (String id) => setState(() => _selectedDeviceId = id),
-          onRefresh: () => widget.facade.discoverDevices(),
-          onPairWireless: () => setState(() => _wirelessOpen = true),
-          onClose: () => setState(() => _deviceDialogOpen = false),
-          onConnect: () {
+          onRefreshDevices: () => widget.facade.discoverDevices(),
+          onClose: () => setState(() => _connectOpen = false),
+          onConnectSelected: () {
             final String? id = _selectedDeviceId ?? _s.selectedDevice?.id;
             if (id != null) {
               // The person picked this phone themselves. From here on the
@@ -1104,24 +1104,8 @@ class _AppShellState extends State<AppShell> {
               widget.facade.selectDevice(id);
               widget.facade.connectSelectedDevice();
             }
-            setState(() => _deviceDialogOpen = false);
+            setState(() => _connectOpen = false);
           },
-        ),
-      ),
-    );
-  }
-
-  /// The guided Wi-Fi flow, stacked over the phone list rather than replacing
-  /// it: closing it puts the person back where they were, with the phone they
-  /// just paired now on the list behind.
-  Widget _wirelessDialog() {
-    return Material(
-      color: Colors.black54,
-      child: Center(
-        child: WirelessPairingDialog.forFacade(
-          facade: widget.facade,
-          devices: _s.devices,
-          onClose: () => setState(() => _wirelessOpen = false),
         ),
       ),
     );

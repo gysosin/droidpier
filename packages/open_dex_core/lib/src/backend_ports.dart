@@ -28,6 +28,24 @@ abstract interface class WirelessDeviceGateway {
   Future<void> forget(String deviceId);
 }
 
+abstract interface class WirelessPairingGateway {
+  /// Returns the authenticated device GUID, never the supplied secret.
+  Future<String?> pairWithSecret({
+    required String host,
+    required int port,
+    required String secret,
+  });
+
+  Future<void> cancelPending();
+}
+
+abstract interface class WirelessDiscoveryGateway {
+  WirelessDiscoveryState get current;
+  Stream<WirelessDiscoveryState> get updates;
+  Future<void> start();
+  Future<void> stop();
+}
+
 abstract interface class BootComponent {
   String get stageId;
 

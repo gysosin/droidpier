@@ -24,6 +24,23 @@ Future<void> _loadFonts() async {
     );
     await l.load();
   }
+  for (final entry in <String, List<String>>{
+    'InstrumentSans': ['assets/fonts/InstrumentSans.ttf'],
+    'SpaceGrotesk': ['assets/fonts/SpaceGrotesk.ttf'],
+    'PublicSans': ['assets/fonts/PublicSans.ttf'],
+    'IBMPlexMono': [
+      'assets/fonts/IBMPlexMono-Regular.ttf',
+      'assets/fonts/IBMPlexMono-Medium.ttf',
+    ],
+  }.entries) {
+    final loader = FontLoader(entry.key);
+    for (final path in entry.value) {
+      loader.addFont(
+        Future.value(ByteData.sublistView(File(path).readAsBytesSync())),
+      );
+    }
+    await loader.load();
+  }
 }
 
 void main() {
@@ -47,7 +64,12 @@ void main() {
                   'ring': VolumeLevel(current: 4, maximum: 7),
                 },
               ),
-              clipboard: ClipboardState(kind: ClipboardKind.empty),
+              // The shipping default: the phone can share a clipboard, and
+              // sharing is off until the person turns it on.
+              clipboard: ClipboardState(
+                kind: ClipboardKind.empty,
+                availability: ClipboardAvailability.available,
+              ),
               onToggleControl: _noop2,
               onToggleClipboardSync: _noop1,
               onSetVolume: _noop2i,

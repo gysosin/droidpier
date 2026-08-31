@@ -1,4 +1,5 @@
 import 'result.dart';
+import 'wireless.dart';
 
 const _unset = Object();
 
@@ -278,18 +279,27 @@ class VolumeLevel {
 
 enum ClipboardKind { empty, text, image }
 
+enum ClipboardAvailability { unknown, available, unavailable }
+
 class ClipboardState {
+  static const desktopFailureMessage =
+      'Clipboard sync is paused because the desktop clipboard could not be accessed. Retry when it is available.';
+
   const ClipboardState({
     this.kind = ClipboardKind.empty,
     this.text,
     this.imagePng,
-    this.syncEnabled = true,
+    this.syncEnabled = false,
+    this.availability = ClipboardAvailability.unknown,
+    this.message,
   });
 
   final ClipboardKind kind;
   final String? text;
   final List<int>? imagePng;
   final bool syncEnabled;
+  final ClipboardAvailability availability;
+  final String? message;
 }
 
 class NotificationItem {
@@ -388,6 +398,8 @@ class OpenDexSnapshot {
     this.permissions = const PermissionState(),
     this.recovery = const RecoveryState(),
     this.agentStatus = AgentConnectionStatus.unavailable,
+    this.wirelessDiscovery = const WirelessDiscoveryState(),
+    this.wirelessPairing = const WirelessPairingState(),
   });
 
   final BootState boot;
@@ -405,6 +417,8 @@ class OpenDexSnapshot {
   final PermissionState permissions;
   final RecoveryState recovery;
   final AgentConnectionStatus agentStatus;
+  final WirelessDiscoveryState wirelessDiscovery;
+  final WirelessPairingState wirelessPairing;
 
   OpenDexSnapshot copyWith({
     BootState? boot,
@@ -422,6 +436,8 @@ class OpenDexSnapshot {
     PermissionState? permissions,
     RecoveryState? recovery,
     AgentConnectionStatus? agentStatus,
+    WirelessDiscoveryState? wirelessDiscovery,
+    WirelessPairingState? wirelessPairing,
   }) => OpenDexSnapshot(
     boot: boot ?? this.boot,
     deviceStatus: deviceStatus ?? this.deviceStatus,
@@ -440,6 +456,8 @@ class OpenDexSnapshot {
     permissions: permissions ?? this.permissions,
     recovery: recovery ?? this.recovery,
     agentStatus: agentStatus ?? this.agentStatus,
+    wirelessDiscovery: wirelessDiscovery ?? this.wirelessDiscovery,
+    wirelessPairing: wirelessPairing ?? this.wirelessPairing,
   );
 }
 

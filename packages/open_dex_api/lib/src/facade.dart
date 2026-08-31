@@ -42,6 +42,9 @@ abstract interface class OpenDexFacade {
 
   Future<VoidResult> setClipboardSync(bool enabled);
 
+  /// Pauses after a desktop clipboard failure, keeping an inline retry reason.
+  Future<VoidResult> pauseClipboardSync();
+
   Future<VoidResult> setVolume(String stream, int value);
 
   Future<VoidResult> sendMediaAction(MediaAction action);
@@ -57,6 +60,14 @@ abstract interface class OpenDexFacade {
   Future<VoidResult> dismissAllNotifications();
 
   Future<VoidResult> reconnect();
+
+  Future<VoidResult> startWirelessDiscovery();
+
+  Future<VoidResult> stopWirelessDiscovery();
+
+  Future<VoidResult> startQrPairing();
+
+  Future<VoidResult> cancelWirelessPairing();
 
   Future<VoidResult> pairWirelessDevice({
     required String host,

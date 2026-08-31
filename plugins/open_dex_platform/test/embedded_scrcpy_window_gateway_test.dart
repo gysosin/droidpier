@@ -9,6 +9,66 @@ import 'package:test/test.dart';
 
 void main() {
   test(
+    'samples displayed frames separately and stops sampling after close',
+    () async {
+      final runtime = await Directory.systemTemp.createTemp(
+        'droidpier-telemetry-test-',
+      );
+      addTearDown(() => runtime.delete(recursive: true));
+      for (final name in ['scrcpy', 'scrcpy-server', 'ffmpeg']) {
+        File('${runtime.path}/$name').createSync();
+      }
+      final executor = FakeExecutor();
+      final textures = FakeTextureHost();
+      final gateway = EmbeddedScrcpyWindowGateway(
+        executable: '${runtime.path}/scrcpy',
+        serverPath: '${runtime.path}/scrcpy-server',
+        ffmpegExecutable: '${runtime.path}/ffmpeg',
+        adb: AdbClient(executable: 'adb', executor: executor),
+        textureHost: textures,
+        processExecutor: executor,
+        processLauncher: FakeLauncher(),
+        telemetryInterval: const Duration(milliseconds: 20),
+      );
+      addTearDown(gateway.dispose);
+      final session = await gateway.launch(
+        const DeviceSummary(
+          id: 'device-1',
+          name: 'Test phone',
+          connectionKind: DeviceConnectionKind.usb,
+          status: DeviceStatus.authorized,
+        ),
+        const AndroidApplication(
+          packageName: 'com.android.settings',
+          label: 'Settings',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      final measurement = gateway.telemetry.firstWhere(
+        (s) => (s.presentedFramesPerSecond ?? 0) > 0,
+      );
+      textures.statsValue = const WindowTextureStats(
+        frames: 10,
+        presentedFrames: 2,
+        droppedFrames: 8,
+        lastFrameMonotonicUs: 0,
+        centerLuma: 0,
+        probeLuma: 0,
+      );
+      final result = await measurement.timeout(const Duration(seconds: 1));
+      expect(
+        result.droppedFramesPerSecond,
+        closeTo(result.presentedFramesPerSecond! * 4, .01),
+      );
+      expect(result.producedFramesPerSecond, isNull);
+      await gateway.close(session.id);
+      final stoppedAt = textures.statsReads;
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(textures.statsReads, stoppedAt);
+    },
+  );
+
+  test(
     'launches headless scrcpy into an RGBA texture and routes input',
     () async {
       final runtime = await Directory.systemTemp.createTemp(
@@ -580,6 +640,15 @@ class FakeTextureHost implements WindowTextureHost {
   final waited = <int>[];
   var _nextTextureId = 77;
   Completer<void>? replacementFrameGate;
+  int statsReads = 0;
+  WindowTextureStats statsValue = const WindowTextureStats(
+    frames: 0,
+    presentedFrames: 0,
+    droppedFrames: 0,
+    lastFrameMonotonicUs: 0,
+    centerLuma: 0,
+    probeLuma: 0,
+  );
 
   @override
   Future<int> createRawRgbaTexture({
@@ -599,15 +668,10 @@ class FakeTextureHost implements WindowTextureHost {
   }
 
   @override
-  Future<WindowTextureStats> stats(int textureId) async =>
-      const WindowTextureStats(
-        frames: 0,
-        presentedFrames: 0,
-        lastFrameMonotonicUs: 0,
-        centerLuma: 0,
-        probeLuma: 0,
-        droppedFrames: 0,
-      );
+  Future<WindowTextureStats> stats(int textureId) async {
+    statsReads++;
+    return statsValue;
+  }
 
   @override
   Future<void> closeTexture(int textureId) async => closed.add(textureId);

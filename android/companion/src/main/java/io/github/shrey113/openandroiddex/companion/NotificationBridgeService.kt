@@ -93,15 +93,23 @@ internal data class NotificationCommandResult(
 )
 
 internal object NotificationCommandBridge {
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val observers = mutableSetOf<() -> Unit>()
+    val isConnected: Boolean get() = listener != null
+    fun observe(observer: () -> Unit) { observers.add(observer); observer() }
+    fun remove(observer: () -> Unit) { observers.remove(observer) }
+    private fun changed() { handler.post { observers.toList().forEach { it() } } }
+
     @Volatile
     private var listener: NotificationBridgeService? = null
 
     fun attach(value: NotificationBridgeService) {
         listener = value
+        changed()
     }
 
     fun detach(value: NotificationBridgeService) {
-        if (listener === value) listener = null
+        if (listener === value) { listener = null; changed() }
     }
 
     fun dismiss(key: String): NotificationCommandResult = listener?.dismiss(key)

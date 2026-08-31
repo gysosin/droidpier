@@ -180,7 +180,17 @@ class DirectScrcpyWindowGateway
         timeout: firstFrameTimeout,
       );
       var firstFrameSettled = false;
-      unawaited(firstFrame.whenComplete(() => firstFrameSettled = true));
+      unawaited(
+        firstFrame.then<void>(
+          (_) => firstFrameSettled = true,
+          onError: (Object _, StackTrace _) {
+            // The original future is awaited below and reports the launch
+            // failure. Do not create a second unhandled failure while observing
+            // its completion.
+            firstFrameSettled = true;
+          },
+        ),
+      );
       var sawKeyFrame = false;
       while (!firstFrameSettled) {
         final bool hasEvent;

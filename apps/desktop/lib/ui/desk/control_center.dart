@@ -119,6 +119,17 @@ class ControlCenter extends StatelessWidget {
     return reason;
   }
 
+  /// Whether the clipboard switch may be operated at all.
+  ///
+  /// Three things have to be true, and none of them is "the person wants it":
+  /// the session is up, the agent that would carry the text is connected, and
+  /// the phone has reported that it can share a clipboard. Until then the
+  /// switch is disabled with the reason on screen, rather than being live and
+  /// failing after it is pressed.
+  bool get _clipboardUsable =>
+      agentStatus == AgentConnectionStatus.connected &&
+      clipboard.availability == ClipboardAvailability.available;
+
   static (String, IconData) _describe(DeviceControl c) => switch (c) {
     DeviceControl.wifi => ('Wi-Fi', Icons.wifi),
     DeviceControl.bluetooth => ('Bluetooth', Icons.bluetooth),
@@ -132,7 +143,6 @@ class ControlCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
-    final TextTheme t = Theme.of(context).textTheme;
     final List<MapEntry<String, VolumeLevel>> volumes =
         telemetry.volume.entries.toList()..sort(
           (MapEntry<String, VolumeLevel> a, MapEntry<String, VolumeLevel> b) =>
@@ -213,36 +223,11 @@ class ControlCenter extends StatelessWidget {
             const SizedBox(height: DexSpace.md),
             Divider(color: c.line, height: DexStroke.hairline),
             const SizedBox(height: DexSpace.md),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text('Shared clipboard', style: t.labelLarge),
-                      Text(
-                        switch (clipboard.kind) {
-                          ClipboardKind.empty => 'Nothing copied yet',
-                          ClipboardKind.text => clipboard.text ?? '',
-                          ClipboardKind.image => 'An image is ready to paste',
-                        },
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: DexTheme.data(c, size: 11),
-                      ),
-                    ],
-                  ),
-                ),
-                Semantics(
-                  toggled: clipboard.syncEnabled,
-                  label: 'Share clipboard between phone and desk',
-                  child: Switch(
-                    value: clipboard.syncEnabled,
-                    onChanged: onToggleClipboardSync,
-                    activeThumbColor: c.signal,
-                  ),
-                ),
-              ],
+            _Clipboard(
+              clipboard: clipboard,
+              usable: _clipboardUsable,
+              onToggle: onToggleClipboardSync,
+              colors: c,
             ),
             if (onManagePhones != null ||
                 onOpenPermissions != null ||
@@ -368,9 +353,7 @@ class _WidePill extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: on
-                        ? Colors.white
-                        : c.surface.withValues(alpha: 0.6),
+                    color: on ? Colors.white : c.surface.withValues(alpha: 0.6),
                   ),
                   child: Icon(
                     icon,
@@ -392,9 +375,8 @@ class _WidePill extends StatelessWidget {
                         label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: on ? Colors.white : c.text,
-                        ),
+                        style: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(color: on ? Colors.white : c.text),
                       ),
                       Text(
                         sub,
@@ -412,7 +394,11 @@ class _WidePill extends StatelessWidget {
                   ),
                 ),
                 if (locked != null)
-                  Icon(Icons.lock_outline, size: 12, color: on ? Colors.white : c.muted),
+                  Icon(
+                    Icons.lock_outline,
+                    size: 12,
+                    color: on ? Colors.white : c.muted,
+                  ),
               ],
             ),
           ),
@@ -554,14 +540,26 @@ class _Volume extends StatelessWidget {
 }
 
 /// One line explaining why the whole panel cannot act right now.
+///
+/// [calm] drops the fault colouring for the cases that are not faults — a
+/// capability the phone has not reported yet is a state, not a failure, and
+/// painting it red teaches people to ignore red.
 class _Banner extends StatelessWidget {
-  const _Banner({required this.text, required this.colors});
+  const _Banner({
+    required this.text,
+    required this.colors,
+    this.calm = false,
+    this.action,
+  });
 
   final String text;
   final DexColors colors;
+  final bool calm;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
+    final Color tint = calm ? colors.muted : colors.fault;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
@@ -569,27 +567,161 @@ class _Banner extends StatelessWidget {
         vertical: DexSpace.sm,
       ),
       decoration: BoxDecoration(
-        color: colors.fault.withValues(alpha: 0.16),
+        color: tint.withValues(alpha: calm ? 0.10 : 0.16),
         borderRadius: BorderRadius.circular(DexRadius.card),
         border: Border.all(
-          color: colors.fault.withValues(alpha: 0.5),
+          color: tint.withValues(alpha: 0.5),
           width: DexStroke.hairline,
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.info_outline, size: 14, color: colors.fault),
+          Icon(Icons.info_outline, size: 14, color: tint),
           const SizedBox(width: DexSpace.sm),
           Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: colors.text, height: 1.35),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: colors.text, height: 1.35),
+                ),
+                if (action != null) ...<Widget>[
+                  const SizedBox(height: DexSpace.xs),
+                  Align(alignment: Alignment.centerLeft, child: action!),
+                ],
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// The shared clipboard: an opt-in, and the reasons it may not be one yet.
+///
+/// The switch is off by default and stays off until the person turns it on,
+/// because turning it on is what lets the desk read what is on the phone. It
+/// is *disabled* until the link is up and the phone has said it can share at
+/// all — a live switch that fails when pressed is worse than a dead one that
+/// says why.
+///
+/// Everything it has to say, it says here and keeps saying. None of these
+/// states raises a snackbar: they persist for as long as they are true, so a
+/// paused sync is visible when the person next opens this panel rather than
+/// only in the second the toast appeared.
+class _Clipboard extends StatelessWidget {
+  const _Clipboard({
+    required this.clipboard,
+    required this.usable,
+    required this.onToggle,
+    required this.colors,
+  });
+
+  final ClipboardState clipboard;
+  final bool usable;
+  final ValueChanged<bool> onToggle;
+  final DexColors colors;
+
+  /// Sharing is possible and switched on, but the phone reported a problem
+  /// with it. The switch stays where the person left it; the notice offers the
+  /// one action that resolves it.
+  bool get _paused =>
+      clipboard.availability == ClipboardAvailability.available &&
+      clipboard.message != null;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+
+    final String state = switch (clipboard.availability) {
+      ClipboardAvailability.unavailable => 'Not available on this phone',
+      ClipboardAvailability.unknown => 'Waiting for the phone',
+      // Paused outranks off: the backend can switch sync off itself when it
+      // breaks, and reporting only "Off" would hide the reason it went off.
+      ClipboardAvailability.available when _paused => 'Paused',
+      ClipboardAvailability.available when !clipboard.syncEnabled =>
+        'Off — nothing is read from the phone',
+      ClipboardAvailability.available => switch (clipboard.kind) {
+        ClipboardKind.empty => 'Nothing copied yet',
+        ClipboardKind.text => clipboard.text ?? '',
+        ClipboardKind.image => 'An image is ready to paste',
+      },
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text('Shared clipboard', style: t.labelLarge),
+                  Text(
+                    state,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DexTheme.data(colors, size: 11),
+                  ),
+                ],
+              ),
+            ),
+            Semantics(
+              toggled: clipboard.syncEnabled,
+              enabled: usable,
+              label: 'Share clipboard between phone and desk',
+              child: Switch(
+                value: clipboard.syncEnabled,
+                onChanged: usable ? onToggle : null,
+                activeThumbColor: colors.signal,
+              ),
+            ),
+          ],
+        ),
+        if (_notice case final String notice) ...<Widget>[
+          const SizedBox(height: DexSpace.sm),
+          _Banner(
+            text: notice,
+            colors: colors,
+            calm: clipboard.availability != ClipboardAvailability.unavailable,
+            action: _paused && usable
+                ? TextButton(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, DexHit.minimum),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DexSpace.sm,
+                      ),
+                    ),
+                    // Turning it on again is the retry: there is no separate
+                    // command, and inventing one would be a button that lies.
+                    onPressed: () => onToggle(true),
+                    child: const Text('Retry'),
+                  )
+                : null,
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// The persistent explanation, or null when there is nothing to explain.
+  String? get _notice => switch (clipboard.availability) {
+    ClipboardAvailability.unknown =>
+      clipboard.message ??
+          'This phone has not said whether it can share a clipboard yet. The '
+              'switch turns on once it does.',
+    ClipboardAvailability.unavailable =>
+      clipboard.message ??
+          'This phone will not share its clipboard, so the desk cannot read '
+              'or set it.',
+    ClipboardAvailability.available =>
+      clipboard.message == null
+          ? null
+          : 'Clipboard sharing is paused. ${clipboard.message}',
+  };
 }

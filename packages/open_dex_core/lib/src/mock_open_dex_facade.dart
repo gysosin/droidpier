@@ -303,6 +303,7 @@ class MockOpenDexFacade implements OpenDexFacade {
           kind: ClipboardKind.text,
           text: text,
           syncEnabled: _snapshot.clipboard.syncEnabled,
+          availability: ClipboardAvailability.available,
         ),
       ),
     );
@@ -318,6 +319,20 @@ class MockOpenDexFacade implements OpenDexFacade {
           text: _snapshot.clipboard.text,
           imagePng: _snapshot.clipboard.imagePng,
           syncEnabled: enabled,
+          availability: ClipboardAvailability.available,
+        ),
+      ),
+    );
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> pauseClipboardSync() async {
+    _emit(
+      _snapshot.copyWith(
+        clipboard: const ClipboardState(
+          availability: ClipboardAvailability.available,
+          message: ClipboardState.desktopFailureMessage,
         ),
       ),
     );
@@ -475,6 +490,47 @@ class MockOpenDexFacade implements OpenDexFacade {
   }
 
   @override
+  Future<VoidResult> startWirelessDiscovery() async {
+    _emit(
+      _snapshot.copyWith(
+        wirelessDiscovery: const WirelessDiscoveryState(
+          status: WirelessDiscoveryStatus.ready,
+        ),
+      ),
+    );
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> stopWirelessDiscovery() async {
+    await cancelWirelessPairing();
+    _emit(
+      _snapshot.copyWith(wirelessDiscovery: const WirelessDiscoveryState()),
+    );
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> startQrPairing() async {
+    _emit(
+      _snapshot.copyWith(
+        wirelessPairing: WirelessPairingState(
+          phase: WirelessPairingPhase.waitingForScan,
+          qrPayload: 'WIFI:T:ADB;S:studio-demo;P:synthetic-demo-only;;',
+          expiresAt: DateTime.now().add(const Duration(minutes: 2)),
+        ),
+      ),
+    );
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> cancelWirelessPairing() async {
+    _emit(_snapshot.copyWith(wirelessPairing: const WirelessPairingState()));
+    return const CommandSuccess(null);
+  }
+
+  @override
   Future<VoidResult> pairWirelessDevice({
     required String host,
     required int pairingPort,
@@ -488,6 +544,14 @@ class MockOpenDexFacade implements OpenDexFacade {
         ),
       );
     }
+    _emit(
+      _snapshot.copyWith(
+        wirelessPairing: WirelessPairingState(
+          phase: WirelessPairingPhase.needsConnectionPort,
+          host: host,
+        ),
+      ),
+    );
     return const CommandSuccess(null);
   }
 
@@ -773,6 +837,7 @@ class MockOpenDexFacade implements OpenDexFacade {
     clipboard: const ClipboardState(
       kind: ClipboardKind.text,
       text: 'Clipboard sync is ready',
+      availability: ClipboardAvailability.available,
     ),
     notificationStatus: LoadStatus.ready,
     notifications: [

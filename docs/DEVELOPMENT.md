@@ -5,7 +5,7 @@
 The toolchain is Flutter 3.47.1 / Dart 3.13.1 (see `tool/flutter-sdk.version`), JDK 17,
 the checked-in Gradle wrapper, Android platforms 35 and 36, and build-tools 35.0.0.
 Linux packaging uses Ubuntu 22.04 with clang, CMake, Ninja, pkg-config, GTK 3
-headers, liblzma development files, Python 3, RPM, dpkg-deb, and AppImage tooling.
+headers, liblzma development files, NASM, Python 3, RPM, dpkg-deb, and AppImage tooling.
 The source-built ADB also needs protobuf/compiler, brotli, lz4, zstd, PCRE2,
 zlib and Google Test development packages, plus `patch`. Its matching Ubuntu
 source-package versions are recorded in `tool/adb-build-inputs.tsv`.
@@ -26,10 +26,30 @@ part of the source repository. Run only one Flutter command at a time per SDK.
 
 ## Run and test
 
-`cd apps/desktop && flutter run -d linux` starts the application. For a safe
-UI preview without a phone, use `flutter run -d linux -t lib/ui/preview/preview_app.dart`.
-Development deployments use the debug companion; do not overwrite a release
-installation without reviewing the [signature migration warning](USER_GUIDE.md).
+For device testing against an installed official Linux package, run:
+
+```sh
+DROIDPIER_DEBUG_RUNTIME_DIR=/path/to/extracted/droidpier tool/run_debug.sh
+```
+
+This invokes `flutter run -d linux --debug -t lib/main.dart` with explicit ADB,
+scrcpy, FFmpeg, agent and companion paths. It does not modify the installed
+application. Omit the runtime override if the release is installed at the script's
+default user-local location. Do not run the release and debug application against
+the same phone simultaneously, or restart a shared ADB server to switch builds.
+
+A mock UI preview is available through
+`flutter run -d linux -t lib/ui/preview/preview_app.dart`; it cannot test devices.
+Test a debug-signed companion on an emulator. Physical upgrades must use a locally
+built candidate signed with the existing release key; never silently uninstall
+or replace data to resolve a [signature conflict](USER_GUIDE.md).
+
+Beta.2 defaults to direct streaming on Linux. To diagnose a regression against the
+older recording backend, set `OPEN_DEX_WINDOW_BACKEND=legacy` before the debug
+script. That fallback is Linux-only and may deliver substantially fewer frames. `OPEN_DEX_FFMPEG` can select a locally rebuilt decoder. Neither override
+changes the installed release. Measure presented FPS separately from decoded
+FPS using synthetic motion; idle screens and debug-mode results are not a
+60 FPS acceptance test. The direct path still requires performance validation.
 
 For each package under `packages/` and `plugins/open_dex_platform`, run
 `dart pub get`, `dart analyze` and `dart test`. For desktop changes, run the

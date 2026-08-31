@@ -1,3 +1,5 @@
+import 'wireless.dart';
+
 enum OpenDexErrorCode {
   adbUnavailable,
   deviceUnauthorized,
@@ -20,12 +22,14 @@ class OpenDexError {
     this.retryable = false,
     this.capability,
     this.technicalDetails,
+    this.wirelessReason,
   });
 
   final OpenDexErrorCode code;
   final String message;
   final bool retryable;
   final String? capability;
+  final WirelessFailureReason? wirelessReason;
 
   /// Diagnostic information for logs. UI must not display this directly.
   final String? technicalDetails;

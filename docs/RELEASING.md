@@ -2,7 +2,7 @@
 
 ## Release policy
 
-The initial target is `v0.1.0-beta.1`: Linux x86-64 and Android only.
+The current beta target is `v0.1.0-beta.2`: Linux x86-64 and Android only.
 Windows and macOS remain in development until native rendering and real-device
 acceptance pass. A successful build is not permission to declare compatibility.
 Record evidence in `release/acceptance.json`. The default `verified-beta` channel

@@ -321,14 +321,12 @@ class CompanionBootComponent
     });
     try {
       final hostPort = await server.start();
-      await adb.install(device.id, companionApkPath);
+      await adb.installIfNeeded(device.id, companionApkPath, packageName);
       await adb.reverse(device.id, devicePort: _devicePort, hostPort: hostPort);
-      await adb.shell(device.id, const [
-        'am',
-        'stopservice',
-        '-n',
+      await adb.stopServiceIfRunning(
+        device.id,
         '$packageName/.CompanionService',
-      ]);
+      );
       await adb.shell(device.id, [
         'am',
         'start-foreground-service',
@@ -355,6 +353,16 @@ class CompanionBootComponent
       await helloSubscription.cancel();
       await _cleanup(device.id);
       if (error is BackendFailure) rethrow;
+      if (error is AdbException) {
+        throw _failure(
+          error.operation == 'install companion'
+              ? error.message.contains('different key')
+                    ? error.message
+                    : 'Android did not allow the companion installation or update. Check the phone for an approval or Play Protect prompt.'
+              : 'The companion is installed, but Android refused its startup or USB tunnel. Open DroidPier Companion on the phone and retry.',
+          'operation=${error.operation}; exit=${error.exitCode}; timeout=${error.timedOut}',
+        );
+      }
       throw _failure(
         error is TimeoutException
             ? 'The Android companion did not complete its handshake.'
@@ -393,8 +401,9 @@ class CompanionBootComponent
   void _handleEvent(ProtocolEnvelope message) {
     switch (message.type) {
       case 'companion.disconnect.request':
-        if (_helloData['sessionDisconnect'] != true || _disconnectRequested)
+        if (_helloData['sessionDisconnect'] != true || _disconnectRequested) {
           return;
+        }
         _disconnectRequested = true;
         _server?.send(
           ProtocolEnvelope(
@@ -671,44 +680,45 @@ class AgentClipboardBootComponent
   final AgentBootComponent agent;
   final Duration pollInterval;
   final Duration responseTimeout;
-  final StreamController<BackendStateUpdate> _updates =
-      StreamController<BackendStateUpdate>.broadcast(sync: true);
+  final _updates = StreamController<BackendStateUpdate>.broadcast(sync: true);
   ClipboardState _clipboard = const ClipboardState();
   Timer? _pollTimer;
   bool _supported = false;
   bool _polling = false;
-  int _clipboardRevision = 0;
+  int _revision = 0;
 
   @override
   String get stageId => 'clipboard';
-
   @override
   ClipboardState get clipboard => _clipboard;
-
   @override
   BackendStateUpdate get currentUpdate =>
       BackendStateUpdate(clipboard: _clipboard);
-
   @override
   Stream<BackendStateUpdate> get updates => _updates.stream;
 
   @override
   Future<void> start(DeviceSummary device) async {
+    _pollTimer?.cancel();
+    _revision++;
     _supported =
         agent.capabilities.contains('clipboard.get') &&
         agent.capabilities.contains('clipboard.set');
-    if (!_supported) {
-      _clipboard = const ClipboardState(syncEnabled: false);
-      _publish();
-      return;
-    }
-    // Capability negotiation must not read personal clipboard content. The
-    // desktop UI explicitly opts in through setSyncEnabled(true).
-    _clipboard = const ClipboardState(syncEnabled: false);
+    _clipboard = ClipboardState(
+      availability: _supported
+          ? ClipboardAvailability.available
+          : ClipboardAvailability.unavailable,
+      message: _supported
+          ? null
+          : 'Clipboard sync is unavailable on this Android build.',
+    );
     _publish();
-    _pollTimer = Timer.periodic(pollInterval, (_) {
-      if (_clipboard.syncEnabled) unawaited(_refresh());
-    });
+    // Negotiation never reads clipboard content. Only explicit opt-in does.
+    if (_supported) {
+      _pollTimer = Timer.periodic(pollInterval, (_) {
+        if (_clipboard.syncEnabled) unawaited(_refresh());
+      });
+    }
   }
 
   @override
@@ -716,18 +726,17 @@ class AgentClipboardBootComponent
     _pollTimer?.cancel();
     _pollTimer = null;
     _supported = false;
-    _clipboardRevision++;
+    _revision++;
     _clipboard = const ClipboardState();
+    _publish();
   }
 
   @override
   void setSyncEnabled(bool enabled) {
-    if (enabled && !_supported) throw _clipboardUnavailable();
-    _clipboardRevision++;
+    if (enabled && !_supported) throw _unavailable();
+    _revision++;
     _clipboard = ClipboardState(
-      kind: _clipboard.kind,
-      text: _clipboard.text,
-      imagePng: _clipboard.imagePng,
+      availability: _clipboard.availability,
       syncEnabled: enabled && _supported,
     );
     _publish();
@@ -736,69 +745,91 @@ class AgentClipboardBootComponent
 
   @override
   Future<void> writeText(String text) async {
-    if (!_supported) throw _clipboardUnavailable();
-    _clipboardRevision++;
+    if (!_supported || !_clipboard.syncEnabled) throw _unavailable();
+    final revision = ++_revision;
     try {
       final response = await agent.request(
         'clipboard.set',
         data: {'text': text},
         timeout: responseTimeout,
       );
-      if (response.data['success'] != true) throw _clipboardUnavailable();
+      if (revision != _revision) return;
+      if (response.data['success'] != true) {
+        _pause(unsupported: true);
+        throw _unavailable();
+      }
       _clipboard = ClipboardState(
         kind: text.isEmpty ? ClipboardKind.empty : ClipboardKind.text,
         text: text.isEmpty ? null : text,
-        syncEnabled: _clipboard.syncEnabled,
+        syncEnabled: true,
+        availability: ClipboardAvailability.available,
       );
       _publish();
-    } on BackendFailure {
+    } on Object {
+      if (revision == _revision) _pause();
       rethrow;
-    } on Object catch (error) {
-      throw _clipboardUnavailable(error);
     }
   }
 
   Future<void> _refresh() async {
     if (_polling || !_supported || !_clipboard.syncEnabled) return;
     _polling = true;
-    final revision = _clipboardRevision;
+    final revision = _revision;
     try {
       final response = await agent.request(
         'clipboard.get',
         responseType: 'clipboard.result',
         timeout: responseTimeout,
       );
-      if (response.data['success'] != true) return;
+      if (revision != _revision) return;
+      if (response.data['success'] != true) {
+        _pause(unsupported: true);
+        return;
+      }
       final text = response.data['text'];
-      if (text is! String || text.length > 65536) return;
-      if (revision != _clipboardRevision) return;
+      if (text is! String || text.length > 65536) {
+        _pause();
+        return;
+      }
       _clipboard = ClipboardState(
         kind: text.isEmpty ? ClipboardKind.empty : ClipboardKind.text,
         text: text.isEmpty ? null : text,
         syncEnabled: true,
+        availability: ClipboardAvailability.available,
       );
       _publish();
     } on Object {
-      // Clipboard access varies by Android build; retain the last safe value.
+      if (revision == _revision) _pause();
     } finally {
       _polling = false;
     }
+  }
+
+  void _pause({bool unsupported = false}) {
+    _revision++;
+    if (unsupported) _supported = false;
+    _clipboard = ClipboardState(
+      availability: unsupported
+          ? ClipboardAvailability.unavailable
+          : ClipboardAvailability.available,
+      message: unsupported
+          ? 'Clipboard access was refused by Android. Sync is off for this connection.'
+          : 'Clipboard sync paused after a communication error. Retry when the phone is ready.',
+    );
+    _publish();
   }
 
   void _publish() {
     if (!_updates.isClosed) _updates.add(currentUpdate);
   }
 
-  static BackendFailure _clipboardUnavailable([Object? cause]) =>
-      BackendFailure(
-        OpenDexError(
-          code: OpenDexErrorCode.capabilityUnavailable,
-          message: 'Clipboard sync is unavailable on this Android build.',
-          retryable: true,
-          capability: 'clipboard',
-          technicalDetails: cause?.toString(),
-        ),
-      );
+  static BackendFailure _unavailable() => const BackendFailure(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'Clipboard sync is not available or has not been enabled.',
+      capability: 'clipboard',
+    ),
+  );
 }
 
 Set<String> _readCapabilities(ProtocolEnvelope hello) {

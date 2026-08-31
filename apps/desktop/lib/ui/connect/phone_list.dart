@@ -5,22 +5,28 @@ import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
+import 'connection_parts.dart';
 
-/// Device selection. Serials are machine values, so they are set in mono;
-/// everything a person reads is set in body.
+/// The phones ADB can actually see, and the choice of which one to open.
 ///
-/// Handles the states the contract can produce: loading, empty, error, ready.
-/// None of them is a dead end.
-class DeviceSelectionDialog extends StatelessWidget {
-  const DeviceSelectionDialog({
+/// Serials are machine values, so they are set in mono; everything a person
+/// reads is set in body. Every state the contract can produce is handled —
+/// loading, empty, unavailable, error, ready — and none of them is a dead end.
+///
+/// This list is *transports*, not advertisements. Anything on it has been
+/// accepted by ADB; a phone merely broadcasting on the network appears in the
+/// nearby panel instead, and never here.
+class PhoneList extends StatelessWidget {
+  const PhoneList({
     required this.status,
     required this.devices,
     required this.selectedId,
     required this.onSelect,
     required this.onRefresh,
     required this.onConnect,
-    this.onClose,
-    this.onPairWireless,
+    this.onDisconnect,
+    this.busy = false,
+    this.busyDeviceId,
     super.key,
   });
 
@@ -31,80 +37,17 @@ class DeviceSelectionDialog extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback onConnect;
 
-  /// Dismisses the dialog. Null only where there is nowhere to go back to.
-  final VoidCallback? onClose;
+  /// Drops this computer's wireless transport to a device. Offered for Wi-Fi
+  /// entries only — a cable is unplugged, not disconnected in software.
+  final ValueChanged<String>? onDisconnect;
 
-  /// Opens the guided Wi-Fi flow. Absent where there is nothing to open it
-  /// over, such as a golden harness rendering the list on its own.
-  final VoidCallback? onPairWireless;
+  /// Whether any command is in flight. Disconnects are held back while one
+  /// is, rather than the button vanishing — a control that disappears under
+  /// the pointer is worse than one that greys out.
+  final bool busy;
 
-  @override
-  Widget build(BuildContext context) {
-    final DexColors c = Theme.of(context).extension<DexColors>()!;
-    final TextTheme t = Theme.of(context).textTheme;
-
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(DexSpace.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('Choose a phone', style: t.titleLarge),
-              const SizedBox(height: DexSpace.xs),
-              Text(
-                'Plug in over USB with USB debugging on, or pair over Wi-Fi.',
-                style: t.bodyMedium?.copyWith(color: c.muted),
-              ),
-              const SizedBox(height: DexSpace.lg),
-              Flexible(child: _body(context, c, t)),
-              const SizedBox(height: DexSpace.lg),
-              // Wrapped rather than a fixed row: three controls plus a long
-              // localised label do not fit a 520 px dialog at every text
-              // scale, and a clipped action is an unusable one.
-              SizedBox(
-                width: double.infinity,
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: DexSpace.sm,
-                  runSpacing: DexSpace.sm,
-                  children: <Widget>[
-                    // A phone that is not on the list yet is the one case
-                    // this dialog cannot answer by itself, so the way out of
-                    // it sits beside the actions that assume the phone is
-                    // already there.
-                    if (onPairWireless != null)
-                      TextButton(
-                        onPressed: onPairWireless,
-                        child: const Text('Pair over Wi-Fi'),
-                      ),
-                    // A way out that does not require connecting: opened from
-                    // the desk, this dialog would otherwise be a trap.
-                    if (onClose != null)
-                      TextButton(
-                        onPressed: onClose,
-                        child: const Text('Close'),
-                      ),
-                    if (onClose != null) const SizedBox(width: DexSpace.sm),
-                    OutlinedButton(
-                      onPressed: onRefresh,
-                      child: const Text('Look again'),
-                    ),
-                    FilledButton(
-                      onPressed: _canConnect ? onConnect : null,
-                      child: const Text('Connect'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  /// The device a disconnect is in flight for, if any.
+  final String? busyDeviceId;
 
   /// Only an authorized, selected device can be connected.
   bool get _canConnect {
@@ -119,34 +62,85 @@ class DeviceSelectionDialog extends StatelessWidget {
     return false;
   }
 
-  Widget _body(BuildContext context, DexColors c, TextTheme t) {
+  bool get _hasWifi => devices.any(
+    (DeviceSummary d) => d.connectionKind == DeviceConnectionKind.wifi,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return ConnectPanel(
+      title: 'Phones',
+      subtitle: 'Plugged in over USB, or already connected over Wi-Fi.',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 292),
+            child: _body(context),
+          ),
+          if (_hasWifi && onDisconnect != null) ...<Widget>[
+            const SizedBox(height: DexSpace.md),
+            const ConnectHint(
+              text:
+                  'Disconnect drops this computer’s link to a phone. It does '
+                  'not remove the pairing the phone is holding — do that in '
+                  'Wireless debugging on the phone itself.',
+            ),
+          ],
+          const SizedBox(height: DexSpace.lg),
+          Row(
+            children: <Widget>[
+              OutlinedButton(
+                onPressed: onRefresh,
+                child: const Text('Look again'),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: _canConnect ? onConnect : null,
+                child: const Text('Connect'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
     switch (status) {
       case LoadStatus.loading:
       case LoadStatus.idle:
-        return _Notice(
+        return const ConnectNotice(
           title: 'Looking for phones…',
           detail: 'Keep the cable connected while this finishes.',
-          colors: c,
         );
       case LoadStatus.empty:
-        return _Notice(
+        return const ConnectNotice(
           title: 'No phones found',
-          detail: 'Turn on USB debugging, then choose “Look again”.',
-          colors: c,
+          detail:
+              'Turn on USB debugging and choose “Look again”, or add one over '
+              'Wi-Fi on the right.',
         );
       case LoadStatus.unavailable:
-        return _Notice(
+        return const ConnectNotice(
           title: 'ADB is unavailable',
           detail: 'DroidPier could not start ADB on this computer.',
-          colors: c,
         );
       case LoadStatus.error:
-        return _Notice(
+        return const ConnectNotice(
           title: 'Could not list phones',
           detail: 'Choose “Look again” to retry the search.',
-          colors: c,
         );
       case LoadStatus.ready:
+        if (devices.isEmpty) {
+          return const ConnectNotice(
+            title: 'No phones found',
+            detail:
+                'Turn on USB debugging and choose “Look again”, or add one '
+                'over Wi-Fi on the right.',
+          );
+        }
         return ListView.separated(
           shrinkWrap: true,
           itemCount: devices.length,
@@ -156,7 +150,12 @@ class DeviceSelectionDialog extends StatelessWidget {
             device: devices[i],
             selected: devices[i].id == selectedId,
             onSelect: () => onSelect(devices[i].id),
-            colors: c,
+            onDisconnect:
+                onDisconnect == null ||
+                    devices[i].connectionKind != DeviceConnectionKind.wifi
+                ? null
+                : () => onDisconnect!(devices[i].id),
+            busy: busy || busyDeviceId == devices[i].id,
           ),
         );
     }
@@ -168,16 +167,18 @@ class _DeviceRow extends StatelessWidget {
     required this.device,
     required this.selected,
     required this.onSelect,
-    required this.colors,
+    required this.onDisconnect,
+    required this.busy,
   });
 
   final DeviceSummary device;
   final bool selected;
   final VoidCallback onSelect;
-  final DexColors colors;
+  final VoidCallback? onDisconnect;
+  final bool busy;
 
   /// What the person should do about this device, in their words.
-  (String, Color) get _state => switch (device.status) {
+  (String, Color) _state(DexColors colors) => switch (device.status) {
     DeviceStatus.authorized => ('Ready', colors.signal),
     DeviceStatus.unauthorized => ('Tap “Allow” on the phone', colors.fault),
     DeviceStatus.offline => ('Offline', colors.muted),
@@ -185,8 +186,9 @@ class _DeviceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DexColors colors = Theme.of(context).extension<DexColors>()!;
     final TextTheme t = Theme.of(context).textTheme;
-    final (String label, Color color) = _state;
+    final (String label, Color color) = _state(colors);
     final bool enabled = device.status == DeviceStatus.authorized;
 
     return Semantics(
@@ -250,44 +252,29 @@ class _DeviceRow extends StatelessWidget {
                 ),
                 const SizedBox(width: DexSpace.md),
                 Text(label, style: t.labelLarge?.copyWith(color: color)),
+                if (onDisconnect != null) ...<Widget>[
+                  const SizedBox(width: DexSpace.md),
+                  Tooltip(
+                    message:
+                        'Drop this computer’s Wi-Fi link to ${device.name}. '
+                        'The phone keeps the pairing.',
+                    child: OutlinedButton(
+                      onPressed: busy ? null : onDisconnect,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, DexHit.comfortable),
+                        foregroundColor: colors.fault,
+                      ),
+                      child: Semantics(
+                        label: 'Disconnect ${device.name}',
+                        child: const Text('Disconnect'),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Notice extends StatelessWidget {
-  const _Notice({
-    required this.title,
-    required this.detail,
-    required this.colors,
-  });
-
-  final String title;
-  final String detail;
-  final DexColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme t = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(DexSpace.lg),
-      decoration: BoxDecoration(
-        color: colors.raised,
-        borderRadius: BorderRadius.circular(DexRadius.card),
-        border: Border.all(color: colors.line, width: DexStroke.hairline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(title, style: t.bodyLarge),
-          const SizedBox(height: DexSpace.xs),
-          Text(detail, style: t.bodyMedium?.copyWith(color: colors.muted)),
-        ],
       ),
     );
   }
