@@ -51,7 +51,10 @@ def main():
     runtime = Path(os.environ['SCRCPY_DIR']) if os.environ.get('SCRCPY_DIR') else prepare_linux()
     (resources / 'scrcpy').mkdir()
     for name in ['scrcpy', 'scrcpy-server', 'adb', 'LICENSE', 'scrcpy.png', 'scrcpy.1']:
-        source = runtime / name
+        source = (ROOT / '.tools/droidpier-runtime/adb/install/bin/adb'
+                  if name == 'adb' else runtime / name)
+        if name == 'adb' and not source.is_file():
+            raise SystemExit('Build ADB from the pinned source with tool/build_adb.sh first')
         if source.exists(): shutil.copy2(source, resources / 'scrcpy' / name)
     ffmpeg = Path(os.environ.get('DROIDPIER_FFMPEG', ROOT / '.tools/droidpier-runtime/ffmpeg/install/bin/ffmpeg'))
     (resources / 'ffmpeg').mkdir()
@@ -63,6 +66,7 @@ def main():
     config = ROOT / '.tools/droidpier-runtime/ffmpeg/configure-arguments.txt'
     if config.exists():
         shutil.copy2(config, resources / 'licenses/ffmpeg-build.txt')
+    shutil.copy2(ROOT / 'tool/adb-build-inputs.tsv', resources / 'licenses/adb-build-inputs.tsv')
     subprocess.run([str(ffmpeg), '-v', 'error', '-f', 'h264', '-i', str(ROOT / 'tool/fixtures/gray-16x16.h264'),
                     '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-y', str(stage / 'probe.rgba')], check=True)
     if (stage / 'probe.rgba').stat().st_size != 1024:

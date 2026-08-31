@@ -47,7 +47,9 @@ def main():
         else:
             copy_distribution_source(key, source, stage)
     recipes = stage / 'build-recipes'; recipes.mkdir()
-    for name in ['runtime-lock.json', 'build_ffmpeg.sh', 'linux/Dockerfile']:
+    for name in ['runtime-lock.json', 'build_ffmpeg.sh', 'build_adb.sh',
+                 'adb-build-inputs.tsv', 'patches/android-tools-static-dependencies.patch',
+                 'linux/Dockerfile']:
         target = recipes / name; target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / 'tool' / name, target)
     config = ROOT / '.tools/droidpier-runtime/ffmpeg/configure-arguments.txt'
@@ -67,6 +69,10 @@ The AppImage runtime's pinned libfuse and squashfuse sources are included. Its
 source archive retains the libfuse patch and dependency build instructions.
 The collection also includes its musl, zlib, zstd and mimalloc source inputs,
 with the matching Alpine package recipes and patches under alpine/.
+ADB is built from android-tools-37.0.0 using build_adb.sh, the included local
+static-link patch and recorded Ubuntu build inputs. The source archive already
+includes android-tools' upstream patches and its vendored libusb, BoringSSL,
+fmt and Android library sources. It is not the Google prebuilt ADB binary.
 Ubuntu source packages include their .dsc checksum records and Debian/Ubuntu
 patches and build rules. See RUNTIME_PROVENANCE.md for the scope of each input.
 

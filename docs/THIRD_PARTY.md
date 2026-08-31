@@ -16,7 +16,7 @@ See [LICENSE](../LICENSE), [NOTICE](../NOTICE) and the texts in [licenses](../li
 | SDL | scrcpy's pinned build inputs | zlib license |
 | dav1d | scrcpy's pinned build inputs | BSD-2-Clause |
 | libusb | scrcpy's pinned build inputs | LGPL-2.1-or-later |
-| ADB | Upstream runtime manifest | Apache/BSD and additional component notices; audit the shipped binary |
+| ADB | Pinned android-tools source and `tool/adb-build-inputs.tsv` | Apache/BSD/MIT and LGPL libusb; sources and `licenses/adb/` notices included |
 | Instrument Sans, Space Grotesk, Public Sans, IBM Plex Mono | Bundled font files | SIL Open Font License 1.1; individual notices in `licenses/fonts/` |
 | AppImage runtime | Pinned runtime asset | See its included upstream license/source notices |
 | musl, zstd, zlib, mimalloc | AppImage upstream build and Alpine package recipes | MIT, BSD-3-Clause, Zlib; complete texts in `licenses/` |

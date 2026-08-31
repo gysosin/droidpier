@@ -76,10 +76,36 @@ The runtime's own MIT license does not replace the licenses of these inputs.
 In particular, libfuse contains LGPL library code and GPL utility code; both
 texts accompany the package. Source archives retain all applicable notices.
 
+## Source-built ADB
+
+Linux packages use ADB 37.0.0 built from the pinned
+[android-tools source release](https://github.com/nmeum/android-tools/releases/tag/37.0.0),
+based on AOSP `android-17.0.0_r1`. The Google prebuilt ADB from the scrcpy archive
+is not included in the Linux payload. Building it locally provides an exact
+source match for its statically linked libusb code.
+
+`tool/build_adb.sh` builds only the `adb` target, using bundled libusb and fmt,
+and the vendored Android/BoringSSL code already present in the source archive.
+The local patch selects static dependency archives and orders the brotli
+libraries correctly for static linking. Ubuntu 22.04's protobuf compiler is
+invoked with its proto3-optional flag. No Android protocol source is modified.
+
+The source collection includes the exact Ubuntu source archives, patches and
+build rules for protobuf, brotli, lz4, zstd and zlib. Google Test's build headers
+and their source package are also covered. `tool/adb-build-inputs.tsv` records
+the reviewed source-package versions; builds reject version drift. The resulting
+ADB executable depends only on the operating system's C/C++/math runtime, with
+no additional USB or compression shared libraries. `licenses/adb/` contains its
+source and dependency notices; the legacy platform-tools notices are retained
+for other development packaging inputs.
+
+This android-tools build does not provide automatic mDNS discovery. DroidPier's
+manual wireless pairing and connection use an explicit address and port. Real
+phone validation of those workflows remains tracked separately.
+
 ## Other payloads
 
-The ADB binary matches the pinned Android platform-tools 37.0.0 Linux archive.
-Its complete `NOTICE.txt` is redistributed. Android dependencies are resolved
+Android dependencies are resolved
 and hashed during Gradle builds, with notices in the APK and desktop packages.
 Flutter's generated `NOTICES.Z`, individual font licenses, and the resolved
 Dart/Android component inventory accompany the desktop application.

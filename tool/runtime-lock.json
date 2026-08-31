@@ -298,5 +298,101 @@
     "sha256": "bbf09f82b9a187399f33f6cc4136bd088f475d769f385aa1f08d0850473b04ae",
     "sourceCollection": true,
     "sourcePath": "alpine/mimalloc2/cmake-add-insecure-suffix.patch"
+  },
+  "adb-source": {
+    "url": "https://github.com/nmeum/android-tools/releases/download/37.0.0/android-tools-37.0.0.tar.xz",
+    "file": "android-tools-37.0.0.tar.xz",
+    "sha256": "2725d09f892a3a38e534429f47a321f58ecf6a3169caa42c915fb2cb7d46be0e",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9-2build6.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9-2build6.dsc",
+    "file": "brotli_1.0.9-2build6.dsc",
+    "sha256": "acd215cccf71c8d077d03b9550d7a23c1963c31c42f3062076cdb5f69ac86c6f",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9.orig.tar.gz",
+    "file": "brotli_1.0.9.orig.tar.gz",
+    "sha256": "f9e8d81d0405ba66d181529af42a3354f838c939095ff99930da6aa9cdf6fe46",
+    "sourceCollection": true
+  },
+  "brotli_1.0.9-2build6.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/b/brotli/brotli_1.0.9-2build6.debian.tar.xz",
+    "file": "brotli_1.0.9-2build6.debian.tar.xz",
+    "sha256": "18bade39edd19e24c6a115b0053f84ebb909a9386c9a657ee6768b49a2af9974",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3-2build2.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3-2build2.dsc",
+    "file": "lz4_1.9.3-2build2.dsc",
+    "sha256": "24f317883fddecd5488241a836a951e83dbd7070b667e34eed4319d2090244a9",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3.orig.tar.gz",
+    "file": "lz4_1.9.3.orig.tar.gz",
+    "sha256": "030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1",
+    "sourceCollection": true
+  },
+  "lz4_1.9.3-2build2.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/l/lz4/lz4_1.9.3-2build2.debian.tar.xz",
+    "file": "lz4_1.9.3-2build2.debian.tar.xz",
+    "sha256": "46e79943d637f60be3a8c1e5edaba8890599e0fdcc2a58462e4eb194f1e56352",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4-1ubuntu7.22.04.6.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4-1ubuntu7.22.04.6.dsc",
+    "file": "protobuf_3.12.4-1ubuntu7.22.04.6.dsc",
+    "sha256": "8bfe7301ec96685c19e20d0a76098bb242a3c329837d6295e97a5cfbf350a496",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4.orig.tar.gz",
+    "file": "protobuf_3.12.4.orig.tar.gz",
+    "sha256": "512e5a674bf31f8b7928a64d8adf73ee67b8fe88339ad29adaa3b84dbaa570d8",
+    "sourceCollection": true
+  },
+  "protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/p/protobuf/protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz",
+    "file": "protobuf_3.12.4-1ubuntu7.22.04.6.debian.tar.xz",
+    "sha256": "5a3a914378e278a948b61194ef39ccd4be71fdc05801c72426efb902d9aa1e16",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg-3build1.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg-3build1.dsc",
+    "file": "libzstd_1.4.8+dfsg-3build1.dsc",
+    "sha256": "d4f80bb9278967f55a38c50c7e2bb8102328c7d2955bdcd9b7dedc70cd4a8c9e",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg.orig.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg.orig.tar.xz",
+    "file": "libzstd_1.4.8+dfsg.orig.tar.xz",
+    "sha256": "1e8ce5c4880a6d5bd8d3186e4186607dd19b64fc98a3877fc13aeefd566d67c5",
+    "sourceCollection": true
+  },
+  "libzstd_1.4.8+dfsg-3build1.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/main/libz/libzstd/libzstd_1.4.8+dfsg-3build1.debian.tar.xz",
+    "file": "libzstd_1.4.8+dfsg-3build1.debian.tar.xz",
+    "sha256": "60d554776b4fbee2aa81eb9990cbe156636b1ec4e4213b73fd190057680241ba",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0-3.dsc": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0-3.dsc",
+    "file": "googletest_1.11.0-3.dsc",
+    "sha256": "d7a122eb82167b6219bd85d0ea3a0cf472fd32accd05ced0457a411513060749",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0.orig.tar.gz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0.orig.tar.gz",
+    "file": "googletest_1.11.0.orig.tar.gz",
+    "sha256": "58dd00393b46704f744f45b1398a6e2c93ad64f9bf811ce34af27b1c63effec0",
+    "sourceCollection": true
+  },
+  "googletest_1.11.0-3.debian.tar.xz": {
+    "url": "https://archive.ubuntu.com/ubuntu/pool/universe/g/googletest/googletest_1.11.0-3.debian.tar.xz",
+    "file": "googletest_1.11.0-3.debian.tar.xz",
+    "sha256": "8889ec225a7d4a4ca7b38b03aa792f0548b31ef04a0cd0c0c6aaa64392d20d0f",
+    "sourceCollection": true
   }
 }

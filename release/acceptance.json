@@ -1,5 +1,6 @@
 {
   "version": "0.1.0-beta.1",
+  "publicationChannel": "experimental-preview",
   "checks": {
     "source_privacy_audit": {
       "status": "passed",
@@ -27,7 +28,7 @@
     },
     "license_and_corresponding_source_audit": {
       "status": "passed",
-      "evidence": "2026-08-31 Linux candidate: upstream build logs and enabled FFmpeg source consumers reviewed; exact scrcpy build commit, direct sources, Ubuntu source/patch inputs, and all AppImage linked Alpine sources/recipes/patches collected. Source hashes checked against upstream package manifests. All 48 collection files pass the inner SHA256 manifest. Complete transitive notices match the staged payload. ADB binary matches platform-tools 37.0.0 and complete notice content is preserved; Flutter/Dart/Android/font notices retained. See docs/RUNTIME_PROVENANCE.md."
+      "evidence": "2026-08-31 final Linux candidate: ADB is now built from pinned android-tools 37.0.0 with its vendored libusb/Android/BoringSSL/fmt sources and reviewed Ubuntu static dependency inputs; the Google prebuilt ADB is not shipped. Scrcpy and AppImage upstream build provenance, linked source consumers, Alpine recipes and patches reviewed. All 67 corresponding-source files pass the inner checksum manifest. Complete packaged notices and actual source-built ADB bytes verified. See docs/RUNTIME_PROVENANCE.md."
     },
     "off_device_signing_key_recovery": {
       "status": "passed",
@@ -35,19 +36,19 @@
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Final DEB: clean Ubuntu 22.04 container installed declared runtime dependencies, launched as non-root under Xvfb, and uninstalled successfully. Final AppImage extraction fallback also launched as non-root. No development SDKs installed. Full desktop VM and upgrade matrix pending."
+      "evidence": "2026-08-31 final DEB with source-built ADB: clean Ubuntu 22.04 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31: clean Ubuntu 24.04 container installed the DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
+      "evidence": "2026-08-31 final DEB with source-built ADB: clean Ubuntu 24.04 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
     },
     "debian_12_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31: clean Debian 12 container installed the final DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
+      "evidence": "2026-08-31 final DEB with source-built ADB: clean Debian 12 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
     },
     "debian_13_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "2026-08-31: clean Debian 13 container installed the DEB and declared dependencies, launched as a non-root user under Xvfb, and uninstalled successfully without development SDKs. Full desktop VM and upgrade testing remain pending."
+      "evidence": "2026-08-31 final DEB with source-built ADB: clean Debian 13 container installed dependencies, launched the app as non-root under Xvfb, started/query-tested/stopped its bundled ADB server, and uninstalled successfully without development SDKs. Full desktop VM, physical-phone and upgrade tests remain unperformed; experimental download only."
     },
     "mint_22_install_upgrade_uninstall": {
       "status": "pending",
@@ -98,8 +99,8 @@
       "evidence": ""
     },
     "assets_checksums_notices_links": {
-      "status": "pending",
-      "evidence": "Final local candidates and SHA256SUMS verified; every DEB/RPM/AppImage/archive contains a companion APK byte-identical to the standalone release. Permanent certificate, Android metadata and production manifest verified; debug key rejected. Complete transitive notices/source review and hosted draft asset verification remain pending."
+      "status": "passed",
+      "evidence": "2026-08-31 final experimental candidate: all nine hosted private-draft asset digests match the local packages and SHA256SUMS. Required asset names, source archive and all notices verified. Standalone signed APK is byte-identical inside DEB, RPM, AppImage and archive; certificate, version and production manifest verified, including the downloaded hosted APK. Stable public download paths are recorded in README; public accessibility is checked immediately after publication."
     }
   }
 }

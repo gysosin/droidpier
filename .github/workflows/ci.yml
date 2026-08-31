@@ -32,6 +32,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libglu1-mesa
+          sudo apt-get install -y libprotobuf-dev protobuf-compiler libbrotli-dev liblz4-dev libzstd-dev libpcre2-dev zlib1g-dev libgtest-dev patch
           sdkmanager "platforms;android-35" "platforms;android-36" "build-tools;35.0.0"
       - name: Check public source and metadata
         run: |
@@ -39,11 +40,14 @@ jobs:
           git diff --check
           for script in tool/*.sh; do bash -n "$script"; done
           python3 -m compileall -q tool
+          python3 -m unittest discover -s tool/tests
       - name: Analyze and test shared packages
         run: |
           for package in packages/open_dex_api packages/open_dex_core packages/open_dex_protocol plugins/open_dex_platform; do
             (cd "$package" && dart pub get && dart analyze && dart test)
           done
+      - name: Build ADB from matching redistribution sources
+        run: bash tool/build_adb.sh
       - name: Build, test and lint Android
         run: android/gradlew -p android agentJar :companion:assembleDebug :companion:lintDebug test --no-daemon
       - name: Analyze, test and build desktop
