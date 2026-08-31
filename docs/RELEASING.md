@@ -36,6 +36,11 @@ The source tag must resolve to the commit used to build the artifacts.
 to store password). For local maintainer use it can read a private keystore and
 password from `~/.local/share/droidpier/signing/`. Restrict file permissions.
 
+The build automatically verifies the APK against the permanent certificate,
+release version, application ID, minimum SDK and production manifest before
+copying it into the release payload. Run `python3 tool/verify_android.py PATH.apk`
+to repeat those checks on a candidate using Android build-tools 35.0.0.
+
 Keep at least one encrypted, independently stored backup and test recovery.
 A second copy on the build computer does not protect against losing that computer.
 Losing the key prevents in-place Android updates. Never include signing material

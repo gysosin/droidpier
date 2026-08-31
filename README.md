@@ -7,6 +7,7 @@ multiple windows, use your keyboard and mouse, and manage your connected phone.
 Your apps run on your phone. Your computer provides the workspace.
 
 [![Build](https://github.com/gysosin/droidpier/actions/workflows/ci.yml/badge.svg)](https://github.com/gysosin/droidpier/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/gysosin/droidpier?include_prereleases)](https://github.com/gysosin/droidpier/releases)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/gysosin/droidpier)](https://github.com/gysosin/droidpier/stargazers)
 
@@ -86,10 +87,12 @@ clipboard text, and secrets from screenshots and logs.
 
 ## Star history
 
+![Daily aggregate GitHub stars](https://raw.githubusercontent.com/gysosin/droidpier/metrics/star-history.svg)
+
 [View DroidPier's star history](https://github.com/gysosin/droidpier/tree/metrics)
 
 The repository records daily aggregate star counts, never individual profiles.
-The chart becomes available after the first successful metrics workflow.
+Zero stars is a valid starting point; API failures preserve the previous chart.
 
 ## Credits and license
 
