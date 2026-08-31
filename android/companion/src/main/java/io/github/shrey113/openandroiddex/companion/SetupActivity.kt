@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -75,7 +76,25 @@ class SetupActivity : Activity() {
         button("Project and help") {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/gysosin/droidpier")))
         }
-        setContentView(ScrollView(this).apply { addView(column) })
+        setContentView(ScrollView(this).apply {
+            addView(column)
+            setOnApplyWindowInsetsListener { view, insets ->
+                if (Build.VERSION.SDK_INT >= 30) {
+                    val bars = insets.getInsets(WindowInsets.Type.systemBars())
+                    view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                } else {
+                    @Suppress("DEPRECATION")
+                    view.setPadding(insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
+                        insets.systemWindowInsetRight, insets.systemWindowInsetBottom)
+                }
+                insets
+            }
+        })
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        refresh()
     }
 
     override fun onResume() { super.onResume(); CompanionConnection.observe(observer) }

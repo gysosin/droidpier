@@ -17,13 +17,14 @@ def main():
         raise SystemExit('A release keystore and password are required; see docs/RELEASING.md.')
     gradle = ROOT / 'android' / ('gradlew.bat' if os.name == 'nt' else 'gradlew')
     subprocess.run([str(gradle), '-p', str(ROOT / 'android'), 'agentJar',
-                    ':companion:assembleRelease', 'test', '--no-daemon'], env=env, check=True)
+                    ':companion:assembleRelease', ':companion:writeDependencyInventory', 'test', '--no-daemon'], env=env, check=True)
     version = release_version()['version']
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
     target = dist / f'droidpier-companion-{version}.apk'
     shutil.copy2(ROOT / 'android/companion/build/outputs/apk/release/companion-release.apk', target)
     shutil.copy2(ROOT / 'android/agent/build/outputs/open-dex-agent.jar', dist / 'open-dex-agent.jar')
+    shutil.copy2(ROOT / 'android/companion/build/outputs/release-dependencies.json', dist / 'android-dependencies.json')
     print(f'Signed companion: {target.name}')
 
 

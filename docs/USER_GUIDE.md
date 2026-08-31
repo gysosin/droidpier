@@ -67,6 +67,12 @@ and are not advertised as validated wireless configurations.
 
 ## Companion status and permissions
 
+<img src="https://raw.githubusercontent.com/gysosin/droidpier/main/docs/images/companion-setup.png" width="320" alt="DroidPier Companion setup on a clean Android emulator" />
+
+*Actual Android setup screen on a clean emulator; full device compatibility is
+tracked separately.*
+
+
 The companion installs on Android 8 or later, but installation alone does not
 establish full desktop compatibility. See [compatibility](COMPATIBILITY.md).
 The setup screen reports a desktop connection only after the authenticated

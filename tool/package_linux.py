@@ -9,6 +9,7 @@ import subprocess
 import tarfile
 from fetch_runtime import fetch
 from prepare_runtime import prepare_linux
+from dependency_inventory import write_inventory
 from version import ROOT, release_version
 
 
@@ -16,7 +17,7 @@ def checksums(directory):
     lines = []
     for file in sorted(directory.rglob('*')):
         if file.is_file() and file.name != 'SHA256SUMS':
-            if directory.resolve() == (ROOT / 'dist').resolve() and file.name == 'open-dex-agent.jar':
+            if directory.resolve() == (ROOT / 'dist').resolve() and file.name in {'open-dex-agent.jar', 'android-dependencies.json'}:
                 continue
             digest = hashlib.sha256(file.read_bytes()).hexdigest()
             lines.append(f'{digest}  {file.relative_to(directory).as_posix()}')
@@ -41,6 +42,7 @@ def main():
     resources = bundle / 'resources'
     (resources / 'android').mkdir(parents=True)
     payload = Path(os.environ.get('DROIDPIER_ANDROID_PAYLOAD_DIR', dist))
+    inventory_path = write_inventory(payload)
     shutil.copy2(payload / f'droidpier-companion-{version}.apk', resources / 'android/companion.apk')
     agent = payload / 'open-dex-agent.jar'
     if not agent.exists():
@@ -57,6 +59,7 @@ def main():
     for file in ['LICENSE', 'NOTICE']:
         shutil.copy2(ROOT / file, bundle / file)
     copytree(ROOT / 'licenses', resources / 'licenses')
+    shutil.copy2(inventory_path, resources / 'licenses/dependencies.cdx.json')
     config = ROOT / '.tools/droidpier-runtime/ffmpeg/configure-arguments.txt'
     if config.exists():
         shutil.copy2(config, resources / 'licenses/ffmpeg-build.txt')
@@ -97,7 +100,7 @@ Section: utils
 Priority: optional
 Architecture: amd64
 Maintainer: DroidPier Contributors <gysosin@users.noreply.github.com>
-Depends: libc6 (>= 2.35), libgtk-3-0, libstdc++6, libglu1-mesa, libudev1, libegl1, libgl1
+Depends: libc6 (>= 2.35), libgtk-3-0, libstdc++6, libglu1-mesa, libudev1, libegl1, libgles2, libgl1
 Homepage: https://github.com/gysosin/droidpier
 Description: Android desktop workspace
  Your Android. A bigger workspace.
@@ -116,7 +119,7 @@ Summary: Android desktop workspace
 License: Apache-2.0 AND LGPL-2.1-or-later AND MIT AND BSD-3-Clause AND OFL-1.1
 URL: https://github.com/gysosin/droidpier
 BuildArch: x86_64
-Requires: gtk3, libstdc++, mesa-libGLU, mesa-libEGL, mesa-libGL, systemd-libs, glibc >= 2.35
+Requires: gtk3, libstdc++, mesa-libGLU, libEGL.so.1()(64bit), libGLESv2.so.2()(64bit), libGL.so.1()(64bit), systemd-libs, glibc >= 2.35
 AutoReqProv: no
 %description
 Your Android. A bigger workspace.

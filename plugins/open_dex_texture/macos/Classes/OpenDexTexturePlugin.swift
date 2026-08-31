@@ -157,6 +157,9 @@ public final class OpenDexTexturePlugin: NSObject, FlutterPlugin {
             }
             let texture = FrameTexture(width: width, height: height, path: path, registrar: registrar)
             texture.id = registrar.register(texture)
+            guard texture.id != 0 else {
+                result(FlutterError(code: "texture-registration-failed", message: "Could not register video texture.", details: nil)); return
+            }
             textures[texture.id] = texture
             texture.start()
             result(texture.id)

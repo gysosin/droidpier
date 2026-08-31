@@ -17,6 +17,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          cmdline-tools-version: '12266719'
+          log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
       - name: Validate source
         run: python3 tool/verify_source.py
@@ -40,6 +44,7 @@ jobs:
           path: |
             dist/*.apk
             dist/open-dex-agent.jar
+            dist/android-dependencies.json
           if-no-files-found: error
   linux:
     needs: android

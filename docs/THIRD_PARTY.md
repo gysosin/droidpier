@@ -22,8 +22,9 @@ See [LICENSE](../LICENSE), [NOTICE](../NOTICE) and the texts in [licenses](../li
 
 This inventory describes intended inputs; it is not a declaration that every
 binary has completed redistribution review. The acceptance record must say when
-the full transitive dependency audit is complete. The generated file SBOM records
-payload hashes; it does not replace a component license inventory.
+the full transitive dependency audit is complete. The release includes both a file SBOM (payload hashes) and a component SBOM
+(resolved Dart/Android dependencies and pinned runtime inputs). These inventories
+do not replace the full license and corresponding-source review.
 
 ## FFmpeg and corresponding source
 

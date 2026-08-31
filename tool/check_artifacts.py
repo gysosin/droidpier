@@ -14,8 +14,9 @@ required = [f'droidpier-companion-{version}.apk',
             f'droidpier-{version}-linux-x86_64.rpm',
             f'droidpier-{version}-linux-x86_64.AppImage',
             f'droidpier-{version}-linux-files.cdx.json',
+            f'droidpier-{version}-dependencies.cdx.json',
             f'droidpier-{version}-dependency-sources.tar.gz', 'SHA256SUMS']
-allowed = set(required) | {'open-dex-agent.jar'}
+allowed = set(required) | {'open-dex-agent.jar', 'android-dependencies.json'}
 extra = [p.name for p in dist.iterdir() if p.name not in allowed]
 if extra: raise SystemExit('Unexpected release files: ' + ', '.join(extra))
 missing = [name for name in required if not (dist / name).is_file()]

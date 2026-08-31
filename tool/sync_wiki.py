@@ -35,7 +35,7 @@ def render(destination):
             file, _, anchor = target.partition('#')
             resolved = (path.parent / file).resolve()
             if str(resolved) in reverse:
-                url = reverse[str(resolved)]
+                url = 'https://github.com/gysosin/droidpier/wiki/' + reverse[str(resolved)]
             else:
                 url = 'https://github.com/gysosin/droidpier/blob/main/' + resolved.relative_to(ROOT).as_posix()
             return f'[{label}]({url}' + ('#' + anchor if anchor else '') + ')'

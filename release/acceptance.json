@@ -2,8 +2,8 @@
   "version": "0.1.0-beta.1",
   "checks": {
     "source_privacy_audit": {
-      "status": "pending",
-      "evidence": ""
+      "status": "passed",
+      "evidence": "Fresh public main clone contains one initial commit, no private guidance/transcripts, no previous development history, local tools, reference repository, signing keys or generated binaries. Public source scan passed."
     },
     "fresh_checkout_build": {
       "status": "pending",
@@ -11,15 +11,15 @@
     },
     "analysis_and_tests": {
       "status": "pending",
-      "evidence": ""
+      "evidence": "Local Dart API/core/protocol/platform suites passed, including 26 controller and 63 platform tests. Desktop analysis and 224 Flutter tests passed on host and Ubuntu 22.04. Android release/debug/tests/lint passed. Hosted CI retry pending SDK setup correction."
     },
     "android_release_manifest": {
       "status": "passed",
       "evidence": "2026-08-31: signed release APK passes apksigner verification, package ID unchanged, minSdk26, versionCode1, DroidPier Companion launcher label. Production manifest excludes StreamProbeActivity."
     },
     "android_screen_visual_review": {
-      "status": "pending",
-      "evidence": ""
+      "status": "passed",
+      "evidence": "2026-08-31: actual signed APK rendered on dedicated Android 15 emulator. Status-bar contrast, safe insets, permission denial state, authenticated status, and explicit disconnect reviewed. Screenshot: docs/images/companion-setup.png."
     },
     "desktop_screen_visual_review": {
       "status": "passed",

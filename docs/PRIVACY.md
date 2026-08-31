@@ -21,3 +21,7 @@ profiles. No automatic silent software updater is included.
 
 Before sharing a diagnostic or screenshot, remove personal app content, device
 identifiers, notification text, clipboard data, addresses and pairing credentials.
+
+Android requires the normal `CHANGE_NETWORK_STATE` permission for this network-based
+connected-device foreground service. The companion declares it to run the session
+service on Android 14 and later; it does not use it to silently change network settings.
