@@ -8,8 +8,10 @@ import 'bootstrap/desktop_clipboard_coordinator.dart';
 import 'bootstrap/facade_factory.dart';
 import 'bootstrap/host_shutdown.dart';
 import 'bootstrap/reporting_facade.dart';
+import 'ui/apps/app_ranking.dart' show AppLaunchStats;
 import 'ui/shell/app_shell.dart';
 import 'ui/theme/dex_theme.dart';
+import 'ui/workspace/window_geometry_store.dart' show RememberedWindow;
 
 void main() {
   final facade = createFacade();
@@ -18,9 +20,10 @@ void main() {
 }
 
 class OpenDexApplication extends StatefulWidget {
-  const OpenDexApplication({required this.facade, super.key});
+  const OpenDexApplication({required this.facade, this.preferences, super.key});
 
   final OpenDexFacade facade;
+  final DeskPreferences? preferences;
 
   @override
   State<OpenDexApplication> createState() => _OpenDexApplicationState();
@@ -36,7 +39,9 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
     facade: _facade,
   );
 
-  final DeskPreferences _preferences = DeskPreferences();
+  late final DeskPreferences _preferences =
+      widget.preferences ?? DeskPreferences();
+  Future<void> _preferenceSaveTail = Future<void>.value();
 
   /// The persisted desk settings. Starts at defaults and is replaced once the
   /// settings file has loaded, so the first frame is never blocked on disk.
@@ -60,7 +65,10 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
 
   void _updatePreferences(DeskPreferencesData next) {
     setState(() => _prefs = next);
-    unawaited(_preferences.save(next));
+    _preferenceSaveTail = _preferenceSaveTail.then(
+      (_) => _preferences.save(next),
+    );
+    unawaited(_preferenceSaveTail);
   }
 
   void _showError(OpenDexError error) {
@@ -107,6 +115,59 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
               wallpaperIndex: _prefs.wallpaperIndex,
               onWallpaperChanged: (int i) =>
                   _updatePreferences(_prefs.copyWith(wallpaperIndex: i)),
+              launchHistory: <String, AppLaunchStats>{
+                for (final MapEntry<String, LaunchRecord> entry
+                    in _prefs.launchHistory.entries)
+                  entry.key: AppLaunchStats(
+                    count: entry.value.count,
+                    lastLaunchedMs: entry.value.lastLaunchedMs,
+                  ),
+              },
+              onLaunchHistoryChanged: (Map<String, AppLaunchStats> history) =>
+                  _updatePreferences(
+                    _prefs.copyWith(
+                      launchHistory: <String, LaunchRecord>{
+                        for (final MapEntry<String, AppLaunchStats> entry
+                            in history.entries)
+                          entry.key: LaunchRecord(
+                            count: entry.value.count,
+                            lastLaunchedMs: entry.value.lastLaunchedMs,
+                          ),
+                      },
+                    ),
+                  ),
+              pinnedPackages: _prefs.pinnedPackages,
+              onPinnedChanged: (List<String> packages) =>
+                  _updatePreferences(_prefs.copyWith(pinnedPackages: packages)),
+              rememberedWindows: <String, RememberedWindow>{
+                for (final MapEntry<String, StoredWindowGeometry> entry
+                    in _prefs.windowGeometry.entries)
+                  entry.key: RememberedWindow(
+                    geometry: WindowGeometry(
+                      x: entry.value.x,
+                      y: entry.value.y,
+                      width: entry.value.width,
+                      height: entry.value.height,
+                    ),
+                    maximised: entry.value.maximised,
+                  ),
+              },
+              onRememberedWindowsChanged:
+                  (Map<String, RememberedWindow> windows) => _updatePreferences(
+                    _prefs.copyWith(
+                      windowGeometry: <String, StoredWindowGeometry>{
+                        for (final MapEntry<String, RememberedWindow> entry
+                            in windows.entries)
+                          entry.key: StoredWindowGeometry(
+                            x: entry.value.geometry.x,
+                            y: entry.value.geometry.y,
+                            width: entry.value.geometry.width,
+                            height: entry.value.geometry.height,
+                            maximised: entry.value.maximised,
+                          ),
+                      },
+                    ),
+                  ),
             ),
           );
         },
