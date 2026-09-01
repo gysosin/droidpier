@@ -178,6 +178,17 @@ class _WorkspaceState extends State<Workspace> {
                 onDragEnd: () => _onDragEnd(size),
                 onResizeStart: () => _setInteracting(w.id),
                 onResizeEnd: () => _setInteracting(null),
+                // Only offered when there is in fact another window to close;
+                // otherwise the entry is absent rather than a no-op.
+                onCloseOthers: widget.windows.length > 1
+                    ? () {
+                        for (final WorkspaceWindow other in widget.windows) {
+                          if (other.id != w.id) {
+                            widget.intents.close(other.id);
+                          }
+                        }
+                      }
+                    : null,
               ),
           ],
         );
@@ -197,6 +208,7 @@ class _Positioned extends StatelessWidget {
     this.onDragEnd,
     this.onResizeStart,
     this.onResizeEnd,
+    this.onCloseOthers,
     super.key,
   });
 
@@ -213,6 +225,9 @@ class _Positioned extends StatelessWidget {
   final VoidCallback? onDragEnd;
   final VoidCallback? onResizeStart;
   final VoidCallback? onResizeEnd;
+
+  /// Closes every other window, for the title bar's context menu.
+  final VoidCallback? onCloseOthers;
 
   /// Maximised fills the workspace it is given; the shell has already reserved
   /// the menu bar and dock, so "the workspace" is exactly this box.
@@ -297,6 +312,7 @@ class _Positioned extends StatelessWidget {
               onDragTo: onDragTo,
               onDragMove: onDragMove,
               onDragEnd: onDragEnd,
+              onCloseOthers: onCloseOthers,
             ),
           ),
           // Painted last so they win the border, which is what a person aims
