@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -673,21 +674,180 @@ class _LiveBadge extends StatelessWidget {
 /// desk, taskbar and title bar are gone. It reuses the same [_Surface] and
 /// input wiring as the framed [AppWindow] so a tap lands in the same place on
 /// the phone whether the window is framed or fullscreen.
-class WindowStage extends StatelessWidget {
-  const WindowStage({required this.window, required this.intents, super.key});
+class WindowStage extends StatefulWidget {
+  const WindowStage({
+    required this.window,
+    required this.intents,
+    this.onExit,
+    super.key,
+  });
 
   final WorkspaceWindow window;
   final WorkspaceIntents intents;
 
+  /// Leaves fullscreen. Null only in harnesses that render the stage alone; in
+  /// the product the shell always supplies it, because a screen with no visible
+  /// way out is the fault this exists to fix.
+  final VoidCallback? onExit;
+
+  @override
+  State<WindowStage> createState() => _WindowStageState();
+}
+
+class _WindowStageState extends State<WindowStage> {
+  /// The stage was a bare black rectangle. Esc and F11 both leave it and
+  /// neither is discoverable, so anyone who pressed F11 once was looking at a
+  /// screen with no apparent way back.
+  ///
+  /// Two answers, which is what every video player settled on: say it once on
+  /// arrival, then keep a real control one pointer-move away.
+  bool _hinting = true;
+  bool _hovering = false;
+  Timer? _hintTimer;
+
+  /// Long enough to read, short enough not to sit on the video.
+  static const Duration _hintFor = Duration(seconds: 5);
+
+  @override
+  void initState() {
+    super.initState();
+    _hintTimer = Timer(_hintFor, () {
+      if (mounted) setState(() => _hinting = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hintTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
-    final WindowInput input = _inputFor(window, intents);
+    final TextTheme t = Theme.of(context).textTheme;
+    final WindowInput input = _inputFor(widget.window, widget.intents);
+    final bool showChrome = _hinting || _hovering;
+
     return ColoredBox(
       color: const Color(0xFF000000),
-      child: input.wrap(
-        enabled: window.isFocused,
-        child: _Surface(window: window, colors: c),
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          input.wrap(
+            enabled: widget.window.isFocused,
+            child: _Surface(window: widget.window, colors: c),
+          ),
+          // A strip along the top rather than the whole surface: the rest of
+          // the stage belongs to the app, and a MouseRegion over all of it
+          // would swallow hover from the phone.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 96,
+            child: MouseRegion(
+              opaque: false,
+              onEnter: (_) => setState(() => _hovering = true),
+              onExit: (_) => setState(() => _hovering = false),
+              child: IgnorePointer(
+                ignoring: !showChrome,
+                child: AnimatedOpacity(
+                  opacity: showChrome ? 1 : 0,
+                  duration: DexMotion.enabled(context)
+                      ? DexDuration.standard
+                      : Duration.zero,
+                  curve: DexMotion.arrive,
+                  child: _StageChrome(
+                    label: widget.window.session.application.label,
+                    colors: c,
+                    text: t,
+                    onExit: widget.onExit,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The bar that appears over the top of a fullscreen window.
+class _StageChrome extends StatelessWidget {
+  const _StageChrome({
+    required this.label,
+    required this.colors,
+    required this.text,
+    required this.onExit,
+  });
+
+  final String label;
+  final DexColors colors;
+  final TextTheme text;
+  final VoidCallback? onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Colors.black.withValues(alpha: 0.72),
+            Colors.black.withValues(alpha: 0),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          DexSpace.xl,
+          DexSpace.lg,
+          DexSpace.lg,
+          DexSpace.xl,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    label,
+                    style: text.titleMedium?.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: 2),
+                  // Names both keys. Someone who reached fullscreen by F11
+                  // will try F11 to leave; someone who did not will try Esc.
+                  Text(
+                    'Press Esc or F11 to leave fullscreen',
+                    style: text.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (onExit != null)
+              Tooltip(
+                message: 'Exit fullscreen',
+                child: IconButton(
+                  onPressed: onExit,
+                  color: Colors.white,
+                  iconSize: 20,
+                  constraints: const BoxConstraints(
+                    minWidth: DexHit.primary,
+                    minHeight: DexHit.primary,
+                  ),
+                  icon: const Icon(Icons.fullscreen_exit),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

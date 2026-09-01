@@ -61,6 +61,40 @@ class _WorkspaceState extends State<Workspace> {
   /// on release.
   final Map<String, WindowGeometry> _drag = <String, WindowGeometry>{};
 
+  /// The last geometry each window had while *not* snapped.
+  ///
+  /// Dragging a snapped window off its edge has to give it back the size it had
+  /// before, which is what every desktop does and what this did not: snapping
+  /// replaced the geometry outright, so a window that had once been snapped
+  /// kept the half-screen size for the rest of its life however far it was
+  /// dragged.
+  ///
+  /// Recorded by observing geometry rather than by hooking the snap, so it
+  /// covers both ways in — dragging to an edge, and the title bar's menu, which
+  /// goes straight to the backend without passing through here.
+  final Map<String, WindowGeometry> _lastFree = <String, WindowGeometry>{};
+
+  /// Where the pointer last was, per window, so a restored window can be placed
+  /// under the cursor rather than jumping away from it.
+  final Map<String, Offset> _pointer = <String, Offset>{};
+
+  /// Whether [g] is sitting exactly on one of the snap rectangles for [size].
+  ///
+  /// Compared with a tolerance because the geometry makes a round trip through
+  /// the backend and back, and an exact double match is not guaranteed.
+  static bool _isSnapped(WindowGeometry g, Size size) {
+    for (final WindowSnap snap in WindowSnap.values) {
+      final WindowGeometry r = snap.geometryIn(size);
+      if ((g.x - r.x).abs() < 2 &&
+          (g.y - r.y).abs() < 2 &&
+          (g.width - r.width).abs() < 2 &&
+          (g.height - r.height).abs() < 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void _setInteracting(String? id) {
     if (_interactingId == id) return;
     setState(() => _interactingId = id);
@@ -74,6 +108,18 @@ class _WorkspaceState extends State<Workspace> {
           .firstWhere((WorkspaceWindow? w) => w?.id == id, orElse: () => null);
       if (w == null) return; // window closed mid-drag
       base = w.geometry;
+
+      // Dragging a snapped window off its edge gives it back the size it had
+      // before it snapped, and puts it under the cursor rather than leaving it
+      // to lurch away from the pointer.
+      final WindowGeometry? free = _lastFree[id];
+      if (free != null && _isSnapped(base, size)) {
+        final Offset? at = _pointer[id];
+        final double x = at != null
+            ? at.dx - free.width / 2
+            : base.x + (base.width - free.width) / 2;
+        base = free.copyWith(x: x, y: base.y);
+      }
     }
     setState(() {
       _drag[id] = base!
@@ -91,6 +137,7 @@ class _WorkspaceState extends State<Workspace> {
       return;
     }
     final Offset local = box.globalToLocal(global);
+    _pointer[id] = local;
     final WindowSnap? zone = WindowSnap.forPointer(local, size);
     if (zone != _preview || id != _draggingId) {
       setState(() {
@@ -137,6 +184,21 @@ class _WorkspaceState extends State<Workspace> {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final Size size = Size(constraints.maxWidth, constraints.maxHeight);
+
+        // Remember every window's un-snapped geometry, so dragging one off a
+        // snap edge can give it back. Skipped while a window is being dragged,
+        // or the size it is being restored *to* would immediately overwrite the
+        // size it is being restored *from*.
+        for (final WorkspaceWindow w in widget.windows) {
+          if (w.id == _interactingId) continue;
+          if (w.displayState != WindowDisplayState.normal) continue;
+          if (_isSnapped(w.geometry, size)) continue;
+          _lastFree[w.id] = w.geometry;
+        }
+        _lastFree.removeWhere(
+          (String id, _) =>
+              !widget.windows.any((WorkspaceWindow w) => w.id == id),
+        );
 
         // Minimised windows live in the dock, not the workspace.
         final List<WorkspaceWindow> visible =
