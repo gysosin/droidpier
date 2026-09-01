@@ -46,6 +46,28 @@ Desktop shell improvements. Keyboard, launcher and window management.
   per frame over the live video texture, which cost playback smoothness.
 - Every corner radius is back on the token scale; several were one or two
   pixels off it, which is what made edges read as unfinished.
+- Every failure now says what to do about it. Twelve error codes existed and
+  none of them was explained: a phone waiting for you to tap Allow, two phones
+  connected at once and a version mismatch all arrived as one sentence and a
+  code name. Wireless failures get more specific advice again, because a
+  refused pairing code and a phone that was never reached need opposite
+  answers.
+- A failed start no longer shows the raw adb transcript. It can carry a device
+  serial, a network address or a local path, so it is now copied deliberately
+  rather than put on screen, with a reminder to read it before sharing.
+- A failed start also offers to choose a different phone. Retrying is not the
+  answer when the problem is that two are connected.
+- A notification group folds after three, with a count on the sender. One
+  chatty app no longer pushes every other sender off the screen.
+- Alt+Shift+Tab steps backwards through open windows. The switcher also holds
+  its order while open — during streaming the list could reorder underneath
+  the highlight, so releasing Alt could focus a window you never picked.
+- Turn a window portrait or landscape from its title bar.
+- Taps land where you point them. Pointer input ignored the letterbox, so
+  whenever the video and the window disagreed on shape every tap was offset,
+  and a tap on a black bar landed in the middle of the app.
+- A short first-run tour points out the launcher, window snapping, the taskbar
+  and the tray, once.
 
 ## 0.1.0-beta.2 — 2026-09-01
 
