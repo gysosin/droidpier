@@ -57,6 +57,35 @@ void main() {
     );
   });
 
+  testWidgets('a failure says what to do about it', (
+    WidgetTester tester,
+  ) async {
+    // The code and the transcript both describe the failure. Neither tells a
+    // person what to try, and an error with no next step is a dead end.
+    await pumpBoot(
+      tester,
+      const OpenDexError(
+        code: OpenDexErrorCode.deploymentFailed,
+        message: 'The Android companion could not start.',
+        technicalDetails: 'INSTALL_FAILED_USER_RESTRICTED',
+      ),
+    );
+    expect(find.textContaining('Play Protect'), findsOneWidget);
+  });
+
+  testWidgets('two phones is explained rather than left as a code', (
+    WidgetTester tester,
+  ) async {
+    await pumpBoot(
+      tester,
+      const OpenDexError(
+        code: OpenDexErrorCode.multipleDevices,
+        message: 'Could not choose a phone.',
+      ),
+    );
+    expect(find.textContaining('More than one phone'), findsOneWidget);
+  });
+
   testWidgets('an error with no detail shows no empty space for it', (
     WidgetTester tester,
   ) async {

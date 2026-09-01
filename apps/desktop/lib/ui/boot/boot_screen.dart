@@ -3,6 +3,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
+import '../util/error_guidance.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
@@ -393,6 +394,14 @@ class _ErrorNote extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: DexSpace.xs),
+          ],
+          // What to try, before the machine-readable parts. This is the only
+          // line most people will read, so it goes above the code and above
+          // the transcript rather than after them.
+          if (guidanceFor(error) case final String advice) ...<Widget>[
+            const SizedBox(height: DexSpace.xs),
+            Text(advice, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: DexSpace.sm),
           ],
           Text(error.code.name, style: DexTheme.data(colors, size: 11)),
           // The cause, when the backend captured one.
