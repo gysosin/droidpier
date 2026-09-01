@@ -4,6 +4,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
+import 'volume_labels.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
@@ -133,7 +134,10 @@ class ControlCenter extends StatelessWidget {
   static (String, IconData) _describe(DeviceControl c) => switch (c) {
     DeviceControl.wifi => ('Wi-Fi', Icons.wifi),
     DeviceControl.bluetooth => ('Bluetooth', Icons.bluetooth),
-    DeviceControl.airplaneMode => ('Airplane mode', Icons.airplanemode_active),
+    // "Airplane mode" does not fit the tile and rendered as "Airplane mo…".
+    // A truncated label reads as a rendering fault; the shorter word is
+    // unambiguous next to the aeroplane icon.
+    DeviceControl.airplaneMode => ('Airplane', Icons.airplanemode_active),
     DeviceControl.rotationLock => ('Rotation lock', Icons.screen_lock_rotation),
     DeviceControl.torch => ('Torch', Icons.flashlight_on),
     DeviceControl.mobileData => ('Mobile data', Icons.signal_cellular_alt),
@@ -143,11 +147,15 @@ class ControlCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
+    // Not alphabetical. Sorting by key put "alarm" above "music", which is
+    // correct alphabetically and wrong in every other sense.
+    final List<String> keys = sortVolumeStreams(telemetry.volume.keys);
     final List<MapEntry<String, VolumeLevel>> volumes =
-        telemetry.volume.entries.toList()..sort(
-          (MapEntry<String, VolumeLevel> a, MapEntry<String, VolumeLevel> b) =>
-              a.key.compareTo(b.key),
-        );
+        <MapEntry<String, VolumeLevel>>[
+          for (final String k in keys)
+            if (telemetry.volume[k] case final VolumeLevel v)
+              MapEntry<String, VolumeLevel>(k, v),
+        ];
 
     // Wi-Fi and Bluetooth ride the two wide pills at the top, as the reference
     // has it; the rest are circular toggles in a grid below.
@@ -517,12 +525,21 @@ class _Volume extends StatelessWidget {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 58,
-            child: Text(stream, style: DexTheme.data(colors, size: 11)),
+            // 92, not 58: 58 fitted "music" and "ring" because those were the
+            // raw keys. "Notifications" is the longest real label and needs
+            // the room, and a fixed width keeps every slider starting on the
+            // same line rather than stepping in and out with the text.
+            width: 92,
+            child: Text(
+              volumeStreamLabel(stream),
+              style: DexTheme.data(colors, size: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           Expanded(
             child: Semantics(
-              label: '$stream volume',
+              label: '${volumeStreamLabel(stream)} volume',
               child: Slider(
                 value: level.current.clamp(0, level.maximum).toDouble(),
                 max: max,
