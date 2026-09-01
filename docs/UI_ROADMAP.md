@@ -12,8 +12,7 @@ guards both. Nothing here is a release commitment; see [Roadmap](ROADMAP.md) for
 shipping plans. The committed visual language lives with the maintainers.
 
 Scoring: **impact** is how much a user notices, **effort** is engineering days for
-one person. Anything touching `apps/desktop/lib/ui/**` is Claude-owned, anything
-under `android/**` is Codex-owned.
+one person.
 
 ## 1. Desktop shell — what is missing
 
@@ -43,7 +42,6 @@ not find.
 | 2.4 | **Per-window zoom / DPI scale** and **rotation lock** | Android apps render at phone density; a 4K monitor makes them unreadable | `lib/ui/workspace/app_window.dart`, surface pipeline |
 | 2.5 | **Screenshot and screen recording** of a single window or the whole workspace, saved to a chosen folder with a toast | Currently only an internal capture path exists; this is a top-five request for any mirroring tool | `lib/ui/workspace/workspace.dart`, `lib/ui/desk/control_center.dart` |
 | 2.6 | **Multi-monitor awareness** — remember which display the shell opened on, keep snapping per-display | Desktop users have two screens; a shell that ignores that feels like a phone app | shell + platform runner |
-| 2.7 | **File drag-and-drop** desktop → phone (push to Downloads) and phone → desktop | The single highest-value non-window feature; makes DroidPier a workflow tool rather than a viewer | `lib/ui/workspace/`, `packages/open_dex_api` (REQUEST to Codex) |
 
 ### Tier 3 — polish and differentiation
 

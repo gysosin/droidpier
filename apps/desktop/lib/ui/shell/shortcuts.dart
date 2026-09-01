@@ -50,9 +50,12 @@ class DexKeyStroke {
   /// How the cheat sheet writes this stroke, e.g. `Ctrl+Shift+D`.
   String get label {
     final StringBuffer b = StringBuffer();
+    // Ctrl, Alt, Shift — the order these are conventionally written in, so
+    // Alt+Shift+Tab reads as people name it rather than as Shift+Alt+Tab.
+    // Every existing label is unaffected: none of them combine Alt and Shift.
     if (control) b.write('Ctrl+');
-    if (shift) b.write('Shift+');
     if (alt) b.write('Alt+');
+    if (shift) b.write('Shift+');
     b.write(_keyName);
     return b.toString();
   }
@@ -135,6 +138,7 @@ class ShellShortcutHooks {
     required this.toggleDrawer,
     required this.toggleFullscreen,
     required this.cycleFocus,
+    required this.cycleFocusBack,
     required this.isFullscreen,
     required this.exitFullscreen,
     required this.isDiagnosticsOpen,
@@ -164,6 +168,10 @@ class ShellShortcutHooks {
   final void Function() toggleDrawer;
   final void Function() toggleFullscreen;
   final void Function() cycleFocus;
+
+  /// Alt+Shift+Tab. Matching is exact, so without its own entry this
+  /// combination is not a variant of Alt+Tab — it falls through to the phone.
+  final void Function() cycleFocusBack;
 
   final bool Function() isFullscreen;
   final void Function() exitFullscreen;
@@ -217,6 +225,19 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
     group: DexShortcutGroup.windows,
     when: _always,
     run: hooks.toggleFullscreen,
+  ),
+  // Before the plain Alt+Tab entry. Matching is exact so the order does not
+  // strictly matter, but reading them adjacent keeps the pair obvious.
+  DexShortcut(
+    stroke: const DexKeyStroke(
+      LogicalKeyboardKey.tab,
+      alt: true,
+      shift: true,
+    ),
+    label: 'Switch window backwards',
+    group: DexShortcutGroup.windows,
+    when: _always,
+    run: hooks.cycleFocusBack,
   ),
   DexShortcut(
     stroke: const DexKeyStroke(LogicalKeyboardKey.tab, alt: true),
