@@ -11,6 +11,7 @@ import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
+import 'connection_controller.dart';
 import 'shortcut_sheet.dart';
 import 'window_controller.dart';
 import 'shortcuts.dart';
@@ -177,118 +178,15 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  /// Attempts spent. Auto-connect stops after [_autoConnectLimit] so a phone
-  /// that genuinely cannot connect does not retry forever.
-  int _autoConnectAttempts = 0;
-  static const int _autoConnectLimit = 3;
-
-  /// True once this shell must never auto-connect again: a session has been
-  /// established, or the person has taken the decision over themselves.
-  ///
-  /// Latching on *success* rather than on the attempt is the difference between
-  /// a transient race resolving itself and the desk never appearing: the first
-  /// cut set the latch before calling, so one failed attempt — an adb server
-  /// still starting, a device that flickered during discovery — stranded the
-  /// app on the boot screen with no retry, which is exactly what was observed
-  /// at runtime.
-  ///
-  /// It never resets, and that is the point. `disconnect()` puts boot back to
-  /// idle and clears the selection, which is byte-for-byte the state that
-  /// invites an auto-connect — so without a latch that outlives the session,
-  /// hitting Disconnect would reconnect the phone before the person's finger
-  /// left the button. Disconnecting is a deliberate act; the only thing that
-  /// may undo it is another deliberate act.
-  ///
-  /// Every route into a live session sets it at the moment of the action rather
-  /// than by observing a snapshot, because two backend emissions inside one
-  /// frame coalesce into a single build: the shell can go from "connecting" to
-  /// "disconnected" without ever rendering the ready state in between. Watching
-  /// for [BootPhase.ready] alone would miss it exactly then.
-  bool _autoConnectDone = false;
-
-  /// Guards against a second attempt starting while one is in flight, since
-  /// this is driven from `build` and several frames can pass before the first
-  /// command resolves.
-  bool _autoConnectInFlight = false;
-
-  /// Long enough that a retry is not a busy loop, short enough that a person
-  /// watching the boot screen does not conclude it has hung.
-  static const Duration _autoConnectBackoff = Duration(seconds: 1);
-  Timer? _autoConnectRetry;
-
-  /// Connects on its own when there is exactly one authorised phone.
-  ///
-  /// The backend auto-*selects* that phone but never connects, so the product
-  /// used to open on a boot screen with a single button, which reads as a
-  /// connection failure. When to issue `connect` is a product decision, not an
-  /// implementation detail: connecting is a decision, not a reflex, so the
-  /// automatic case is confined to the one situation with no question in it.
-  ///
-  /// Deliberately narrow. Zero devices, several devices, or an unauthorised
-  /// one all still require a choice, because in those cases there is a real
-  /// question only the person can answer.
-  ///
-  /// It also only ever runs once per shell, before any session exists. See
-  /// [_autoConnectDone] for why a disconnect must not be allowed to restart it.
-  void _maybeAutoConnect() {
-    if (_autoConnectDone || _autoConnectInFlight) return;
-    if (_s.boot.isReady) {
-      // Connected by any route — this one, or the person choosing a phone.
-      _autoConnectDone = true;
-      return;
-    }
-    if (_autoConnectAttempts >= _autoConnectLimit) return;
-    if (_s.deviceStatus != LoadStatus.ready) return;
-    final List<DeviceSummary> authorised = _s.devices
-        .where((DeviceSummary d) => d.status == DeviceStatus.authorized)
-        .toList();
-    if (authorised.length != 1) return;
-
-    _autoConnectAttempts++;
-    _autoConnectInFlight = true;
-    // After the frame: this runs from build, and a facade command can emit a
-    // new snapshot synchronously.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      bool connected = false;
-      try {
-        if (!mounted) return;
-        final VoidResult selected = await widget.facade.selectDevice(
-          authorised.single.id,
-        );
-        // Connecting after a failed select would act on whatever was selected
-        // before, which could be nothing or the wrong phone.
-        if (!mounted || selected is! CommandSuccess) return;
-        connected =
-            await widget.facade.connectSelectedDevice() is CommandSuccess;
-      } finally {
-        // Order matters, and every exit path runs through here. The retry is
-        // scheduled only after the in-flight flag is cleared, or the timer
-        // would find the guard still closed and do nothing. Scheduling inside
-        // the `try` also missed the early returns entirely — a failed
-        // `selectDevice` scheduled nothing at all and spent an attempt.
-        _autoConnectInFlight = false;
-        if (connected) {
-          _autoConnectDone = true;
-        } else {
-          _scheduleAutoConnectRetry();
-        }
-      }
-    });
-  }
-
-  /// Re-runs the check after a pause.
-  ///
-  /// `_maybeAutoConnect` is driven from `build`, so without this a retry
-  /// depends on some unrelated snapshot happening to arrive and rebuild the
-  /// shell. On a phone that failed to connect there may be no such snapshot,
-  /// and waiting for one is how a person ends up staring at a boot screen.
-  void _scheduleAutoConnectRetry() {
-    if (_autoConnectDone || _autoConnectAttempts >= _autoConnectLimit) return;
-    _autoConnectRetry?.cancel();
-    _autoConnectRetry = Timer(_autoConnectBackoff, () {
+  /// When the shell connects a phone without being asked.
+  /// See `connection_controller.dart`.
+  late final ConnectionController _connection = ConnectionController(
+    facade: widget.facade,
+    notify: () {
       if (mounted) setState(() {});
-    });
-  }
+    },
+    isMounted: () => mounted,
+  );
 
   /// The time the desk should display.
   DateTime get _now => widget.now ?? _tick;
@@ -430,7 +328,7 @@ class _AppShellState extends State<AppShell> {
   void dispose() {
     _clock?.cancel();
     _wm.dispose();
-    _autoConnectRetry?.cancel();
+    _connection.dispose();
     HardwareKeyboard.instance.removeHandler(_onKey);
     super.dispose();
   }
@@ -702,7 +600,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _content(BuildContext context) {
-    _maybeAutoConnect();
+    _connection.maybeConnect(_s);
     // Before the link is up the boot screen is the whole window: there is
     // nothing else to do until it finishes.
     if (!_s.boot.isReady) {
@@ -714,7 +612,7 @@ class _AppShellState extends State<AppShell> {
             onRetry: () {
               // The person is driving now, so auto-connect stands down for
               // good — including after a later disconnect returns us here.
-              _autoConnectDone = true;
+              _connection.standDown();
               widget.facade.retryBoot();
             },
           ),
@@ -940,10 +838,8 @@ class _AppShellState extends State<AppShell> {
             final String? id = _selectedDeviceId ?? _s.selectedDevice?.id;
             if (id != null) {
               // The person picked this phone themselves. From here on the
-              // choice is theirs, so auto-connect never runs again — see
-              // [_autoConnectDone].
-              _autoConnectDone = true;
-              _autoConnectRetry?.cancel();
+              // choice is theirs, so auto-connect never runs again.
+              _connection.standDown();
               widget.facade.selectDevice(id);
               widget.facade.connectSelectedDevice();
             }
