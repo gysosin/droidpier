@@ -257,7 +257,7 @@ class _List extends StatelessWidget {
   }
 }
 
-class _Group extends StatelessWidget {
+class _Group extends StatefulWidget {
   const _Group({
     required this.packageName,
     required this.items,
@@ -276,19 +276,38 @@ class _Group extends StatelessWidget {
   final Future<void> Function(String id) onDismiss;
   final Future<void> Function(String id) onActivate;
 
+  /// How many of a sender's notifications show before the rest are folded
+  /// away. Three is enough to see what an app is saying without one chatty
+  /// group pushing every other sender off the screen.
+  static const int collapseAfter = 3;
+
+  @override
+  State<_Group> createState() => _GroupState();
+}
+
+class _GroupState extends State<_Group> {
+  bool _expanded = false;
+
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
     final TextTheme t = Theme.of(context).textTheme;
 
-    final AndroidApplication app = applications.firstWhere(
-      (AndroidApplication a) => a.packageName == packageName,
+    final List<NotificationItem> items = widget.items;
+    final bool foldable = items.length > _Group.collapseAfter;
+    final List<NotificationItem> visible = foldable && !_expanded
+        ? items.sublist(0, _Group.collapseAfter)
+        : items;
+    final int hidden = items.length - visible.length;
+
+    final AndroidApplication app = widget.applications.firstWhere(
+      (AndroidApplication a) => a.packageName == widget.packageName,
       // The sender may not be in the launcher list at all — a system service,
       // or an app installed since the last scan. A derived name beats a raw
       // package name, and both beat hiding the notification.
       orElse: () => AndroidApplication(
-        packageName: packageName,
-        label: displayNameFor(packageName),
+        packageName: widget.packageName,
+        label: displayNameFor(widget.packageName),
       ),
     );
     final String sender = isPlaceholderLabel(app.label, app.packageName)
@@ -312,20 +331,67 @@ class _Group extends StatelessWidget {
                   style: t.labelLarge?.copyWith(color: c.muted),
                 ),
               ),
+              // A badge reading "1" says nothing the row does not already say.
+              if (items.length > 1)
+                _CountBadge(count: items.length, colors: c),
             ],
           ),
           const SizedBox(height: DexSpace.sm),
-          for (final NotificationItem n in items)
+          for (final NotificationItem n in visible)
             _Item(
               item: n,
-              now: now,
+              now: widget.now,
               colors: c,
-              dismissing: pending.contains(n.id),
-              onDismiss: () => onDismiss(n.id),
-              onActivate: () => onActivate(n.id),
+              dismissing: widget.pending.contains(n.id),
+              onDismiss: () => widget.onDismiss(n.id),
+              onActivate: () => widget.onActivate(n.id),
+            ),
+          if (foldable)
+            Padding(
+              padding: const EdgeInsets.only(top: DexSpace.xs),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, DexHit.comfortable),
+                  ),
+                  child: Semantics(
+                    label: _expanded
+                        ? 'Collapse $sender'
+                        : 'Show $hidden more from $sender',
+                    child: Text(_expanded ? 'Show less' : 'Show $hidden more'),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
+    );
+  }
+}
+
+/// How many a sender has waiting.
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count, required this.colors});
+
+  final int count;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DexSpace.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: colors.raised,
+        borderRadius: BorderRadius.circular(DexRadius.pill),
+        border: Border.all(color: colors.line, width: DexStroke.hairline),
+      ),
+      // Tabular, so a group going from 9 to 10 does not shift the badge.
+      child: Text('$count', style: DexTheme.data(colors, size: 11)),
     );
   }
 }
