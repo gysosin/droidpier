@@ -198,4 +198,101 @@ void _keyMappingTests() {
     expect(s.logicalKeyId, LogicalKeyboardKey.keyA.keyId);
     expect(s.physicalKeyId, PhysicalKeyboardKey.keyA.usbHidUsage);
   });
+
+  testWidgets('a letterboxed surface maps taps to the video, not the frame', (
+    WidgetTester tester,
+  ) async {
+    // The window is wider than the video, so `BoxFit.contain` centres the
+    // picture with black bars left and right. Dividing by the whole widget —
+    // which is what the mapping used to do — puts a tap on the centre of the
+    // *frame* rather than the centre of the *picture*, and the error grows
+    // with the mismatch.
+    final List<Offset> seen = <Offset>[];
+    final ForwardInputToBackend input = ForwardInputToBackend(
+      surfacePixelSize: const Size(1080, 1920),
+      onPointer: (PointerEvent _, Offset surface) => seen.add(surface),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              // Fits the default 800x600 test surface: a wider frame would
+              // overflow and every coordinate below would be measured against
+              // a clipped rect.
+              width: 600,
+              height: 320,
+              child: input.wrap(
+                enabled: true,
+                child: const ColoredBox(
+                  key: Key('surface'),
+                  color: Color(0xFF000000),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Deliberately off centre. The centre is the fixed point of both the
+    // correct and the incorrect mapping, so a centre tap cannot tell them
+    // apart — the first version of this test passed against the bug.
+    //
+    // 1080x1920 contained in 600x320 scales by 1/6, so the picture is 180
+    // wide and starts 210 in. A quarter across the picture is surface x=270;
+    // dividing by the whole frame would report about 459.
+    final Rect box = tester.getRect(find.byKey(const Key('surface')));
+    await tester.tapAt(Offset(box.left + 210 + 45, box.center.dy));
+    await tester.pump();
+
+    expect(seen, isNotEmpty);
+    expect(seen.first.dx, closeTo(270, 1), reason: 'a quarter across the video');
+    expect(seen.first.dy, closeTo(960, 1));
+  });
+
+  testWidgets('a tap on the black bar clamps to the edge of the video', (
+    WidgetTester tester,
+  ) async {
+    // It cannot be delivered faithfully — there is no app under a letterbox
+    // bar — so the nearest edge is the honest answer. Mapping it into the
+    // middle of the app, which is what dividing by the whole frame did, means
+    // a click on nothing presses something.
+    final List<Offset> seen = <Offset>[];
+    final ForwardInputToBackend input = ForwardInputToBackend(
+      surfacePixelSize: const Size(1080, 1920),
+      onPointer: (PointerEvent _, Offset surface) => seen.add(surface),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 600,
+              height: 320,
+              child: input.wrap(
+                enabled: true,
+                child: const ColoredBox(
+                  key: Key('surface'),
+                  color: Color(0xFF000000),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Rect box = tester.getRect(find.byKey(const Key('surface')));
+    // Well inside the left bar: the picture starts 210px in.
+    await tester.tapAt(Offset(box.left + 20, box.center.dy));
+    await tester.pump();
+
+    expect(seen, isNotEmpty);
+    expect(seen.first.dx, 0);
+  });
 }
