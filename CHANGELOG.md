@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased
+
+Desktop shell improvements. Keyboard, launcher and window management.
+
+- Keyboard shortcuts are defined once and documented by construction. Ctrl+/,
+  F1, or `?` opens a cheat sheet listing every accelerator, rendered from the
+  same list the dispatcher walks, so it cannot drift out of date.
+- Launcher search ranks by match quality rather than the alphabet: literal
+  prefix, then initials, then word start, substring and scattered letters.
+  Initials mean "wa" finds WhatsApp, which a substring search cannot — the
+  letters are not adjacent in the name.
+- Search results weight by launch frequency and recency, so the drawer learns
+  which apps are actually used. Habit reorders matches but never promotes
+  something the query did not match.
+- Search results are a ranked list with a selected row. Up and Down move it,
+  Enter opens it, and typing returns to the top.
+- Right-click an app to pin it above the rest. Pins survive restart.
+- Right-click a window title bar for snapping to halves and quarters,
+  Maximise/Restore, Minimise, Fullscreen, Close and Close others.
+- Applications reopen where they were left, at the size they were, maximised
+  if they were. Placements are clamped so a window saved on a larger monitor
+  cannot restore beyond the edge of a smaller one.
+- Empty, loading, error, no-match, results and pinned states of the launcher
+  all carry golden coverage.
+- Fixed: the auto-connect retry cancelled the window-move flush timer, a
+  latent fault that would have shown up as a dragged window forgetting its
+  position once the two paths could overlap.
+
 ## 0.1.0-beta.2 — 2026-09-01
 
 Experimental Linux/Android preview. These changes are not in beta.1 downloads.
