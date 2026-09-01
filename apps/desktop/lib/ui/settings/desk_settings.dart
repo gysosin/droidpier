@@ -31,6 +31,8 @@ class DeskSettings extends StatelessWidget {
     required this.onWallpaperChanged,
     this.accentIndex = 0,
     this.onAccentChanged = _ignoreAccent,
+    this.glassEnabled = true,
+    this.onGlassChanged = _ignoreGlass,
     required this.onDisconnect,
     this.onOpenPermissions,
     this.onManagePhones,
@@ -50,7 +52,12 @@ class DeskSettings extends StatelessWidget {
   final int accentIndex;
   final ValueChanged<int> onAccentChanged;
 
+  /// Whether panels frost what is behind them, and its setter.
+  final bool glassEnabled;
+  final ValueChanged<bool> onGlassChanged;
+
   static void _ignoreAccent(int _) {}
+  static void _ignoreGlass(bool _) {}
   final VoidCallback onDisconnect;
 
   /// The tray no longer carries these; Settings is the hub. Null hides the row
@@ -101,6 +108,16 @@ class DeskSettings extends StatelessWidget {
                           selected: accentIndex,
                           onSelected: onAccentChanged,
                           colors: c,
+                        ),
+                        const SizedBox(height: DexSpace.lg),
+                        _SwitchRow(
+                          title: 'Frosted panels',
+                          detail:
+                              'Blurs the desk behind panels. Turn off for a '
+                              'flatter, cheaper desk on weaker hardware.',
+                          colors: c,
+                          value: glassEnabled,
+                          onChanged: onGlassChanged,
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _WallpaperRow(

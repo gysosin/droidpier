@@ -22,6 +22,7 @@ import '../motion/sustained.dart';
 import '../recovery/recovery_overlay.dart';
 import '../settings/desk_settings.dart';
 import '../theme/dex_tokens.dart';
+import '../theme/glass.dart';
 import '../theme/wallpapers.dart';
 import '../workspace/app_window.dart';
 import '../workspace/window_input.dart';
@@ -71,6 +72,8 @@ class AppShell extends StatefulWidget {
     this.onPinnedChanged = _ignorePins,
     this.accentIndex = 0,
     this.onAccentChanged = _ignoreInt,
+    this.glassEnabled = true,
+    this.onGlassChanged = _ignoreBool,
     this.rememberedWindows = const <String, RememberedWindow>{},
     this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
@@ -116,6 +119,14 @@ class AppShell extends StatefulWidget {
   /// already is — the shell sits inside it and cannot change it from within.
   final int accentIndex;
   final ValueChanged<int> onAccentChanged;
+
+  /// Whether panels frost what is behind them, and its setter.
+  ///
+  /// Off is the low-end-GPU and legibility path: a `BackdropFilter` is
+  /// expensive, and heavy translucency is hard to read. Off removes the filter
+  /// entirely rather than softening it.
+  final bool glassEnabled;
+  final ValueChanged<bool> onGlassChanged;
 
   /// Where each application's window was last left, and its setter. Lifted for
   /// the same reason as [launchHistory].
@@ -603,7 +614,15 @@ class _AppShellState extends State<AppShell> {
                   kWallpaperChoices.length - 1,
                 )]
                 .colors,
-      child: Material(color: Colors.transparent, child: _content(context)),
+      // The outer blur gate: the person's own choice, covering every surface
+      // including those stacked beside the desk rather than inside it — the
+      // launcher and the settings overlay both sit outside the desk's own
+      // scope, so gating only there left them frosted after glass was off.
+      // The desk nests a narrower scope for the streaming case.
+      child: GlassBlurScope(
+        enabled: widget.glassEnabled,
+        child: Material(color: Colors.transparent, child: _content(context)),
+      ),
     );
   }
 
@@ -691,6 +710,7 @@ class _AppShellState extends State<AppShell> {
       children: <Widget>[
         Expanded(
           child: Desk(
+            glassEnabled: widget.glassEnabled,
             snapshot: _s,
             now: _now,
             onOpenLauncher: _toggleDrawer,
@@ -779,6 +799,8 @@ class _AppShellState extends State<AppShell> {
           onWallpaperChanged: widget.onWallpaperChanged,
           accentIndex: widget.accentIndex,
           onAccentChanged: widget.onAccentChanged,
+          glassEnabled: widget.glassEnabled,
+          onGlassChanged: widget.onGlassChanged,
           deviceLabel: _s.selectedDevice?.name,
           onManagePhones: () => setState(() {
             _settingsOpen = false;
@@ -894,11 +916,21 @@ class _Overlay extends StatelessWidget {
           child: GestureDetector(
             onTap: onDismiss,
             behavior: HitTestBehavior.opaque,
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-              child: ColoredBox(
-                color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.30),
-              ),
+            // Gated on the same scope as every panel, so turning frosted
+            // panels off actually turns them all off.
+            child: Builder(
+              builder: (BuildContext context) {
+                final Widget scrim = ColoredBox(
+                  color: Colors.black.withValues(
+                    alpha: isDark ? 0.55 : 0.30,
+                  ),
+                );
+                if (!GlassBlurScope.of(context)) return scrim;
+                return BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                  child: scrim,
+                );
+              },
             ),
           ),
         ),
