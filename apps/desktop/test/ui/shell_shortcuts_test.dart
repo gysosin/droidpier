@@ -243,6 +243,7 @@ void main() {
           toggleDrawer: () {},
           toggleFullscreen: () {},
           cycleFocus: () {},
+          cycleFocusBack: () {},
           isFullscreen: () => false,
           exitFullscreen: () {},
           isDiagnosticsOpen: () => false,
