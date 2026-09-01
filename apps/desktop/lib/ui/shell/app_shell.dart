@@ -12,6 +12,7 @@ import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
 import 'shortcut_sheet.dart';
+import 'window_controller.dart';
 import 'shortcuts.dart';
 import '../theme/dex_colors.dart';
 import '../connect/connection_screen.dart';
@@ -125,23 +126,16 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  /// Workspace state the contract does not carry yet.
-  ///
-  /// Held here only until `OpenDexFacade` publishes workspace state itself
-  /// (see `docs/ARCHITECTURE.md` for the facade boundary). When it does, this
-  /// map disappears and the values come from the snapshot — the widgets below
-  /// already read it as if it were remote, so the swap is mechanical.
-  final Map<String, WorkspaceWindow> _workspace = <String, WorkspaceWindow>{};
-
-  /// Windows already fitted to their video's aspect ratio (once, when the first
-  /// frame revealed it). Kept so a person can freely resize afterwards.
-  final Set<String> _aspectFitted = <String>{};
-
-  /// The title-bar height the controller subtracts from the window when mapping
-  /// it to a phone-display resolution. Kept in sync so a fitted window's
-  /// *content* matches the video aspect exactly — no black bars.
-  static const double _windowChrome = 34;
-  int _nextZ = 1;
+  /// Which windows exist and where they are. See `window_controller.dart`.
+  late final WindowController _wm = WindowController(
+    facade: widget.facade,
+    notify: () {
+      if (mounted) setState(() {});
+    },
+    isMounted: () => mounted,
+    rememberedWindows: () => widget.rememberedWindows,
+    onRememberedChanged: widget.onRememberedWindowsChanged,
+  );
 
   bool _settingsOpen = false;
   bool _drawerOpen = false;
@@ -320,121 +314,26 @@ class _AppShellState extends State<AppShell> {
   /// until the drag ends, so the frame tracks the pointer instead of waiting
   /// for a round trip and stuttering against stale echoes.
   List<WorkspaceWindow> _windows(BuildContext context) {
-    final Size approx = MediaQuery.sizeOf(context);
-
-    for (final WindowSessionState session in _s.windows) {
-      final WorkspaceWindow? existing = _workspace[session.id];
-      final bool dragging = _dragging == session.id;
-
-      if (existing == null) {
-        // A brand-new window has whatever geometry the backend defaults to,
-        // which is the same for every window — so two opened in a row would
-        // land exactly on top of each other. Cascade it and tell the backend,
-        // which then echoes our position back as the authoritative one.
-        // Where a brand-new window goes. A remembered placement wins; failing
-        // that the cascade keeps two windows opened in a row from landing
-        // exactly on top of each other.
-        final WindowGeometry? remembered = recallWindow(
-          widget.rememberedWindows,
-          session.application.packageName,
-          approx,
-        );
-        final WindowGeometry placed = _isUnplaced(session.geometry)
-            ? (remembered ?? cascadeGeometry(_workspace.length, approx))
-            : session.geometry;
-        _workspace[session.id] = WorkspaceWindow(
-          session: session,
-          geometry: placed,
-          zOrder: session.zOrder,
-          displayState: session.displayState,
-          surface: session.surface,
-          presentedFramesPerSecond: session.presentedFramesPerSecond,
-        );
-        // A window remembered as maximised comes back maximised.
-        final RememberedWindow? record =
-            widget.rememberedWindows[session.application.packageName];
-        if (record != null &&
-            record.maximised &&
-            session.displayState != WindowDisplayState.maximised) {
-          final String id = session.id;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              unawaited(
-                widget.facade.setWindowDisplayState(
-                  id,
-                  WindowDisplayState.maximised,
-                ),
-              );
-            }
-          });
-        }
-        if (placed != session.geometry) {
-          // Deferred to after the frame on purpose. `_windows` runs during
-          // build, and a facade command can emit a new snapshot synchronously —
-          // which re-enters build and throws "setState called during build".
-          final WindowGeometry send = placed;
-          final String id = session.id;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) unawaited(widget.facade.moveWindow(id, send));
-          });
-        }
-      } else {
-        _workspace[session.id] = existing.copyWith(
-          session: session,
-          geometry: dragging ? existing.geometry : session.geometry,
-          zOrder: session.zOrder,
-          displayState: session.displayState,
-          surface: session.surface,
-          presentedFramesPerSecond: session.presentedFramesPerSecond,
-        );
-      }
-    }
-
-    // Once a window's first frame reveals the app's aspect ratio, size the
-    // window to it (once). A portrait app then opens in a portrait window and
-    // the phone display stays portrait, instead of the default landscape window
-    // resizing the display wide and greying the app out. Skipped while dragging
-    // or once the person has been given the chance to resize.
-    for (final WindowSessionState session in _s.windows) {
-      final String id = session.id;
-      final WorkspaceWindow? w = _workspace[id];
-      if (w == null || _aspectFitted.contains(id) || _dragging == id) continue;
-      final WindowSurface? surface = w.surface;
-      if (surface == null ||
-          surface.pixelSize.width <= 0 ||
-          surface.pixelSize.height <= 0) {
-        continue;
-      }
-      _aspectFitted.add(id);
-      if (w.displayState != WindowDisplayState.normal) continue;
-      final WindowGeometry fitted = _fitToSurface(surface, approx, w.geometry);
-      if ((fitted.width - w.geometry.width).abs() < 1 &&
-          (fitted.height - w.geometry.height).abs() < 1) {
-        continue;
-      }
-      _workspace[id] = w.copyWith(geometry: fitted);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(widget.facade.moveWindow(id, fitted));
-      });
-    }
-    for (final MapEntry<String, WorkspaceWindow> entry in _workspace.entries) {
-      if (_s.windows.any((WindowSessionState w) => w.id == entry.key)) continue;
-      final WorkspaceWindow gone = entry.value;
-      final String reason =
-          gone.session.error?.message ??
-          (gone.session.status == WindowSessionStatus.failed
-              ? 'stopped unexpectedly'
-              : 'closed');
-      _recentExits.insert(
-        0,
-        '${_clockLabel(_now)}  ${gone.session.application.label} — $reason',
-      );
-      if (_recentExits.length > _recentExitsKept) _recentExits.removeLast();
-    }
-    _workspace.removeWhere(
-      (String id, _) => !_s.windows.any((WindowSessionState w) => w.id == id),
+    return _wm.sync(
+      sessions: _s.windows,
+      workspaceSize: MediaQuery.sizeOf(context),
+      onClosed: _logExit,
     );
-    return _workspace.values.toList();
+  }
+
+  /// Notes a window that has gone, for the diagnostics panel. The controller
+  /// reports the closure; formatting it needs the clock, which lives here.
+  void _logExit(WorkspaceWindow gone) {
+    final String reason =
+        gone.session.error?.message ??
+        (gone.session.status == WindowSessionStatus.failed
+            ? 'stopped unexpectedly'
+            : 'closed');
+    _recentExits.insert(
+      0,
+      '${_clockLabel(_now)}  ${gone.session.application.label} — $reason',
+    );
+    if (_recentExits.length > _recentExitsKept) _recentExits.removeLast();
   }
 
   /// Alt+Tab: focus the next window and raise it.
@@ -443,19 +342,6 @@ class _AppShellState extends State<AppShell> {
   /// presses feel like "the window behind this one" instead of an arbitrary
   /// list. Minimised windows are skipped — Alt+Tab to something invisible would
   /// look like nothing happened.
-  /// Windows Alt+Tab can reach, most recently used first.
-  List<WorkspaceWindow> get _switchable =>
-      _workspace.values
-          .where(
-            (WorkspaceWindow w) =>
-                w.session.status != WindowSessionStatus.closed,
-          )
-          .toList()
-        ..sort(
-          (WorkspaceWindow a, WorkspaceWindow b) =>
-              b.zOrder.compareTo(a.zOrder),
-        );
-
   /// Advances the Alt+Tab selection, opening the switcher on the first press.
   ///
   /// This used to swap focus silently on every press. With two windows that
@@ -463,7 +349,7 @@ class _AppShellState extends State<AppShell> {
   /// you are in the list. Selection is now committed when Alt is released,
   /// which is what every desktop does.
   void _cycleFocus() {
-    final List<WorkspaceWindow> open = _switchable;
+    final List<WorkspaceWindow> open = _wm.switchable;
     if (open.length < 2) {
       return;
     }
@@ -478,116 +364,13 @@ class _AppShellState extends State<AppShell> {
   /// Alt released: commit whatever the switcher landed on.
   void _commitSwitch() {
     if (!_switcherOpen) return;
-    final List<WorkspaceWindow> open = _switchable;
+    final List<WorkspaceWindow> open = _wm.switchable;
     final WorkspaceWindow? next = _switcherIndex < open.length
         ? open[_switcherIndex]
         : null;
     setState(() => _switcherOpen = false);
-    if (next != null) _raiseAndFocus(next.id);
+    if (next != null) _wm.raiseAndFocus(next.id);
   }
-
-  void _raiseAndFocus(String id) {
-    final WorkspaceWindow? w = _workspace[id];
-    if (w == null) return;
-    if (w.isMinimised) {
-      setState(() {
-        _workspace[id] = w.copyWith(displayState: WindowDisplayState.normal);
-      });
-      unawaited(
-        widget.facade.setWindowDisplayState(id, WindowDisplayState.normal),
-      );
-    }
-    setState(() {
-      _workspace[id] = _workspace[id]!.copyWith(zOrder: _nextZ++);
-    });
-    unawaited(widget.facade.raiseWindow(id));
-    widget.facade.focusWindow(id);
-  }
-
-  /// Dock click. A minimised window is restored first: focusing a window that
-  /// is not on screen changes nothing the person can see, which is exactly how
-  /// the minimise/restore round trip was broken.
-  void _focusOrRestore(String id) {
-    final WorkspaceWindow? w = _workspace[id];
-    if (w != null && w.isMinimised) {
-      setState(() {
-        _workspace[id] = w.copyWith(
-          displayState: WindowDisplayState.normal,
-          zOrder: _nextZ++,
-        );
-      });
-      // The backend owns displayState and `_windows` re-reads it on every
-      // rebuild, which fps telemetry triggers constantly. Without this the
-      // facade stays on `minimised`, the next snapshot clobbers the local
-      // restore, and the window snaps shut again — the restore that looked
-      // instant and then undid itself. `_raiseAndFocus` always did this; the
-      // taskbar path did not, which is why Alt-Tab restored and a dock click
-      // did not.
-      unawaited(
-        widget.facade.setWindowDisplayState(id, WindowDisplayState.normal),
-      );
-    }
-    widget.facade.focusWindow(id);
-  }
-
-  /// Latest geometry not yet sent to the backend, and the timer that will
-  /// send it.
-  ///
-  /// Trailing-edge on purpose: whatever the last geometry of a gesture is, it
-  /// is always delivered, so no explicit drag-end signal is needed and a drag
-  /// can never leave the backend holding a stale position.
-  final Map<String, WindowGeometry> _pendingMoves = <String, WindowGeometry>{};
-  Timer? _moveFlush;
-
-  /// Roughly twelve updates a second. Far below pointer rate, far above what
-  /// the backend needs to keep a window where the person put it.
-  static const Duration _moveThrottle = Duration(milliseconds: 80);
-
-  void _queueMove(String id, WindowGeometry g) {
-    _pendingMoves[id] = g;
-    _moveFlush ??= Timer(_moveThrottle, _flushMoves);
-  }
-
-  /// Remembers where a window was left, so relaunching reopens it there.
-  ///
-  /// Called on commit rather than continuously: `_queueMove`/`_flushMoves`
-  /// already coalesce a drag, and recording per pointer sample would write the
-  /// settings file dozens of times per second.
-  void _rememberGeometry(String id) {
-    final WorkspaceWindow? w = _workspace[id];
-    if (w == null) return;
-    widget.onRememberedWindowsChanged(
-      rememberWindow(
-        widget.rememberedWindows,
-        w.session.application.packageName,
-        w.geometry,
-        maximised: w.displayState == WindowDisplayState.maximised,
-      ),
-    );
-  }
-
-  void _flushMoves() {
-    _moveFlush = null;
-    if (_pendingMoves.isEmpty) return;
-    final Map<String, WindowGeometry> sending =
-        Map<String, WindowGeometry>.from(_pendingMoves);
-    _pendingMoves.clear();
-    for (final MapEntry<String, WindowGeometry> e in sending.entries) {
-      _rememberGeometry(e.key);
-      unawaited(
-        widget.facade.moveWindow(e.key, e.value).then((_) {
-          // Authority goes back to the backend only once it has the position.
-          if (mounted && _dragging == e.key && _pendingMoves.isEmpty) {
-            setState(() => _dragging = null);
-          }
-        }),
-      );
-    }
-  }
-
-  /// The window currently being dragged, if any. While a drag is in flight the
-  /// backend's echo of that window's geometry is ignored.
-  String? _dragging;
 
   bool _diagnosticsOpen = false;
 
@@ -606,44 +389,6 @@ class _AppShellState extends State<AppShell> {
   bool _switcherOpen = false;
   int _switcherIndex = 0;
 
-  /// Whether the backend has actually positioned this window, or is still
-  /// reporting the default it gives every new session.
-  static bool _isUnplaced(WindowGeometry g) =>
-      g.x == 64 && g.y == 64 && g.width == 640 && g.height == 480;
-
-  /// A window geometry whose *content* (height minus the title bar) matches the
-  /// video's aspect ratio, sized to ~85% of the work area and centred on the
-  /// window's current centre. The surface then fills the window with no black
-  /// bars, and the phone display the controller derives from the content keeps
-  /// the app's own aspect (so a portrait app is never greyed onto a wide
-  /// display).
-  WindowGeometry _fitToSurface(
-    WindowSurface surface,
-    Size workspace,
-    WindowGeometry current,
-  ) {
-    final double aspect = surface.pixelSize.width / surface.pixelSize.height;
-    // 0.78, not the full height: leave room for the floating dock band at the
-    // bottom so a tall portrait window is not forced taller than the work area
-    // (which would push its title bar off the top).
-    double contentH = workspace.height * 0.78 - _windowChrome;
-    double w = contentH * aspect;
-    final double maxW = workspace.width * 0.9;
-    if (w > maxW) {
-      w = maxW;
-      contentH = w / aspect;
-    }
-    final double h = contentH + _windowChrome;
-    final double cx = current.x + current.width / 2;
-    final double cy = current.y + current.height / 2;
-    return WindowGeometry(
-      x: cx - w / 2,
-      y: cy - h / 2,
-      width: w,
-      height: h,
-    ).clampedTo(workspace);
-  }
-
   WorkspaceIntents get _intents => WorkspaceIntents(
     fullscreen: _enterFullscreen,
     focus: (String id) => widget.facade.focusWindow(id),
@@ -653,22 +398,17 @@ class _AppShellState extends State<AppShell> {
     // follows. Local-only was the old behaviour and it meant dragging a window
     // moved our chrome while the app stayed where it was.
     raise: (String id) {
-      setState(() {
-        final WorkspaceWindow? w = _workspace[id];
-        if (w != null) {
-          _workspace[id] = w.copyWith(zOrder: _nextZ++);
-        }
-      });
+      setState(() => _wm.raiseLocally(id));
       unawaited(widget.facade.raiseWindow(id));
     },
     move: (String id, WindowGeometry g) {
       // Local first, every single event: this is what makes the frame track
       // the pointer.
       setState(() {
-        _dragging = id;
-        final WorkspaceWindow? w = _workspace[id];
+        _wm.dragging = id;
+        final WorkspaceWindow? w = _wm.windows[id];
         if (w != null) {
-          _workspace[id] = w.copyWith(geometry: g);
+          _wm.windows[id] = w.copyWith(geometry: g);
         }
       });
       // The backend, however, is told on a throttle. Every `moveWindow` makes
@@ -677,21 +417,9 @@ class _AppShellState extends State<AppShell> {
       // pointer rate that was sixty to a hundred full-tree repaints a second
       // on top of a live video texture, which showed up as blinking while
       // dragging.
-      _queueMove(id, g);
+      _wm.queueMove(id, g);
     },
-    setDisplayState: (String id, WindowDisplayState state) {
-      setState(() {
-        final WorkspaceWindow? w = _workspace[id];
-        if (w != null) {
-          _workspace[id] = w.copyWith(displayState: state);
-        }
-      });
-      // Maximised is part of the placement, so a change to it is worth
-      // remembering as much as a move is. Minimised is not: a window you come
-      // back to should not reopen hidden.
-      if (state != WindowDisplayState.minimised) _rememberGeometry(id);
-      unawaited(widget.facade.setWindowDisplayState(id, state));
-    },
+    setDisplayState: _wm.setDisplayState,
     close: (String id) => widget.facade.closeWindow(id),
     retry: (String id) => widget.facade.focusWindow(id),
     sendPointer: (String id, WindowPointerSample sample) =>
@@ -701,7 +429,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void dispose() {
     _clock?.cancel();
-    _moveFlush?.cancel();
+    _wm.dispose();
     _autoConnectRetry?.cancel();
     HardwareKeyboard.instance.removeHandler(_onKey);
     super.dispose();
@@ -801,7 +529,7 @@ class _AppShellState extends State<AppShell> {
   bool _forwardKeyToWindow(KeyEvent event) {
     if (_deskOwnsKeyboard) return false;
 
-    final WorkspaceWindow? target = _workspace.values
+    final WorkspaceWindow? target = _wm.windows.values
         .cast<WorkspaceWindow?>()
         .firstWhere(
           (WorkspaceWindow? w) =>
@@ -870,7 +598,7 @@ class _AppShellState extends State<AppShell> {
       _exitFullscreen();
       return;
     }
-    final WorkspaceWindow? target = _workspace.values
+    final WorkspaceWindow? target = _wm.windows.values
         .cast<WorkspaceWindow?>()
         .firstWhere(
           (WorkspaceWindow? w) =>
@@ -899,7 +627,7 @@ class _AppShellState extends State<AppShell> {
   /// Routes a nav-pill key to the focused streaming window's display. No-op
   /// when nothing is focused — the pill is disabled in that state anyway.
   void _sendNavKey(AndroidNavKey key) {
-    final WorkspaceWindow? target = _workspace.values
+    final WorkspaceWindow? target = _wm.windows.values
         .cast<WorkspaceWindow?>()
         .firstWhere(
           (WorkspaceWindow? w) =>
@@ -918,7 +646,7 @@ class _AppShellState extends State<AppShell> {
   /// expand (↗) button. Only a streaming window can be shown; a window still
   /// starting has nothing to fill the monitor with.
   void _enterFullscreen(String id) {
-    final WorkspaceWindow? w = _workspace[id];
+    final WorkspaceWindow? w = _wm.windows[id];
     if (w == null ||
         w.surface == null ||
         w.session.status != WindowSessionStatus.streaming) {
@@ -939,7 +667,7 @@ class _AppShellState extends State<AppShell> {
   WorkspaceWindow? get _fullscreenWindow {
     final String? id = _fullscreenId;
     if (id == null) return null;
-    final WorkspaceWindow? w = _workspace[id];
+    final WorkspaceWindow? w = _wm.windows[id];
     if (w == null ||
         w.surface == null ||
         w.session.status != WindowSessionStatus.streaming) {
@@ -1037,13 +765,13 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _switcher() {
-    final List<WorkspaceWindow> open = _switchable;
+    final List<WorkspaceWindow> open = _wm.switchable;
     return WindowSwitcher(
       windows: open,
       selected: _switcherIndex.clamp(0, open.isEmpty ? 0 : open.length - 1),
       onPick: (String id) {
         setState(() => _switcherOpen = false);
-        _raiseAndFocus(id);
+        _wm.raiseAndFocus(id);
       },
       onDismiss: () => setState(() => _switcherOpen = false),
     );
@@ -1062,7 +790,7 @@ class _AppShellState extends State<AppShell> {
             onOpenLauncher: _toggleDrawer,
             onWebSearch: _openUrl,
             onMediaAction: widget.facade.sendMediaAction,
-            onFocusWindow: _focusOrRestore,
+            onFocusWindow: _wm.focusOrRestore,
             onCloseWindow: widget.facade.closeWindow,
             onOpenSettings: () => setState(() {
               _settingsOpen = true;
@@ -1101,7 +829,7 @@ class _AppShellState extends State<AppShell> {
               emptyChild: const SizedBox.shrink(),
             ),
             windows: _windows(context),
-            minimisedWindows: _workspace.values
+            minimisedWindows: _wm.windows.values
                 .where((WorkspaceWindow w) => w.isMinimised)
                 .map((WorkspaceWindow w) => w.id)
                 .toSet(),
