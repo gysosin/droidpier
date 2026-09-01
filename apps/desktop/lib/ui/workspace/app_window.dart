@@ -547,7 +547,7 @@ class _Notice extends StatelessWidget {
 /// outside the desk and belonged to no one. [WindowSurface.textureId] is the
 /// handle the host registers for that window's video, and Flutter's [Texture]
 /// composites it into our tree like any other widget.
-class _Surface extends StatelessWidget {
+class _Surface extends StatefulWidget {
   const _Surface({
     required this.window,
     required this.colors,
@@ -564,9 +564,30 @@ class _Surface extends StatelessWidget {
   final WorkspaceIntents? intents;
 
   @override
+  State<_Surface> createState() => _SurfaceState();
+}
+
+class _SurfaceState extends State<_Surface> {
+  /// Whether this window has ever put a frame on screen.
+  ///
+  /// This is the whole of what separates a stalled stream from a still one. A
+  /// motionless app — a paused video, a page nobody is scrolling — presents
+  /// zero frames in an interval and is working perfectly; the Live badge says
+  /// as much, that the rate "counts changes, not speed". Only a window that
+  /// has never once painted is broken, and no amount of waiting distinguishes
+  /// the two, because a still screen stays still for as long as it likes.
+  bool _everPresented = false;
+
+  @override
   Widget build(BuildContext context) {
+    final WorkspaceWindow window = widget.window;
+    final DexColors colors = widget.colors;
+    final WorkspaceIntents? intents = widget.intents;
     final WindowSurface? surface = window.surface;
     final WidgetBuilder? preview = window.previewBuilder;
+
+    final double? rate = window.presentedFramesPerSecond;
+    if (rate != null && rate > 0) _everPresented = true;
 
     if (surface == null && preview == null) {
       // Streaming, but the host has not registered a texture for this window.
@@ -600,20 +621,19 @@ class _Surface extends StatelessWidget {
     // notice is cancelled long before it becomes visible. No timer ticks, and
     // once either end is reached the animation rests.
     //
-    // Eight seconds, and the length is the safety margin rather than a taste
-    // decision. A null rate means the backend has not reported one, which is
-    // not the same as reporting zero — so this is inferring a failure from
-    // absent data, and the only defence is to wait long enough that no healthy
-    // stream could still be silent. Telemetry drives a rebuild continuously
-    // while a window is up; eight seconds of nothing is not lag.
-    //
-    // It would be better not to infer at all. If the video path reported an
-    // explicit 0 for a session that has a texture and has painted nothing,
-    // this could fire on that instead, in a fraction of the time and with no
-    // guessing. Requested.
+    // Three seconds is now a courtesy rather than a guess: the condition is
+    // already specific — a completed measurement of zero, on a window that has
+    // never painted — so the delay only spares a window whose very first
+    // interval happens to land empty while it is still opening.
+    // Null is not zero. The backend emits a numeric rate on every completed
+    // one-second sample, so null means no interval has finished yet, while an
+    // explicit 0.0 means one finished and presented nothing. Coalescing the
+    // two would accuse every window that has only just opened.
     final bool stalled = surface != null &&
         intents != null &&
-        (window.presentedFramesPerSecond ?? 0) <= 0;
+        !_everPresented &&
+        rate != null &&
+        rate <= 0;
 
     final Widget video = ColoredBox(
       // Letterbox in black: a phone is taller than its window, and tinting the
@@ -652,7 +672,7 @@ class _Surface extends StatelessWidget {
         video,
         TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: stalled ? 1 : 0),
-          duration: const Duration(seconds: 8),
+          duration: const Duration(seconds: 3),
           // Nothing at all for the first seven tenths, then a fade. A notice
           // held at a quarter opacity over live video is not a gentler
           // warning, it is a smear — and it would report a stall that has not
@@ -672,7 +692,7 @@ class _Surface extends StatelessWidget {
                 'to draw it, but no frame has reached the desk. Reopening the '
                 'window starts a fresh stream.',
             action: 'Reopen',
-            onAction: () => intents!.retry(window.id),
+            onAction: () => intents.retry(window.id),
           ),
         ),
       ],

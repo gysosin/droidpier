@@ -96,35 +96,34 @@ void main() {
     );
     await tester.pump();
     // Past the fade, so a healthy stream has had every chance to cancel it.
-    await tester.pump(const Duration(seconds: 9));
+    await tester.pump(const Duration(seconds: 4));
   }
 
-  testWidgets('a stream with no frames says so instead of staying black', (
-    WidgetTester tester,
-  ) async {
-    await pump(tester, win(fps: null));
-    expect(find.textContaining('No video'), findsOneWidget);
-  });
-
-  testWidgets('zero frames a second counts as no frames', (
+  testWidgets('a measured zero on a window that never painted says so', (
     WidgetTester tester,
   ) async {
     await pump(tester, win(fps: 0));
     expect(find.textContaining('No video'), findsOneWidget);
   });
 
-  testWidgets('a stream still starting up is left alone', (
-    WidgetTester tester,
-  ) async {
-    // The margin matters more than the message. A rate of null means the
-    // backend has not reported one yet, not that it reported zero — so within
-    // the window a silent stream is presumed to be starting, not broken.
+  testWidgets('an unmeasured rate accuses nobody', (WidgetTester tester) async {
+    // Null is not zero. The backend emits a number on every completed sample,
+    // so null means no interval has finished — which is every window that has
+    // only just opened.
+    await pump(tester, win(fps: null));
+    expect(find.textContaining('No video'), findsNothing);
+  });
+
+  testWidgets('a still app is not a broken one', (WidgetTester tester) async {
+    // The trap this nearly walked into. A motionless app — a paused video, a
+    // page nobody is scrolling — presents zero frames in an interval and is
+    // working perfectly. Only a window that has *never* painted is broken.
     await tester.pumpWidget(
       MaterialApp(
         theme: DexTheme.dark(),
         home: Scaffold(
           body: Workspace(
-            windows: <WorkspaceWindow>[win(fps: null)],
+            windows: <WorkspaceWindow>[win(fps: 42)],
             intents: WorkspaceIntents(
               focus: (_) {},
               raise: (_) {},
@@ -139,7 +138,28 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(seconds: 2));
+
+    // It painted, and then went still.
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: DexTheme.dark(),
+        home: Scaffold(
+          body: Workspace(
+            windows: <WorkspaceWindow>[win(fps: 0)],
+            intents: WorkspaceIntents(
+              focus: (_) {},
+              raise: (_) {},
+              move: (_, _) {},
+              setDisplayState: (_, _) {},
+              close: (_) {},
+              retry: (_) {},
+            ),
+            emptyChild: const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 4));
     expect(find.textContaining('No video'), findsNothing);
   });
 
@@ -151,7 +171,7 @@ void main() {
   });
 
   testWidgets('the notice is not a dead end', (WidgetTester tester) async {
-    await pump(tester, win(fps: null));
+    await pump(tester, win(fps: 0));
     // Something to press. A message with no action leaves the person with a
     // black rectangle and a sentence about it.
     expect(find.text('Reopen'), findsOneWidget);
@@ -160,7 +180,7 @@ void main() {
   testWidgets('stalled window, dark', (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(560, 420));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await pump(tester, win(fps: null));
+    await pump(tester, win(fps: 0));
     await expectLater(
       find.byType(Workspace),
       matchesGoldenFile('goldens/stalled_stream_dark.png'),
