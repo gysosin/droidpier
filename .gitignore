@@ -57,3 +57,18 @@ extracted/
 # Python caches
 __pycache__/
 *.pyc
+
+# Agent working material — planning, skills and prompt scaffolding.
+#
+# Only application code and product documentation are published. These are the
+# working notes of how the code got written, not part of the product: specs,
+# BMAD epics and stories, per-feature implementation plans, and the skills
+# installer both coding agents share. They stay local by request.
+/bmad-output/
+/docs/superpowers/
+/docs/plans/
+/docs/AGENT_SKILLS.md
+/tool/prompts/
+/tool/bootstrap_skills.sh
+/tool/skills.manifest.json
+/docs/DEX_DIFFERENTIAL_REVIEW_*.md
