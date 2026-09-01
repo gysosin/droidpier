@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Run Android Apps on Linux in Separate Windows | DroidPier</title>
+  <meta name="description" content="Learn how DroidPier runs Android apps in separate Linux desktop windows using your phone, ADB, and scrcpy over USB or Wi-Fi.">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://gysosin.github.io/droidpier/android-apps-on-linux/">
+  <link rel="icon" href="../assets/droidpier.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="DroidPier">
+  <meta property="og:title" content="Run Android apps on Linux in separate windows">
+  <meta property="og:description" content="A practical guide to using a connected Android phone as an app source for a Linux desktop workspace.">
+  <meta property="og:url" content="https://gysosin.github.io/droidpier/android-apps-on-linux/">
+  <meta property="og:image" content="https://gysosin.github.io/droidpier/assets/social-preview.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "headline": "Run Android apps on Linux in separate windows",
+        "description": "A guide to running Android phone apps in separate Linux desktop windows with DroidPier.",
+        "url": "https://gysosin.github.io/droidpier/android-apps-on-linux/",
+        "datePublished": "2026-09-01",
+        "dateModified": "2026-09-01",
+        "author": {"@type": "Organization", "name": "DroidPier maintainers"},
+        "publisher": {"@type": "Organization", "name": "DroidPier"},
+        "image": "https://gysosin.github.io/droidpier/assets/social-preview.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "DroidPier", "item": "https://gysosin.github.io/droidpier/"},
+          {"@type": "ListItem", "position": 2, "name": "Android apps on Linux", "item": "https://gysosin.github.io/droidpier/android-apps-on-linux/"}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#article">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="DroidPier home">
+      <img src="../assets/droidpier.svg" alt="" width="36" height="36">
+      <span>DroidPier</span>
+    </a>
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a href="../#features">Features</a>
+      <a href="../#connect">Connect</a>
+      <a href="../#compatibility">Compatibility</a>
+      <a href="../#guides">Guides</a>
+    </nav>
+    <a class="header-link" href="https://github.com/gysosin/droidpier">GitHub</a>
+  </header>
+
+  <main class="article-page" id="article">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="../">DroidPier</a> / Android apps on Linux
+    </nav>
+
+    <header class="article-hero">
+      <div data-reveal>
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Practical Linux guide</p>
+        <h1>Run Android apps on Linux in separate windows</h1>
+        <p class="hero-summary">DroidPier uses your connected phone to run the apps, then gives each supported app a place in your Linux workspace.</p>
+      </div>
+      <aside class="article-signal" data-reveal>
+        <span class="telemetry">QUICK ANSWER</span>
+        <strong>Phone powered, desktop arranged</strong>
+        <p>You do not install an Android emulator or system image. Your phone stays connected through authenticated ADB over USB or Wi-Fi.</p>
+      </aside>
+    </header>
+
+    <div class="article-layout">
+      <nav class="article-nav" aria-label="On this page">
+        <span>On this page</span>
+        <a href="#how-it-works">How it works</a>
+        <a href="#setup">Setup</a>
+        <a href="#compare">Compare approaches</a>
+        <a href="#requirements">Requirements</a>
+        <a href="#limits">Current limits</a>
+      </nav>
+
+      <article class="prose">
+        <section id="how-it-works" data-reveal>
+          <p class="section-index">01 / Architecture</p>
+          <h2>How DroidPier puts Android apps on a Linux desktop</h2>
+          <div class="answer-box">
+            <p>DroidPier launches supported activities on virtual displays on the Android phone. It transports their video to Linux and sends keyboard and pointer input back to the device.</p>
+          </div>
+          <p>The Android application continues to execute on the phone, with its installed data and signed-in state. The Linux application supplies the desktop shell, app drawer, window controls, device connection, and input routing.</p>
+          <p>This architecture is useful when you want phone apps beside ordinary Linux applications without installing a second Android environment on the computer. The phone remains part of the session, so disconnecting it ends the Android workspace.</p>
+          <h3>Separate windows instead of one full phone screen</h3>
+          <p>Traditional mirroring presents the phone display as one computer window. DroidPier is designed around individual Android app windows. Supported apps can be opened, moved, resized, minimized, maximized, and closed from the Linux workspace.</p>
+        </section>
+
+        <section id="setup" data-reveal>
+          <p class="section-index">02 / Setup</p>
+          <h2>Connect over USB first, then add Wi-Fi if needed</h2>
+          <ol>
+            <li>Install the DroidPier package for your Linux distribution and open the application.</li>
+            <li>Enable Android developer options and USB debugging. Connect a data cable, unlock the phone, and approve the trusted computer.</li>
+            <li>Select the phone in DroidPier. The desktop uses its bundled companion, shell agent, ADB, scrcpy, and decoder.</li>
+            <li>Open an app from the DroidPier app drawer and arrange its window.</li>
+          </ol>
+          <p>Android 11 and newer versions can also use wireless debugging on a trusted local network. DroidPier supports nearby discovery, a locally generated QR pairing session, and manual pairing. Pairing and connection ports are different, and isolated Wi-Fi networks may block discovery.</p>
+          <p><a class="text-link" href="https://github.com/gysosin/droidpier/blob/main/docs/USER_GUIDE.md">Open the complete connection guide <span aria-hidden="true">→</span></a></p>
+        </section>
+
+        <section id="compare" data-reveal>
+          <p class="section-index">03 / Options</p>
+          <h2>DroidPier, screen mirroring, and Android emulation solve different problems</h2>
+          <p>Choose based on where you want Android to run and how you want its apps to appear.</p>
+          <div class="comparison" role="table" aria-label="Android on Linux approaches">
+            <div class="comparison-row" role="row">
+              <span role="columnheader">Approach</span><span role="columnheader">Where Android runs</span><span role="columnheader">Desktop result</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">DroidPier</strong><span role="cell">On your connected phone</span><span role="cell">Supported apps in separate Linux windows</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">Screen mirroring</strong><span role="cell">On your connected phone</span><span role="cell">Usually one mirrored phone display</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">Emulator or container</strong><span role="cell">In a computer-hosted Android environment</span><span role="cell">A separate Android installation with its own compatibility needs</span>
+            </div>
+          </div>
+          <p>DroidPier builds on ADB and scrcpy components but adds a guided workspace, app discovery, companion integration, connection management, and multi-window orchestration. It does not replace every scrcpy feature and currently does not forward audio.</p>
+        </section>
+
+        <section id="requirements" data-reveal>
+          <p class="section-index">04 / Compatibility</p>
+          <h2>What you need</h2>
+          <ul>
+            <li>A Linux x86-64 computer using a compatible Ubuntu, Debian, Mint, Fedora, or other desktop environment.</li>
+            <li>An Android phone that permits USB debugging and the virtual-display behavior required by the apps you want to open.</li>
+            <li>A USB data cable for the most reliable first connection, or Android wireless debugging on a trusted network.</li>
+            <li>Permission to install the signed DroidPier Companion APK from the published GitHub release.</li>
+          </ul>
+          <p>The companion keeps an Android 8 installation minimum, but that does not mean every Android 8 phone or manufacturer build has full desktop compatibility. Check the tested-device notes before relying on DroidPier for important work.</p>
+        </section>
+
+        <section id="limits" data-reveal>
+          <p class="section-index">05 / Limits</p>
+          <h2>Know what the beta does not promise</h2>
+          <p>Desktop audio forwarding is unavailable. Apps that block capture, DRM playback, secondary displays, or injected input may not work. Frame rate varies with the phone, app, cable or network, encoder, decoder, and Linux graphics stack.</p>
+          <p>DroidPier is currently a Linux and Android beta. Windows and macOS are in development. It requires no account, advertising, analytics, or cloud relay, but optional clipboard and notification features can expose that content to the connected computer when enabled.</p>
+          <div class="article-cta">
+            <p class="section-index">Start testing</p>
+            <h2>Download the Linux beta and connect one phone</h2>
+            <p>Use the package built for your distribution and read the release notes before installation.</p>
+            <div class="actions">
+              <a class="button button-primary" href="https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2">Download beta.2</a>
+              <a class="button button-secondary" href="../#compatibility">Check packages</a>
+            </div>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="../assets/droidpier.svg" alt="" width="30" height="30">
+      <div><strong>DroidPier</strong><span>Your Android. A bigger workspace.</span></div>
+    </div>
+    <nav aria-label="Project links">
+      <a href="../">Home</a>
+      <a href="../samsung-dex-alternative-linux/">DeX alternative guide</a>
+      <a href="https://github.com/gysosin/droidpier/releases">Releases</a>
+      <a href="https://github.com/gysosin/droidpier/wiki">Wiki</a>
+      <a href="https://github.com/gysosin/droidpier">GitHub</a>
+    </nav>
+    <p class="legal">DroidPier is independent of and not endorsed by Google, Samsung, or Genymobile.</p>
+  </footer>
+  <script src="../site.js" defer></script>
+</body>
+</html>

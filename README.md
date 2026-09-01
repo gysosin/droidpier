@@ -17,6 +17,9 @@ Your apps run on your phone. Your computer provides the workspace.
 
 [Website](https://gysosin.github.io/droidpier/) · [Documentation](docs/README.md) · [Wiki](https://github.com/gysosin/droidpier/wiki)
 
+[Run Android apps on Linux](https://gysosin.github.io/droidpier/android-apps-on-linux/) ·
+[Samsung DeX alternative for Linux guide](https://gysosin.github.io/droidpier/samsung-dex-alternative-linux/)
+
 ## Download
 
 **0.1.0-beta.2 is an experimental Linux/Android preview.** These downloads are for

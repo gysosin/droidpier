@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Samsung DeX Alternative for Linux | DroidPier</title>
+  <meta name="description" content="DroidPier offers a Samsung DeX style Android workspace on Linux, with separate app windows over USB or Wi-Fi. Learn how the approaches differ.">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://gysosin.github.io/droidpier/samsung-dex-alternative-linux/">
+  <link rel="icon" href="../assets/droidpier.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="DroidPier">
+  <meta property="og:title" content="A Samsung DeX style workspace for Linux">
+  <meta property="og:description" content="Use a connected Android phone as the app source for a multi-window Linux workspace. See the differences before installing.">
+  <meta property="og:url" content="https://gysosin.github.io/droidpier/samsung-dex-alternative-linux/">
+  <meta property="og:image" content="https://gysosin.github.io/droidpier/assets/social-preview.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "headline": "A Samsung DeX style Android workspace for Linux",
+        "description": "How DroidPier provides a DeX style multi-window Android workspace on Linux and how its architecture differs.",
+        "url": "https://gysosin.github.io/droidpier/samsung-dex-alternative-linux/",
+        "datePublished": "2026-09-01",
+        "dateModified": "2026-09-01",
+        "author": {"@type": "Organization", "name": "DroidPier maintainers"},
+        "publisher": {"@type": "Organization", "name": "DroidPier"},
+        "image": "https://gysosin.github.io/droidpier/assets/social-preview.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "DroidPier", "item": "https://gysosin.github.io/droidpier/"},
+          {"@type": "ListItem", "position": 2, "name": "Samsung DeX alternative for Linux", "item": "https://gysosin.github.io/droidpier/samsung-dex-alternative-linux/"}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#article">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="DroidPier home">
+      <img src="../assets/droidpier.svg" alt="" width="36" height="36">
+      <span>DroidPier</span>
+    </a>
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a href="../#features">Features</a>
+      <a href="../#connect">Connect</a>
+      <a href="../#compatibility">Compatibility</a>
+      <a href="../#guides">Guides</a>
+    </nav>
+    <a class="header-link" href="https://github.com/gysosin/droidpier">GitHub</a>
+  </header>
+
+  <main class="article-page" id="article">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="../">DroidPier</a> / Samsung DeX alternative for Linux
+    </nav>
+
+    <header class="article-hero">
+      <div data-reveal>
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Independent open-source project</p>
+        <h1>A Samsung DeX style workspace for Linux</h1>
+        <p class="hero-summary">DroidPier brings supported Android apps into separate Linux desktop windows while the connected phone continues to run them.</p>
+      </div>
+      <aside class="article-signal" data-reveal>
+        <span class="telemetry">CLEAR DISTINCTION</span>
+        <strong>DroidPier is not Samsung DeX</strong>
+        <p>It is an independent Apache-2.0 project. It does not install, unlock, emulate, or redistribute Samsung DeX.</p>
+      </aside>
+    </header>
+
+    <div class="article-layout">
+      <nav class="article-nav" aria-label="On this page">
+        <span>On this page</span>
+        <a href="#answer">Is it an alternative?</a>
+        <a href="#similar">What feels similar</a>
+        <a href="#different">What differs</a>
+        <a href="#phones">Phone support</a>
+        <a href="#choose">When to choose it</a>
+      </nav>
+
+      <article class="prose">
+        <section id="answer" data-reveal>
+          <p class="section-index">01 / Short answer</p>
+          <h2>Can DroidPier serve as a Samsung DeX alternative on Linux?</h2>
+          <div class="answer-box">
+            <p>It can provide a similar multi-window Android workspace idea for some Linux users, but it uses a different connection and rendering architecture and has different compatibility limits.</p>
+          </div>
+          <p>DroidPier is aimed at people who want to open apps from a connected Android phone beside their normal Linux applications. It supplies a desktop shell with an app drawer, taskbar, individual app windows, connection controls, and optional phone integration.</p>
+          <p>It does not activate a hidden manufacturer mode or turn the phone itself into a complete desktop. The Linux computer remains the host workspace, and the phone remains the Android execution device.</p>
+        </section>
+
+        <section id="similar" data-reveal>
+          <p class="section-index">02 / Similar goals</p>
+          <h2>The familiar parts of the desktop experience</h2>
+          <ul>
+            <li>An app drawer for applications discovered on the connected Android phone.</li>
+            <li>Separate windows that can be moved, resized, minimized, maximized, and closed.</li>
+            <li>Keyboard and pointer input sent to the Android application.</li>
+            <li>A desktop taskbar, notification surface, device status, and basic phone controls.</li>
+            <li>USB and Android wireless-debugging connection options.</li>
+          </ul>
+          <p>Those interface ideas make DroidPier relevant when someone wants a DeX style workflow but uses Linux as the computer operating system.</p>
+        </section>
+
+        <section id="different" data-reveal>
+          <p class="section-index">03 / Differences</p>
+          <h2>How DroidPier differs from a manufacturer desktop mode</h2>
+          <p>DroidPier uses Android Debug Bridge, a companion service, a shell agent, virtual displays, and scrcpy-based video transport. The desktop program manages those pieces and presents the result as a Linux workspace.</p>
+          <div class="comparison" role="table" aria-label="DroidPier architecture compared with manufacturer desktop modes">
+            <div class="comparison-row" role="row">
+              <span role="columnheader">Question</span><span role="columnheader">DroidPier</span><span role="columnheader">Manufacturer desktop mode</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">Where is the desktop shell?</strong><span role="cell">In the DroidPier Linux application</span><span role="cell">Provided by the phone manufacturer</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">How does it connect?</strong><span role="cell">ADB over USB or trusted Wi-Fi</span><span role="cell">Depends on the phone and manufacturer</span>
+            </div>
+            <div class="comparison-row" role="row">
+              <strong role="cell">Who controls support?</strong><span role="cell">Open-source project compatibility work</span><span role="cell">Phone manufacturer and supported models</span>
+            </div>
+          </div>
+          <p>DroidPier currently does not forward Android audio to the Linux computer. Some apps block secondary displays, capture, DRM content, or input injection. Performance depends on both devices and the connection.</p>
+        </section>
+
+        <section id="phones" data-reveal>
+          <p class="section-index">04 / Devices</p>
+          <h2>Does it work with every Android phone?</h2>
+          <p>No universal support claim is possible. The companion can install on Android 8 and newer, but the full desktop workflow depends on Android version, manufacturer changes, secondary-display behavior, app restrictions, encoder support, and permissions.</p>
+          <p>DroidPier is not limited to Samsung phones by its product design. That does not mean every non-Samsung device will behave identically. The beta currently advertises only combinations that have been validated, with unsupported and untested configurations identified clearly.</p>
+          <p><a class="text-link" href="https://github.com/gysosin/droidpier/blob/main/docs/COMPATIBILITY.md">Review tested compatibility <span aria-hidden="true">→</span></a></p>
+        </section>
+
+        <section id="choose" data-reveal>
+          <p class="section-index">05 / Decision</p>
+          <h2>DroidPier may fit when Linux is already your desktop</h2>
+          <p>Consider DroidPier if you want Android apps from your phone beside Linux applications, prefer an open-source tool, can enable USB or wireless debugging, and accept beta limitations. Use your phone manufacturer’s supported desktop mode when you need its official hardware integration and guarantees.</p>
+          <p>If you only want one mirrored phone screen with extensive mirroring controls, the official scrcpy project may be a more direct choice. DroidPier focuses on the guided workspace and separate-app window model.</p>
+          <div class="article-cta">
+            <p class="section-index">Try the Linux beta</p>
+            <h2>See whether your phone supports the workflow</h2>
+            <p>Start over USB, open one non-restricted app, and review the compatibility notes before depending on wireless pairing or multiple windows.</p>
+            <div class="actions">
+              <a class="button button-primary" href="https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2">Download beta.2</a>
+              <a class="button button-secondary" href="../android-apps-on-linux/">Read the Linux guide</a>
+            </div>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="../assets/droidpier.svg" alt="" width="30" height="30">
+      <div><strong>DroidPier</strong><span>Your Android. A bigger workspace.</span></div>
+    </div>
+    <nav aria-label="Project links">
+      <a href="../">Home</a>
+      <a href="../android-apps-on-linux/">Android on Linux guide</a>
+      <a href="https://github.com/gysosin/droidpier/releases">Releases</a>
+      <a href="https://github.com/gysosin/droidpier/wiki">Wiki</a>
+      <a href="https://github.com/gysosin/droidpier">GitHub</a>
+    </nav>
+    <p class="legal">Samsung DeX is a trademark of Samsung. DroidPier is independent of and not endorsed by Samsung, Google, or Genymobile.</p>
+  </footer>
+  <script src="../site.js" defer></script>
+</body>
+</html>
