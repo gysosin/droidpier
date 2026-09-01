@@ -279,7 +279,7 @@ class _AppsGridButton extends StatelessWidget {
         child: HoverLift(
           builder: (BuildContext context, bool hovered) => InkWell(
             onTap: onPressed,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(DexRadius.panel),
             child: AnimatedContainer(
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
@@ -288,7 +288,7 @@ class _AppsGridButton extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(DexRadius.panel),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
                     color: colors.signal.withValues(alpha: 0.35),
@@ -445,7 +445,7 @@ class _MediaProgressState extends State<_MediaProgress> {
     final double value = ((_baseMs + elapsed) / dur).clamp(0.0, 1.0);
     return RepaintBoundary(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(DexRadius.pill),
         child: LinearProgressIndicator(
           value: value,
           minHeight: 3,
@@ -471,14 +471,14 @@ class _MiniArt extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: colors.raised,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(DexRadius.control),
       ),
       child: Icon(Icons.music_note, size: 16, color: colors.muted),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) return fallback;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(DexRadius.control),
       child: Image.memory(
         Uint8List.fromList(art),
         width: size,
@@ -581,7 +581,7 @@ class _TaskEntry extends StatelessWidget {
           builder: (BuildContext context, bool hovered) => InkWell(
             onTap: onFocus,
             onLongPress: onClose,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(DexRadius.card),
             child: AnimatedContainer(
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
@@ -841,7 +841,7 @@ class _Bell extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: colors.signal,
-                          borderRadius: BorderRadius.circular(7),
+                          borderRadius: BorderRadius.circular(DexRadius.control),
                         ),
                         child: Text(
                           count > 9 ? '9+' : '$count',

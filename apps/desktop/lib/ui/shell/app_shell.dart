@@ -979,11 +979,11 @@ class _Overlay extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 880, maxHeight: 620),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(DexRadius.dialog),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: c.bg.withValues(alpha: isDark ? 0.92 : 0.96),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(DexRadius.dialog),
                     border: Border.all(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.08)

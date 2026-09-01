@@ -332,7 +332,7 @@ class _WidePill extends StatelessWidget {
         },
         child: InkWell(
           onTap: usable ? () => onToggle(control, !on) : null,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(DexRadius.panel),
           child: AnimatedContainer(
             duration: DexDuration.micro,
             curve: DexMotion.arrive,
@@ -343,7 +343,7 @@ class _WidePill extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: on ? c.signal.withValues(alpha: 0.9) : c.raised,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(DexRadius.panel),
             ),
             child: Row(
               children: <Widget>[
