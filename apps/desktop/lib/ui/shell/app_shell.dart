@@ -10,6 +10,8 @@ import '../apps/app_drawer.dart';
 import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
+import 'shortcut_sheet.dart';
+import 'shortcuts.dart';
 import '../theme/dex_colors.dart';
 import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
@@ -515,6 +517,9 @@ class _AppShellState extends State<AppShell> {
 
   bool _diagnosticsOpen = false;
 
+  /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
+  bool _sheetOpen = false;
+
   /// One line per window that has gone away, most recent first.
   ///
   /// A closed or failed window leaves the snapshot entirely, so by the time
@@ -624,6 +629,35 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
+  /// The shell's half of the shortcut registry: what each accelerator asks
+  /// about the shell, and what it does to it. The list itself, and its order,
+  /// live in `shortcuts.dart`.
+  ShellShortcutHooks get _shortcutHooks => ShellShortcutHooks(
+    openSheet: () => setState(() => _sheetOpen = true),
+    isSheetOpen: () => _sheetOpen,
+    closeSheet: () => setState(() => _sheetOpen = false),
+    keyboardIsFree: () => !_deskOwnsKeyboard,
+    toggleDiagnostics: () =>
+        setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+    toggleDrawer: _toggleDrawer,
+    toggleFullscreen: _toggleFullscreen,
+    cycleFocus: _cycleFocus,
+    isFullscreen: () => _fullscreenId != null,
+    exitFullscreen: _exitFullscreen,
+    isDiagnosticsOpen: () => _diagnosticsOpen,
+    closeDiagnostics: () => setState(() => _diagnosticsOpen = false),
+    isSwitcherOpen: () => _switcherOpen,
+    cancelSwitch: () => setState(() => _switcherOpen = false),
+    isDeskSurfaceOpen: () => _drawerOpen || _permissionsOpen || _settingsOpen,
+    closeDeskSurfaces: () => setState(() {
+      _drawerOpen = false;
+      _permissionsOpen = false;
+      _settingsOpen = false;
+    }),
+    isConnectOpen: () => _connectOpen,
+    closeConnect: () => setState(() => _connectOpen = false),
+  );
+
   /// App-global accelerators.
   ///
   /// Deliberately not `Shortcuts`/`CallbackShortcuts`. Those require the focus
@@ -644,60 +678,40 @@ class _AppShellState extends State<AppShell> {
       // held down forever. Accelerators only ever fire on down.
       return _forwardKeyToWindow(event);
     }
-    final bool control = HardwareKeyboard.instance.isControlPressed;
-    if (control &&
-        HardwareKeyboard.instance.isShiftPressed &&
-        event.logicalKey == LogicalKeyboardKey.keyD) {
-      setState(() => _diagnosticsOpen = !_diagnosticsOpen);
+    final HardwareKeyboard keys = HardwareKeyboard.instance;
+    final DexShortcut? hit = matchShortcut(
+      buildShortcuts(_shortcutHooks),
+      event.logicalKey,
+      control: keys.isControlPressed,
+      shift: keys.isShiftPressed,
+      alt: keys.isAltPressed,
+    );
+    if (hit != null) {
+      hit.run();
       return true;
-    }
-    if (control && event.logicalKey == LogicalKeyboardKey.space) {
-      _toggleDrawer();
-      return true;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.f11) {
-      _toggleFullscreen();
-      return true;
-    }
-    if (HardwareKeyboard.instance.isAltPressed &&
-        event.logicalKey == LogicalKeyboardKey.tab) {
-      _cycleFocus();
-      return true;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
-      // Fullscreen is the most immersive layer, so Escape leaves it first.
-      if (_fullscreenId != null) {
-        _exitFullscreen();
-        return true;
-      }
-      if (_diagnosticsOpen) {
-        setState(() => _diagnosticsOpen = false);
-        return true;
-      }
-      if (_switcherOpen) {
-        // Cancels the switch rather than committing it, which is the whole
-        // reason a person reaches for Escape mid-Alt+Tab.
-        setState(() => _switcherOpen = false);
-        return true;
-      }
-      if (_drawerOpen || _permissionsOpen || _settingsOpen) {
-        setState(() {
-          _drawerOpen = false;
-          _permissionsOpen = false;
-          _settingsOpen = false;
-        });
-        return true;
-      }
-      // One layer, so one Escape. Closing it also stops discovery and cancels
-      // any pairing — see [ConnectionScreen.dispose].
-      if (_connectOpen) {
-        setState(() => _connectOpen = false);
-        return true;
-      }
     }
     // Nothing above claimed it, so it belongs to the app the person is
     // actually typing into.
     return _forwardKeyToWindow(event);
+  }
+
+  /// Whether the desk's own chrome should keep every plain keystroke.
+  ///
+  /// True while any desk surface is open, or while a text field anywhere in our
+  /// chrome has focus. Two callers need exactly this question and must not
+  /// drift apart: forwarding to the phone, and the bare `?` cheat-sheet
+  /// binding. Without the second, typing a question mark into the launcher
+  /// search would throw a help panel over what you were searching for.
+  bool get _deskOwnsKeyboard {
+    if (_drawerOpen ||
+        _settingsOpen ||
+        _permissionsOpen ||
+        _connectOpen ||
+        _sheetOpen) {
+      return true;
+    }
+    final FocusNode? focus = FocusManager.instance.primaryFocus;
+    return focus?.context?.widget is EditableText;
   }
 
   /// Sends a key to the focused Android window, if one should have it.
@@ -707,13 +721,7 @@ class _AppShellState extends State<AppShell> {
   /// desk's own text fields need, so the search box in the drawer would stop
   /// accepting letters the moment an app window existed.
   bool _forwardKeyToWindow(KeyEvent event) {
-    // Any desk surface that is open owns the keyboard.
-    if (_drawerOpen || _settingsOpen || _permissionsOpen || _connectOpen) {
-      return false;
-    }
-    // A focused text field anywhere in our own chrome owns it too.
-    final FocusNode? focus = FocusManager.instance.primaryFocus;
-    if (focus?.context?.widget is EditableText) return false;
+    if (_deskOwnsKeyboard) return false;
 
     final WorkspaceWindow? target = _workspace.values
         .cast<WorkspaceWindow?>()
@@ -1050,6 +1058,15 @@ class _AppShellState extends State<AppShell> {
             setState(() => _settingsOpen = false);
             widget.facade.disconnect();
           },
+        ),
+      );
+    }
+    if (_sheetOpen) {
+      return _Overlay(
+        onDismiss: () => setState(() => _sheetOpen = false),
+        child: ShortcutSheet(
+          shortcuts: buildShortcuts(_shortcutHooks),
+          onClose: () => setState(() => _sheetOpen = false),
         ),
       );
     }
