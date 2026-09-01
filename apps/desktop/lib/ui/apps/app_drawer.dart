@@ -184,8 +184,11 @@ class _AppDrawerState extends State<AppDrawer> {
           child: GestureDetector(
             onTap: widget.onDismiss,
             behavior: HitTestBehavior.opaque,
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            // The scrim honours the same scope every GlassPanel does. It used
+            // to blur unconditionally, so turning frosted panels off left the
+            // launcher — the most-used surface — still frosting the desk.
+            child: _MaybeBlur(
+              sigma: 18,
               child: ColoredBox(
                 color: Colors.black.withValues(
                   alpha: Theme.of(context).brightness == Brightness.dark
@@ -719,6 +722,26 @@ class _ResultsList extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A backdrop blur that obeys [GlassBlurScope].
+///
+/// Panels get this for free through [GlassPanel]; a hand-rolled scrim does not,
+/// which is how the launcher kept blurring after glass was switched off.
+class _MaybeBlur extends StatelessWidget {
+  const _MaybeBlur({required this.sigma, required this.child});
+
+  final double sigma;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!GlassBlurScope.of(context)) return child;
+    return BackdropFilter(
+      filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+      child: child,
     );
   }
 }

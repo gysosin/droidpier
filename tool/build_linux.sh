@@ -5,6 +5,7 @@ flutter_bin="${FLUTTER_BIN:-${repository_dir}/.tools/flutter/bin/flutter}"
 if [[ -z "${FLUTTER_BIN:-}" && ! -x "${flutter_bin}" ]]; then flutter_bin=flutter; fi
 version="$(python3 "${repository_dir}/tool/version.py")"
 version_code="$(python3 "${repository_dir}/tool/version.py" androidVersionCode)"
+built_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 if [[ -z "${DROIDPIER_ANDROID_PAYLOAD_DIR:-}" ]]; then
   python3 "${repository_dir}/tool/build_android.py"
 fi
@@ -22,6 +23,9 @@ bash "${repository_dir}/tool/build_adb.sh"
   "${flutter_bin}" test
   # Ship full Material font: icon tree shaking previously produced invalid glyphs.
   "${flutter_bin}" build linux --release --no-tree-shake-icons \
-    --build-name="${version}" --build-number="${version_code}"
+    --build-name="${version}" --build-number="${version_code}" \
+    --dart-define=DROIDPIER_VERSION="${version}" \
+    --dart-define=DROIDPIER_BUILD="${version_code}" \
+    --dart-define=DROIDPIER_BUILT_AT="${built_at}"
 )
 python3 "${repository_dir}/tool/package_linux.py"

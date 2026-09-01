@@ -27,6 +27,7 @@ import 'taskbar_bar.dart';
 class Desk extends StatefulWidget {
   const Desk({
     required this.snapshot,
+    this.glassEnabled = true,
     required this.now,
     required this.onOpenLauncher,
     required this.onWebSearch,
@@ -53,6 +54,10 @@ class Desk extends StatefulWidget {
   });
 
   final OpenDexSnapshot snapshot;
+
+  /// Whether panels may frost. False is the person's own choice in Settings;
+  /// streaming switches it off regardless, for the flicker described below.
+  final bool glassEnabled;
   final DateTime now;
   final VoidCallback onOpenLauncher;
 
@@ -164,7 +169,9 @@ class _DeskState extends State<Desk> {
     // continuously — which read as the desk flickering. Flat translucent glass
     // is nearly indistinguishable at these alphas and costs nothing.
     return GlassBlurScope(
-      enabled: !_streaming,
+      // Two independent reasons to drop the blur, and either is enough: the
+      // person turned glass off, or a window is streaming.
+      enabled: widget.glassEnabled && !_streaming,
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
