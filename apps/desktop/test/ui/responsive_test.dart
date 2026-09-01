@@ -150,7 +150,28 @@ void main() {
           fullscreenActive: false,
           onLaunchApplication: (_) {},
           workspace: const SizedBox.shrink(),
-          windows: const <WorkspaceWindow>[],
+          // With apps running, which is the state the desk is normally in.
+          // Sweeping it empty is why a 35px taskbar overflow at 900 lived
+          // through this suite: with no windows there are no running-app
+          // chips, and the chips are half of what fills the bar.
+          windows: <WorkspaceWindow>[
+            for (final String l in <String>['Maps', 'Spotify', 'Camera'])
+              WorkspaceWindow(
+                session: WindowSessionState(
+                  id: l,
+                  application: _app(l),
+                  status: WindowSessionStatus.streaming,
+                  isFocused: l == 'Maps',
+                ),
+                geometry: const WindowGeometry(
+                  x: 0,
+                  y: 0,
+                  width: 400,
+                  height: 300,
+                ),
+                zOrder: 1,
+              ),
+          ],
           minimisedWindows: const <String>{},
         ),
       );
@@ -169,7 +190,23 @@ void main() {
           children: <Widget>[
             TaskbarBar(
               minimised: const <String>{},
-              trailing: const SizedBox.shrink(),
+              // The real tray, not an empty box. Stubbing this out is why a
+              // 35px overflow at 900px lived through the whole sweep: the bar
+              // was being measured without the half of it that takes room.
+              trailing: SystemTray(
+                now: DateTime.utc(2026, 8, 25, 22, 10),
+                telemetry: const DeviceTelemetry(
+                  batteryPercentage: 87,
+                  charging: true,
+                  wifiEnabled: true,
+                ),
+                onOpenControls: () {},
+                onOpenNotifications: () {},
+                notificationCount: 3,
+                onOpenSettings: () {},
+                onToggleFullscreen: () {},
+                fullscreenActive: false,
+              ),
               windows: <WorkspaceWindow>[
                 for (final String l in <String>['Maps', 'Spotify', 'Camera'])
                   WorkspaceWindow(
