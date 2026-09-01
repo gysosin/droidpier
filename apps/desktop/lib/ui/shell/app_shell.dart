@@ -682,7 +682,11 @@ class _AppShellState extends State<AppShell> {
         // closes or stops streaming (see [_fullscreenWindow]).
         if (_fullscreenWindow case final WorkspaceWindow w)
           Positioned.fill(
-            child: WindowStage(window: w, intents: _intents),
+            child: WindowStage(
+              window: w,
+              intents: _intents,
+              onExit: _exitFullscreen,
+            ),
           ),
         // Recovery covers everything: nothing else is usable while the link is
         // down, and pretending otherwise would invite dead clicks.
