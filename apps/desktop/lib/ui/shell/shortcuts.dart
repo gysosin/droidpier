@@ -124,6 +124,9 @@ DexShortcut? matchShortcut(
 /// built per key press and must read state as it is *now*.
 class ShellShortcutHooks {
   const ShellShortcutHooks({
+    required this.openPalette,
+    required this.isPaletteOpen,
+    required this.closePalette,
     required this.openSheet,
     required this.isSheetOpen,
     required this.closeSheet,
@@ -143,6 +146,10 @@ class ShellShortcutHooks {
     required this.isConnectOpen,
     required this.closeConnect,
   });
+
+  final void Function() openPalette;
+  final bool Function() isPaletteOpen;
+  final void Function() closePalette;
 
   final void Function() openSheet;
   final bool Function() isSheetOpen;
@@ -219,6 +226,17 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
     run: hooks.cycleFocus,
   ),
   DexShortcut(
+    stroke: const DexKeyStroke(
+      LogicalKeyboardKey.keyP,
+      control: true,
+      shift: true,
+    ),
+    label: 'Open the command palette',
+    group: DexShortcutGroup.session,
+    when: _always,
+    run: hooks.openPalette,
+  ),
+  DexShortcut(
     stroke: const DexKeyStroke(LogicalKeyboardKey.slash, control: true),
     label: 'Show keyboard shortcuts',
     group: DexShortcutGroup.session,
@@ -251,6 +269,13 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
     group: DexShortcutGroup.windows,
     when: hooks.isFullscreen,
     run: hooks.exitFullscreen,
+  ),
+  DexShortcut(
+    stroke: const DexKeyStroke(LogicalKeyboardKey.escape, anyModifiers: true),
+    label: 'Close the command palette',
+    group: DexShortcutGroup.session,
+    when: hooks.isPaletteOpen,
+    run: hooks.closePalette,
   ),
   DexShortcut(
     stroke: const DexKeyStroke(LogicalKeyboardKey.escape, anyModifiers: true),

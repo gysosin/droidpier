@@ -12,6 +12,8 @@ import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/diagnostics_report.dart';
 import '../diagnostics/stream_diagnostics.dart';
+import 'command_palette.dart';
+import 'commands.dart';
 import 'connection_controller.dart';
 import 'shortcut_sheet.dart';
 import 'window_controller.dart';
@@ -312,6 +314,9 @@ class _AppShellState extends State<AppShell> {
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
 
+  /// The command palette. Ctrl+Shift+P.
+  bool _paletteOpen = false;
+
   /// One line per window that has gone away, most recent first.
   ///
   /// A closed or failed window leaves the snapshot entirely, so by the time
@@ -370,10 +375,60 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
+  /// Everything the palette can offer, assembled from live state.
+  ///
+  /// Rebuilt per open rather than cached, so a command can never outlive the
+  /// thing it acts on — an app that was uninstalled or a window that closed is
+  /// simply not in the list.
+  List<DexCommand> get _commands => buildCommands(
+    applications: _s.applications,
+    windows: _s.windows,
+    onLaunchApplication: (String pkg) {
+      widget.facade.launchApplication(pkg);
+      _recordLaunch(pkg);
+    },
+    onFocusWindow: _wm.raiseAndFocus,
+    shellEntries: <DexCommandEntry>[
+      DexCommandEntry(
+        title: 'Open settings',
+        keywords: const <String>['preferences', 'theme', 'accent'],
+        run: () => setState(() => _settingsOpen = true),
+      ),
+      DexCommandEntry(
+        title: 'Show keyboard shortcuts',
+        keywords: const <String>['help', 'keys'],
+        run: () => setState(() => _sheetOpen = true),
+      ),
+      DexCommandEntry(
+        title: 'Toggle stream diagnostics',
+        keywords: const <String>['fps', 'performance', 'debug'],
+        run: () => setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+      ),
+      DexCommandEntry(
+        title: 'Open the app launcher',
+        keywords: const <String>['apps', 'drawer'],
+        run: _toggleDrawer,
+      ),
+      DexCommandEntry(
+        title: 'Manage phones',
+        keywords: const <String>['connect', 'pair', 'device'],
+        run: () => setState(() => _connectOpen = true),
+      ),
+      DexCommandEntry(
+        title: 'Permissions',
+        keywords: const <String>['access', 'grant'],
+        run: () => setState(() => _permissionsOpen = true),
+      ),
+    ],
+  );
+
   /// The shell's half of the shortcut registry: what each accelerator asks
   /// about the shell, and what it does to it. The list itself, and its order,
   /// live in `shortcuts.dart`.
   ShellShortcutHooks get _shortcutHooks => ShellShortcutHooks(
+    openPalette: () => setState(() => _paletteOpen = true),
+    isPaletteOpen: () => _paletteOpen,
+    closePalette: () => setState(() => _paletteOpen = false),
     openSheet: () => setState(() => _sheetOpen = true),
     isSheetOpen: () => _sheetOpen,
     closeSheet: () => setState(() => _sheetOpen = false),
@@ -448,7 +503,8 @@ class _AppShellState extends State<AppShell> {
         _settingsOpen ||
         _permissionsOpen ||
         _connectOpen ||
-        _sheetOpen) {
+        _sheetOpen ||
+        _paletteOpen) {
       return true;
     }
     final FocusNode? focus = FocusManager.instance.primaryFocus;
@@ -853,6 +909,15 @@ class _AppShellState extends State<AppShell> {
             setState(() => _settingsOpen = false);
             widget.facade.disconnect();
           },
+        ),
+      );
+    }
+    if (_paletteOpen) {
+      return _Overlay(
+        onDismiss: () => setState(() => _paletteOpen = false),
+        child: CommandPalette(
+          commands: _commands,
+          onDismiss: () => setState(() => _paletteOpen = false),
         ),
       );
     }
