@@ -89,6 +89,32 @@ List<AndroidApplication> rankApps(
   ];
 }
 
+/// How well [text] answers [query], or null when it does not match at all.
+///
+/// The shared matcher. Drawer search and the command palette rank different
+/// things, but "did the person mean this?" is one question, and two
+/// implementations of it would drift apart within a release.
+///
+/// Null rather than zero on no match: zero is a score, null is the answer to a
+/// different question, and callers filter on it.
+double? scoreMatch(String query, String text) {
+  final String q = query.trim().toLowerCase();
+  if (q.isEmpty) return 0;
+
+  final String lower = text.toLowerCase();
+  double? best = _scoreText(lower, q);
+
+  // Run-together names have no spaces, so their only word boundary is the
+  // capital. WhatsApp -> wa, PayPal -> pp.
+  final String camel = _camelAcronym(text);
+  if (q.length > 1 && camel.length > 1 && camel.startsWith(q)) {
+    final double byCamel =
+        _Tier.acronym + (100 - camel.length).toDouble().clamp(0, 100);
+    if (best == null || byCamel > best) best = byCamel;
+  }
+  return best;
+}
+
 /// The best score this app earns for [q], or null if it does not match.
 double? _score(AndroidApplication a, String q) {
   // Rank on what the drawer actually displays: a placeholder label is shown as
@@ -97,17 +123,8 @@ double? _score(AndroidApplication a, String q) {
       ? displayNameFor(a.packageName)
       : a.label;
 
-  double? onLabel = _scoreText(shown.toLowerCase(), q);
-
-  // Run-together names have no spaces, so their only word boundary is the
-  // capital. WhatsApp -> wa, PayPal -> pp.
-  final String camel = _camelAcronym(shown);
-  if (q.length > 1 && camel.length > 1 && camel.startsWith(q)) {
-    final double byCamel =
-        _Tier.acronym + (100 - camel.length).toDouble().clamp(0, 100);
-    if (onLabel == null || byCamel > onLabel) onLabel = byCamel;
-  }
-  final double? onPackage = _scoreText(a.packageName.toLowerCase(), q);
+  final double? onLabel = scoreMatch(q, shown);
+  final double? onPackage = scoreMatch(q, a.packageName);
 
   if (onLabel == null && onPackage == null) return null;
   if (onPackage == null) return onLabel;

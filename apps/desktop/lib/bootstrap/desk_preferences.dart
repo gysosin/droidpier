@@ -94,6 +94,9 @@ class DeskPreferencesData {
   const DeskPreferencesData({
     this.themeMode = ThemeMode.system,
     this.wallpaperIndex = 0,
+    this.accentIndex = 0,
+    this.glassEnabled = true,
+    this.reduceMotion = false,
     this.snapEnabled = true,
     this.windowGeometry = const <String, StoredWindowGeometry>{},
     this.pinnedPackages = const <String>[],
@@ -108,6 +111,18 @@ class DeskPreferencesData {
   /// a stored index that no longer exists degrades to the default rather than
   /// failing to parse.
   final int wallpaperIndex;
+
+  /// Which accent tints links, focus rings and the selected row. 0 is the
+  /// product's own blue, so an unset preference needs no special case.
+  final int accentIndex;
+
+  /// Whether panels frost what is behind them. Off is the low-end-GPU and
+  /// legibility path.
+  final bool glassEnabled;
+
+  /// Whether to cut motion beyond whatever the platform already asks for.
+  /// Can only ever reduce; see `DexMotion.enabled`.
+  final bool reduceMotion;
 
   final bool snapEnabled;
 
@@ -125,6 +140,9 @@ class DeskPreferencesData {
   DeskPreferencesData copyWith({
     ThemeMode? themeMode,
     int? wallpaperIndex,
+    int? accentIndex,
+    bool? glassEnabled,
+    bool? reduceMotion,
     bool? snapEnabled,
     Map<String, StoredWindowGeometry>? windowGeometry,
     List<String>? pinnedPackages,
@@ -132,6 +150,9 @@ class DeskPreferencesData {
   }) => DeskPreferencesData(
     themeMode: themeMode ?? this.themeMode,
     wallpaperIndex: wallpaperIndex ?? this.wallpaperIndex,
+    accentIndex: accentIndex ?? this.accentIndex,
+    glassEnabled: glassEnabled ?? this.glassEnabled,
+    reduceMotion: reduceMotion ?? this.reduceMotion,
     snapEnabled: snapEnabled ?? this.snapEnabled,
     windowGeometry: windowGeometry ?? this.windowGeometry,
     pinnedPackages: pinnedPackages ?? this.pinnedPackages,
@@ -141,6 +162,9 @@ class DeskPreferencesData {
   Map<String, Object?> toJson() => <String, Object?>{
     'themeMode': themeMode.name,
     'wallpaperIndex': wallpaperIndex,
+    'accentIndex': accentIndex,
+    'glassEnabled': glassEnabled,
+    'reduceMotion': reduceMotion,
     'snapEnabled': snapEnabled,
     'windowGeometry': windowGeometry.map(
       (String packageName, StoredWindowGeometry geometry) =>
@@ -166,6 +190,9 @@ class DeskPreferencesData {
       );
     }
     final Object? idx = json['wallpaperIndex'];
+    final Object? accent = json['accentIndex'];
+    final Object? glass = json['glassEnabled'];
+    final Object? motion = json['reduceMotion'];
     final Object? snap = json['snapEnabled'];
 
     // Each entry decodes independently: one malformed record is dropped rather
@@ -205,6 +232,9 @@ class DeskPreferencesData {
     return DeskPreferencesData(
       themeMode: mode,
       wallpaperIndex: idx is int && idx >= 0 ? idx : 0,
+      accentIndex: accent is int && accent >= 0 ? accent : 0,
+      glassEnabled: glass is bool ? glass : true,
+      reduceMotion: motion is bool ? motion : false,
       snapEnabled: snap is bool ? snap : true,
       windowGeometry: geometry,
       pinnedPackages: pinned,

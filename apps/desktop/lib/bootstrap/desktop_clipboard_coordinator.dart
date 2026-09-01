@@ -37,6 +37,7 @@ class DesktopClipboardCoordinator {
   Timer? _timer;
   bool _enabled = false;
   bool _busy = false;
+  Completer<void>? _idleWaiter;
   bool _disposed = false;
   int _generation = 0;
   String? _deviceId;
@@ -63,7 +64,7 @@ class DesktopClipboardCoordinator {
   Future<void> synchronizeOnce() async {
     if (_busy || !_valid(_generation)) return;
     final generation = _generation;
-    _busy = true;
+    _beginOperation();
     try {
       final hostText = await hostClipboard.readText();
       if (!_valid(generation)) return;
@@ -86,8 +87,47 @@ class DesktopClipboardCoordinator {
         await facade.pauseClipboardSync();
       }
     } finally {
-      _busy = false;
+      _finishOperation();
     }
+  }
+
+  /// Writes an explicit user copy after any in-flight synchronization.
+  ///
+  /// The user-initiated value wins over phone text that was already pending,
+  /// then follows the normal opted-in host-to-phone synchronization policy.
+  Future<void> writeHostText(String text) async {
+    await _acquireOperation();
+    if (_disposed) {
+      _finishOperation();
+      throw StateError('The desktop clipboard coordinator is disposed.');
+    }
+    try {
+      _pendingDeviceText = null;
+      await hostClipboard.writeText(text);
+    } finally {
+      _finishOperation();
+      if (_valid(_generation)) unawaited(synchronizeOnce());
+    }
+  }
+
+  Future<void> _acquireOperation() async {
+    while (_busy) {
+      final waiter = _idleWaiter ??= Completer<void>();
+      await waiter.future;
+    }
+    _beginOperation();
+  }
+
+  void _beginOperation() {
+    assert(!_busy);
+    _busy = true;
+  }
+
+  void _finishOperation() {
+    _busy = false;
+    final waiter = _idleWaiter;
+    _idleWaiter = null;
+    waiter?.complete();
   }
 
   void _acceptSnapshot(OpenDexSnapshot snapshot) {
