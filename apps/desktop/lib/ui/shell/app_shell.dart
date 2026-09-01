@@ -297,27 +297,59 @@ class _AppShellState extends State<AppShell> {
   /// reads as a glitch; with four it is unusable, because nothing says where
   /// you are in the list. Selection is now committed when Alt is released,
   /// which is what every desktop does.
-  void _cycleFocus() {
-    final List<WorkspaceWindow> open = _wm.switchable;
-    if (open.length < 2) {
+  /// The order Alt+Tab is walking, captured when the switcher opens.
+  ///
+  /// Frozen on purpose. `_cycleFocus`, the switcher widget and `_commitSwitch`
+  /// each used to re-derive the list independently, while `_switcherIndex`
+  /// pointed into it — so a snapshot arriving mid-hold could reorder the list
+  /// under the highlight, and releasing Alt could focus a window the person
+  /// never selected. The shell rebuilds on every telemetry snapshot, which
+  /// during streaming is continuous.
+  List<String> _switchOrder = const <String>[];
+
+  /// The frozen order, resolved against the windows that still exist.
+  List<WorkspaceWindow> get _switchList => <WorkspaceWindow>[
+    for (final String id in _switchOrder)
+      if (_wm.windows[id] case final WorkspaceWindow w) w,
+  ];
+
+  void _cycleFocus({bool backwards = false}) {
+    if (!_switcherOpen) {
+      final List<WorkspaceWindow> open = _wm.switchable;
+      if (open.length < 2) return;
+      setState(() {
+        _switchOrder = <String>[
+          for (final WorkspaceWindow w in open) w.id,
+        ];
+        // First press lands on the window beneath the current one, not on the
+        // one already focused — otherwise a quick Alt+Tab does nothing.
+        _switcherIndex = backwards ? _switchOrder.length - 1 : 1;
+        _switcherOpen = true;
+      });
       return;
     }
+
+    final int count = _switchOrder.length;
+    if (count < 2) return;
     setState(() {
-      // First press lands on the window beneath the current one, not on the
-      // one already focused — otherwise a quick Alt+Tab does nothing.
-      _switcherIndex = _switcherOpen ? (_switcherIndex + 1) % open.length : 1;
-      _switcherOpen = true;
+      _switcherIndex = backwards
+          ? (_switcherIndex - 1 + count) % count
+          : (_switcherIndex + 1) % count;
     });
   }
 
   /// Alt released: commit whatever the switcher landed on.
   void _commitSwitch() {
     if (!_switcherOpen) return;
-    final List<WorkspaceWindow> open = _wm.switchable;
+    // Committed against the frozen order, not a fresh sort.
+    final List<WorkspaceWindow> open = _switchList;
     final WorkspaceWindow? next = _switcherIndex < open.length
         ? open[_switcherIndex]
         : null;
-    setState(() => _switcherOpen = false);
+    setState(() {
+      _switcherOpen = false;
+      _switchOrder = const <String>[];
+    });
     if (next != null) _wm.raiseAndFocus(next.id);
   }
 
@@ -450,6 +482,7 @@ class _AppShellState extends State<AppShell> {
     toggleDrawer: _toggleDrawer,
     toggleFullscreen: _toggleFullscreen,
     cycleFocus: _cycleFocus,
+    cycleFocusBack: () => _cycleFocus(backwards: true),
     isFullscreen: () => _fullscreenId != null,
     exitFullscreen: _exitFullscreen,
     isDiagnosticsOpen: () => _diagnosticsOpen,
@@ -801,7 +834,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _switcher() {
-    final List<WorkspaceWindow> open = _wm.switchable;
+    final List<WorkspaceWindow> open = _switchList;
     return WindowSwitcher(
       windows: open,
       selected: _switcherIndex.clamp(0, open.isEmpty ? 0 : open.length - 1),
