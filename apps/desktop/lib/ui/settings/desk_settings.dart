@@ -33,6 +33,8 @@ class DeskSettings extends StatelessWidget {
     this.onAccentChanged = _ignoreAccent,
     this.glassEnabled = true,
     this.onGlassChanged = _ignoreGlass,
+    this.reduceMotion = false,
+    this.onReduceMotionChanged = _ignoreGlass,
     required this.onDisconnect,
     this.onOpenPermissions,
     this.onManagePhones,
@@ -55,6 +57,10 @@ class DeskSettings extends StatelessWidget {
   /// Whether panels frost what is behind them, and its setter.
   final bool glassEnabled;
   final ValueChanged<bool> onGlassChanged;
+
+  /// Whether to cut motion beyond the platform setting, and its setter.
+  final bool reduceMotion;
+  final ValueChanged<bool> onReduceMotionChanged;
 
   static void _ignoreAccent(int _) {}
   static void _ignoreGlass(bool _) {}
@@ -108,6 +114,16 @@ class DeskSettings extends StatelessWidget {
                           selected: accentIndex,
                           onSelected: onAccentChanged,
                           colors: c,
+                        ),
+                        const SizedBox(height: DexSpace.lg),
+                        _SwitchRow(
+                          title: 'Reduce motion',
+                          detail:
+                              'Skips the entrance animations. Already on if '
+                              'your system asks for reduced motion.',
+                          colors: c,
+                          value: reduceMotion,
+                          onChanged: onReduceMotionChanged,
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _SwitchRow(

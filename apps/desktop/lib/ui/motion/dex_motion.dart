@@ -18,8 +18,14 @@ abstract final class DexMotion {
   static const Duration stagger = Duration(milliseconds: 55);
 
   /// Whether motion is permitted at all in this context.
+  ///
+  /// The platform's own reduce-motion setting always wins, and the in-app
+  /// preference can only add to it. There is deliberately no way to express
+  /// "animate anyway": reducing motion is an accessibility choice, and an
+  /// application setting does not get a vote on reversing one.
   static bool enabled(BuildContext context) =>
-      !MediaQuery.disableAnimationsOf(context);
+      !MediaQuery.disableAnimationsOf(context) &&
+      !ReduceMotionScope.of(context);
 }
 
 /// Staggered entrance: fade plus a short rise.
@@ -173,4 +179,31 @@ class _HoverLiftState extends State<HoverLift> {
       ),
     );
   }
+}
+
+/// Carries the in-app reduce-motion preference down the tree.
+///
+/// A scope rather than a parameter because motion is checked deep inside
+/// individual widgets — [Entrance], [SwapText], [HoverLift] — and threading a
+/// flag through every one of them would guarantee that some widget was missed.
+class ReduceMotionScope extends InheritedWidget {
+  const ReduceMotionScope({
+    required this.reduce,
+    required super.child,
+    super.key,
+  });
+
+  final bool reduce;
+
+  /// False when no scope is present, so the platform setting decides alone —
+  /// which is what every existing caller already relied on.
+  static bool of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<ReduceMotionScope>()
+          ?.reduce ??
+      false;
+
+  @override
+  bool updateShouldNotify(ReduceMotionScope oldWidget) =>
+      oldWidget.reduce != reduce;
 }
