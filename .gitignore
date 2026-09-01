@@ -72,3 +72,4 @@ __pycache__/
 /tool/bootstrap_skills.sh
 /tool/skills.manifest.json
 /docs/DEX_*REVIEW*.md
+/docs/AGENT_CHANNEL.md
