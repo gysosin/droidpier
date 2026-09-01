@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -9,7 +10,9 @@ import '../theme/dex_glass.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
 import '../util/app_display_name.dart';
+import '../widgets/context_menu.dart';
 import 'app_glyph.dart';
+import 'app_ranking.dart';
 
 /// App drawer.
 ///
@@ -25,6 +28,9 @@ class AppDrawer extends StatefulWidget {
     required this.onLaunch,
     required this.onRefresh,
     required this.onDismiss,
+    this.launchHistory = const <String, AppLaunchStats>{},
+    this.pinnedPackages = const <String>[],
+    this.onPinnedChanged = _ignorePins,
     super.key,
   });
 
@@ -36,13 +42,25 @@ class AppDrawer extends StatefulWidget {
   /// Tapping the blurred area behind the icons dismisses the drawer.
   final VoidCallback onDismiss;
 
+  /// How often and how recently each package was launched, used to weight
+  /// search ranking. Empty until the host supplies it, in which case ranking
+  /// falls back to match quality alone.
+  final Map<String, AppLaunchStats> launchHistory;
+
+  /// Packages pinned to the top of the drawer, in pin order, and its setter.
+  /// Turns a four-hundred-app list into a five-app launcher.
+  final List<String> pinnedPackages;
+  final ValueChanged<List<String>> onPinnedChanged;
+
+  static void _ignorePins(List<String> _) {}
+
   @override
   State<AppDrawer> createState() => _AppDrawerState();
 }
 
 class _AppDrawerState extends State<AppDrawer> {
   final TextEditingController _query = TextEditingController();
-  final FocusNode _searchFocus = FocusNode();
+  late final FocusNode _searchFocus = FocusNode(onKeyEvent: _onSearchKey);
 
   @override
   void initState() {
@@ -60,33 +78,95 @@ class _AppDrawerState extends State<AppDrawer> {
     super.dispose();
   }
 
-  bool _matches(AndroidApplication a) {
-    final String q = _query.text.trim().toLowerCase();
-    return q.isEmpty ||
-        a.label.toLowerCase().contains(q) ||
-        a.packageName.toLowerCase().contains(q);
+  /// Which result the arrow keys have landed on, within [_results].
+  int _selected = 0;
+
+  bool get _searching => _query.text.trim().isNotEmpty;
+
+  /// Ranked results for the current query.
+  ///
+  /// Ordering is the product now, not the alphabet: match quality first, then
+  /// the person's own launch habits. See `app_ranking.dart`.
+  List<AndroidApplication> get _results => rankApps(
+    widget.applications,
+    _query.text,
+    history: widget.launchHistory,
+  );
+
+  List<AndroidApplication> get _systemApps => _results
+      .where((AndroidApplication a) => a.isSystemApp)
+      .toList();
+
+  List<AndroidApplication> get _userApps => _results
+      .where((AndroidApplication a) => !a.isSystemApp)
+      .toList();
+
+  /// The pinned apps that are actually installed, in pin order.
+  ///
+  /// A pin naming a package that is gone is skipped rather than rendered as a
+  /// broken tile — uninstalling an app should not leave wreckage behind.
+  List<AndroidApplication> get _pinnedApps {
+    final Map<String, AndroidApplication> byPackage =
+        <String, AndroidApplication>{
+          for (final AndroidApplication a in widget.applications)
+            a.packageName: a,
+        };
+    return <AndroidApplication>[
+      for (final String p in widget.pinnedPackages)
+        if (byPackage[p] case final AndroidApplication a) a,
+    ];
   }
 
-  static int _byLabel(AndroidApplication a, AndroidApplication b) =>
-      a.label.toLowerCase().compareTo(b.label.toLowerCase());
+  void _togglePin(AndroidApplication a) {
+    final List<String> next = List<String>.of(widget.pinnedPackages);
+    if (!next.remove(a.packageName)) next.add(a.packageName);
+    widget.onPinnedChanged(next);
+  }
 
-  List<AndroidApplication> get _systemApps => widget.applications
-      .where((AndroidApplication a) => a.isSystemApp && _matches(a))
-      .toList()
-    ..sort(_byLabel);
+  void _showTileMenu(BuildContext context, Offset at, AndroidApplication a) {
+    final bool pinned = widget.pinnedPackages.contains(a.packageName);
+    showDexContextMenu(
+      context: context,
+      globalPosition: at,
+      actions: <DexMenuAction>[
+        DexMenuAction(
+          label: pinned ? 'Unpin from top' : 'Pin to top',
+          onSelected: () => _togglePin(a),
+        ),
+      ],
+    );
+  }
 
-  List<AndroidApplication> get _userApps => widget.applications
-      .where((AndroidApplication a) => !a.isSystemApp && _matches(a))
-      .toList()
-    ..sort(_byLabel);
+  void _launchSelected() {
+    final List<AndroidApplication> r = _results;
+    if (r.isEmpty) return;
+    // Enter with nothing explicitly chosen still takes the top match, which is
+    // what typing-then-Enter has always done.
+    final int i = _selected.clamp(0, r.length - 1);
+    widget.onLaunch(r[i].packageName);
+  }
 
-  void _launchFirst() {
-    // User apps are what people reach for; only fall back to a system match.
-    final List<AndroidApplication> user = _userApps;
-    final List<AndroidApplication> first = user.isNotEmpty ? user : _systemApps;
-    if (first.isNotEmpty) {
-      widget.onLaunch(first.first.packageName);
+  /// Arrow keys move the selection; Enter opens it.
+  ///
+  /// Handled on the search field's own focus node because that is where focus
+  /// sits the entire time the drawer is open — the field takes it on the frame
+  /// after opening and never gives it up.
+  KeyEventResult _onSearchKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
     }
+    final int count = _results.length;
+    if (count == 0) return KeyEventResult.ignored;
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      setState(() => _selected = (_selected + 1) % count);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      setState(() => _selected = (_selected - 1 + count) % count);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -152,8 +232,9 @@ class _AppDrawerState extends State<AppDrawer> {
                               controller: _query,
                               focusNode: _searchFocus,
                               colors: c,
-                              onChanged: (_) => setState(() {}),
-                              onSubmitted: (_) => _launchFirst(),
+                              onChanged: (_) =>
+                                  setState(() => _selected = 0),
+                              onSubmitted: (_) => _launchSelected(),
                             ),
                           ),
                         ),
@@ -185,6 +266,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
     final List<AndroidApplication> system = _systemApps;
     final List<AndroidApplication> user = _userApps;
+    final List<AndroidApplication> pinned = _pinnedApps;
 
     if (system.isEmpty && user.isEmpty) {
       return _Notice(
@@ -200,6 +282,28 @@ class _AppDrawerState extends State<AppDrawer> {
       );
     }
 
+    // Searching is a different job from browsing. A ranked grid would still
+    // read as a wall of icons and give the arrow keys nowhere obvious to go,
+    // so results come back as a list in rank order with one row selected —
+    // the shape every launcher search uses, and the only one where "the first
+    // result" is a visible thing rather than an inference.
+    if (_searching) {
+      final List<AndroidApplication> results = _results;
+      // Bottom-aligned, growing up out of the search field. Pinned to the top
+      // of a full-height panel, two results left a screen of empty glass
+      // between what you typed and what it found.
+      return Align(
+        alignment: Alignment.bottomLeft,
+        child: _ResultsList(
+          results: results,
+          selected: _selected.clamp(0, results.length - 1),
+          colors: c,
+          onLaunch: widget.onLaunch,
+          onHover: (int i) => setState(() => _selected = i),
+        ),
+      );
+    }
+
     // Sectioned, System then User — the reference order. Empty sections (which
     // happen while searching) drop out rather than leaving a bare header.
     return SingleChildScrollView(
@@ -207,15 +311,38 @@ class _AppDrawerState extends State<AppDrawer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // Pinned first: the whole point is that these are reachable
+          // without reading anything else. An empty pin list drops the
+          // section and its header together, as the other sections do.
+          if (pinned.isNotEmpty) ...<Widget>[
+            _SectionHeader(label: 'Pinned', colors: c),
+            _AppGrid(
+              apps: pinned,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
+            const SizedBox(height: DexSpace.lg),
+          ],
           if (system.isNotEmpty) ...<Widget>[
             _SectionHeader(label: 'System apps', colors: c),
-            _AppGrid(apps: system, colors: c, onLaunch: widget.onLaunch),
+            _AppGrid(
+              apps: system,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
           ],
           if (system.isNotEmpty && user.isNotEmpty)
             const SizedBox(height: DexSpace.lg),
           if (user.isNotEmpty) ...<Widget>[
             _SectionHeader(label: 'User apps', colors: c),
-            _AppGrid(apps: user, colors: c, onLaunch: widget.onLaunch),
+            _AppGrid(
+              apps: user,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
           ],
         ],
       ),
@@ -257,11 +384,13 @@ class _AppGrid extends StatelessWidget {
     required this.apps,
     required this.colors,
     required this.onLaunch,
+    this.onContextMenu,
   });
 
   final List<AndroidApplication> apps;
   final DexColors colors;
   final ValueChanged<String> onLaunch;
+  final void Function(BuildContext, Offset, AndroidApplication)? onContextMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -279,6 +408,7 @@ class _AppGrid extends StatelessWidget {
         app: apps[i],
         colors: colors,
         onLaunch: () => onLaunch(apps[i].packageName),
+        onContextMenu: onContextMenu,
       ),
     );
   }
@@ -343,11 +473,13 @@ class _AppTile extends StatelessWidget {
     required this.app,
     required this.colors,
     required this.onLaunch,
+    this.onContextMenu,
   });
 
   final AndroidApplication app;
   final DexColors colors;
   final VoidCallback onLaunch;
+  final void Function(BuildContext, Offset, AndroidApplication)? onContextMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -363,6 +495,10 @@ class _AppTile extends StatelessWidget {
       child: HoverLift(
         builder: (BuildContext context, bool hovered) => InkWell(
           onTap: onLaunch,
+          onSecondaryTapDown: onContextMenu == null
+              ? null
+              : (TapDownDetails d) =>
+                    onContextMenu!(context, d.globalPosition, app),
           borderRadius: BorderRadius.circular(DexRadius.card),
           child: AnimatedContainer(
             duration: DexDuration.micro,
@@ -467,6 +603,122 @@ class _Notice extends StatelessWidget {
           OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
         ],
       ),
+    );
+  }
+}
+
+/// Ranked search results, one row each, with the current selection marked.
+///
+/// Selection has to out-contrast hover, which in turn out-contrasts rest —
+/// otherwise moving the mouse over a list you are driving with the keyboard
+/// makes it impossible to tell where Enter will go.
+class _ResultsList extends StatelessWidget {
+  const _ResultsList({
+    required this.results,
+    required this.selected,
+    required this.colors,
+    required this.onLaunch,
+    required this.onHover,
+  });
+
+  final List<AndroidApplication> results;
+  final int selected;
+  final DexColors colors;
+  final ValueChanged<String> onLaunch;
+  final ValueChanged<int> onHover;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return ListView.builder(
+      // Shrink-wrapped so a short result set hugs the search field; a long one
+      // still scrolls inside whatever height the panel allows.
+      shrinkWrap: true,
+      padding: const EdgeInsets.only(bottom: DexSpace.sm),
+      itemCount: results.length,
+      itemBuilder: (BuildContext context, int i) {
+        final AndroidApplication a = results[i];
+        final bool isSelected = i == selected;
+        final bool placeholder = isPlaceholderLabel(a.label, a.packageName);
+        final String shown = placeholder
+            ? displayNameFor(a.packageName)
+            : a.label;
+
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: 'Open $shown',
+          child: MouseRegion(
+            onEnter: (_) => onHover(i),
+            child: GestureDetector(
+              onTap: () => onLaunch(a.packageName),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: DexDuration.micro,
+                curve: DexMotion.arrive,
+                margin: const EdgeInsets.only(bottom: DexSpace.xs),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DexSpace.md,
+                  vertical: DexSpace.sm,
+                ),
+                constraints: const BoxConstraints(
+                  minHeight: DexHit.primary,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colors.signal.withValues(alpha: 0.16)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(DexRadius.card),
+                  border: Border.all(
+                    color: isSelected ? colors.signal : Colors.transparent,
+                    width: DexStroke.hairline,
+                  ),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    AppGlyph(app: a, size: 28),
+                    const SizedBox(width: DexSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            shown,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: t.bodyMedium?.copyWith(
+                              color: colors.text,
+                            ),
+                          ),
+                          // A derived name is a guess; the package it came
+                          // from stays visible beneath it.
+                          if (placeholder)
+                            Text(
+                              a.packageName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DexTheme.data(colors, size: 10),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (isSelected)
+                      Text(
+                        'Enter',
+                        style: DexTheme.data(
+                          colors,
+                          size: 10,
+                          color: colors.signal,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

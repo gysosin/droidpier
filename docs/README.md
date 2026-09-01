@@ -17,6 +17,7 @@ complete distribution validation remain pending; see the release notes.
 | Signing, packaging and publication checklist | [Releasing](RELEASING.md) |
 | Dependency licenses and corresponding source | [Third-party software](THIRD_PARTY.md) |
 | Planned support | [Roadmap](ROADMAP.md) |
+| Proposed UI, companion and test work | [UI roadmap](UI_ROADMAP.md) |
 | Changes and upgrade notes | [Changelog](../CHANGELOG.md) · [Beta notes](releases/0.1.0-beta.1.md) |
 | Contributing and maintainer contact | [Contributing](../CONTRIBUTING.md) · [Maintainers](MAINTAINERS.md) |
 | Reporting vulnerabilities and conduct concerns | [Security](../SECURITY.md) · [Code of conduct](../CODE_OF_CONDUCT.md) |

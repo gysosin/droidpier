@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_dex_core/open_dex_core.dart';
+import 'package:open_android_dex/ui/diagnostics/stream_diagnostics.dart';
 import 'package:open_android_dex/ui/shell/app_shell.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
 
@@ -240,5 +241,70 @@ void main() {
       findsNothing,
       reason: 'a surface you cannot leave is a trap',
     );
+  });
+
+  testWidgets('Escape closes diagnostics before it closes the launcher', (
+    WidgetTester tester,
+  ) async {
+    // The Escape ladder, at the one rung a person can actually reach twice.
+    //
+    // Escape is not one binding: with several layers up it peels exactly one,
+    // in a fixed order. Most rungs cannot be observed together, because
+    // entering fullscreen deliberately clears the drawer, settings and
+    // diagnostics (see _toggleFullscreen). The launcher and diagnostics are the
+    // pair that genuinely coexist — neither toggle clears the other — and the
+    // ladder ranks diagnostics above the launcher.
+    //
+    // Every other Escape test opens a single layer, so none of them can tell
+    // this order from any other. Flattening the ladder into a map, which cannot
+    // express order at all, would leave the suite green.
+    await pumpShell(tester);
+
+    Future<void> settle() async {
+      await tester.pump();
+      for (int i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+    }
+
+    // Launcher up.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await settle();
+    expect(find.text('Search apps\u2026'), findsOneWidget);
+
+    // Diagnostics over the top of it.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await settle();
+    expect(
+      find.byType(StreamDiagnostics),
+      findsOneWidget,
+      reason: 'both layers should now be up',
+    );
+    expect(find.text('Search apps\u2026'), findsOneWidget);
+
+    // One Escape takes the higher rung only.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle();
+    expect(
+      find.byType(StreamDiagnostics),
+      findsNothing,
+      reason: 'the first Escape belongs to diagnostics',
+    );
+    expect(
+      find.text('Search apps\u2026'),
+      findsOneWidget,
+      reason: 'the launcher is a lower rung and must survive the first Escape',
+    );
+
+    // The second Escape takes the next rung down.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle();
+    expect(find.text('Search apps\u2026'), findsNothing);
   });
 }

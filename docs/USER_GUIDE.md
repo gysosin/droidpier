@@ -57,6 +57,29 @@ or `android-tools` on Fedora), then unplug and reconnect. Log in again if your
 distribution requires a group change. Do not fix this by running the desktop or
 ADB as root, or by giving every USB device unrestricted permissions.
 
+## Keyboard and the launcher
+
+Press **Ctrl + /** or **F1** for the full list of shortcuts. A bare **?** works
+too, except while you are typing into a search box. The list is generated from
+the shortcuts themselves, so it cannot fall out of date.
+
+| Key | Does |
+| --- | --- |
+| `Ctrl + Space` | Open or close the launcher |
+| `Ctrl + /`, `F1`, `?` | Show every keyboard shortcut |
+| `Alt + Tab` | Switch window |
+| `F11` | Fullscreen the focused window |
+| `Ctrl + Shift + D` | Stream diagnostics |
+| `Esc` | Close whatever is open, one layer at a time |
+
+**Finding an app.** The launcher searches as you type and orders results by how
+well they match and by which apps you actually open. Typing `wa` finds WhatsApp
+from its initials, not only from names literally containing those letters.
+Arrow **Up** and **Down** move the selection, **Enter** opens it.
+
+**Pinning.** Right-click any app and choose *Pin to top* to give it a row of its
+own above the rest.
+
 ## Wireless pairing
 
 Android 11 or later normally exposes **Developer options → Wireless debugging**.

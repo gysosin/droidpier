@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
+import '../widgets/context_menu.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
@@ -22,6 +23,7 @@ class AppWindow extends StatelessWidget {
     this.onDragTo,
     this.onDragMove,
     this.onDragEnd,
+    this.onCloseOthers,
     super.key,
   });
 
@@ -38,6 +40,10 @@ class AppWindow extends StatelessWidget {
   /// local state — the whole shell no longer rebuilds on every pointer move.
   final ValueChanged<Offset>? onDragMove;
   final VoidCallback? onDragEnd;
+
+  /// Closes every other window. Null where the shell has not supplied it, in
+  /// which case the entry is absent rather than inert.
+  final VoidCallback? onCloseOthers;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +111,7 @@ class AppWindow extends StatelessWidget {
                   onDragTo: onDragTo,
                   onDragMove: onDragMove,
                   onDragEnd: onDragEnd,
+                  onCloseOthers: onCloseOthers,
                 ),
                 Expanded(
                   child: input.wrap(
@@ -131,6 +138,7 @@ class _TitleBar extends StatelessWidget {
     this.onDragTo,
     this.onDragMove,
     this.onDragEnd,
+    this.onCloseOthers,
   });
 
   final WorkspaceWindow window;
@@ -139,6 +147,67 @@ class _TitleBar extends StatelessWidget {
   final ValueChanged<Offset>? onDragTo;
   final ValueChanged<Offset>? onDragMove;
   final VoidCallback? onDragEnd;
+
+  /// Closes every other window. Null where the shell has not supplied it,
+  /// in which case the entry is absent rather than inert.
+  final VoidCallback? onCloseOthers;
+
+  /// The title-bar menu.
+  ///
+  /// Carries only what `WorkspaceIntents` can actually perform. The roadmap
+  /// also asked for "always on top" and "move to workspace"; there is no
+  /// always-on-top anywhere in the window API, and workspaces do not exist
+  /// yet, so neither ships — not even greyed out. A control that does nothing
+  /// is worse than no control.
+  void _showMenu(BuildContext context, Offset at) {
+    final bool maximised =
+        window.displayState == WindowDisplayState.maximised;
+
+    showDexContextMenu(
+      context: context,
+      globalPosition: at,
+      actions: <DexMenuAction>[
+        // Labels and geometry both come from WindowSnap, which already spells
+        // them the way a person would: "Left half", "Top right quarter".
+        for (final WindowSnap snap in WindowSnap.values)
+          if (snap != WindowSnap.maximise)
+            DexMenuAction(
+              label: snap.label,
+              onSelected: () => intents.move(
+                window.id,
+                snap.geometryIn(workspaceSize),
+              ),
+            ),
+        const DexMenuAction.separator(),
+        DexMenuAction(
+          // Says what the click will do, not what the window currently is.
+          label: maximised ? 'Restore' : 'Maximise',
+          onSelected: _toggleMaximise,
+        ),
+        DexMenuAction(
+          label: 'Minimise',
+          onSelected: () => intents.setDisplayState(
+            window.id,
+            WindowDisplayState.minimised,
+          ),
+        ),
+        // Absent rather than disabled where the host has no fullscreen
+        // surface, matching what the title bar's own button does.
+        if (intents.fullscreen case final ValueChanged<String> enter)
+          DexMenuAction(
+            label: 'Fullscreen',
+            onSelected: () => enter(window.id),
+          ),
+        const DexMenuAction.separator(),
+        DexMenuAction(
+          label: 'Close',
+          onSelected: () => intents.close(window.id),
+        ),
+        if (onCloseOthers != null)
+          DexMenuAction(label: 'Close others', onSelected: onCloseOthers!),
+      ],
+    );
+  }
 
   void _toggleMaximise() {
     intents.setDisplayState(
@@ -163,6 +232,11 @@ class _TitleBar extends StatelessWidget {
     final Widget draggableLabel = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onDoubleTap: _toggleMaximise,
+      // Deliberately on the label region only. A detector wrapping the window
+      // buttons once swallowed every click on close, minimise and maximise
+      // while looking perfectly normal.
+      onSecondaryTapDown: (TapDownDetails d) =>
+          _showMenu(context, d.globalPosition),
       // Intent is streamed during the drag; the UI holds no local position, so
       // a move the backend clamps or rejects cannot leave the window showing a
       // place it is not.

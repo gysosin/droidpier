@@ -3,7 +3,90 @@ import 'dart:io';
 
 import 'package:flutter/material.dart' show ThemeMode;
 
-/// The desk settings that outlive a run: theme, wallpaper and window snapping.
+/// One window's remembered placement. Restored per package on relaunch.
+class StoredWindowGeometry {
+  const StoredWindowGeometry({
+    required this.x,
+    required this.y,
+    required this.width,
+    required this.height,
+    this.maximised = false,
+  });
+
+  final double x;
+  final double y;
+  final double width;
+  final double height;
+  final bool maximised;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'x': x,
+    'y': y,
+    'width': width,
+    'height': height,
+    'maximised': maximised,
+  };
+
+  /// Returns null rather than throwing on anything unexpected: one bad entry
+  /// must cost that window its position, not the whole settings file.
+  static StoredWindowGeometry? fromJson(Object? json) {
+    if (json is! Map<String, Object?>) return null;
+    final Object? x = json['x'];
+    final Object? y = json['y'];
+    final Object? width = json['width'];
+    final Object? height = json['height'];
+    if (x is! num ||
+        y is! num ||
+        width is! num ||
+        height is! num ||
+        !x.isFinite ||
+        !y.isFinite ||
+        !width.isFinite ||
+        !height.isFinite ||
+        width <= 0 ||
+        height <= 0) {
+      return null;
+    }
+    return StoredWindowGeometry(
+      x: x.toDouble(),
+      y: y.toDouble(),
+      width: width.toDouble(),
+      height: height.toDouble(),
+      maximised: json['maximised'] == true,
+    );
+  }
+}
+
+/// How often and how recently one package was launched, for search ranking.
+class LaunchRecord {
+  const LaunchRecord({required this.count, required this.lastLaunchedMs});
+
+  final int count;
+
+  /// Milliseconds since epoch, UTC. Stored as an int so it round-trips through
+  /// JSON without a date format to disagree about.
+  final int lastLaunchedMs;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'count': count,
+    'lastLaunchedMs': lastLaunchedMs,
+  };
+
+  static LaunchRecord? fromJson(Object? json) {
+    if (json is! Map<String, Object?>) return null;
+    final Object? count = json['count'];
+    final Object? lastLaunchedMs = json['lastLaunchedMs'];
+    if (count is! int ||
+        lastLaunchedMs is! int ||
+        count < 0 ||
+        lastLaunchedMs < 0) {
+      return null;
+    }
+    return LaunchRecord(count: count, lastLaunchedMs: lastLaunchedMs);
+  }
+}
+
+/// The desk settings that outlive a run.
 ///
 /// Deliberately small and plain — it is serialised to a single JSON file, so
 /// every field must round-trip through [toJson]/[fromJson].
@@ -12,7 +95,12 @@ class DeskPreferencesData {
     this.themeMode = ThemeMode.system,
     this.wallpaperIndex = 0,
     this.snapEnabled = true,
+    this.windowGeometry = const <String, StoredWindowGeometry>{},
+    this.pinnedPackages = const <String>[],
+    this.launchHistory = const <String, LaunchRecord>{},
   });
+
+  static const int maxRememberedWindows = 64;
 
   final ThemeMode themeMode;
 
@@ -23,20 +111,46 @@ class DeskPreferencesData {
 
   final bool snapEnabled;
 
+  /// Remembered window placement by package name. Capped at
+  /// [maxRememberedWindows] so a long-lived install does not grow the settings
+  /// file without bound.
+  final Map<String, StoredWindowGeometry> windowGeometry;
+
+  /// Packages pinned to the top of the app drawer, in pin order.
+  final List<String> pinnedPackages;
+
+  /// Launch counts and recency by package name, for drawer search ranking.
+  final Map<String, LaunchRecord> launchHistory;
+
   DeskPreferencesData copyWith({
     ThemeMode? themeMode,
     int? wallpaperIndex,
     bool? snapEnabled,
+    Map<String, StoredWindowGeometry>? windowGeometry,
+    List<String>? pinnedPackages,
+    Map<String, LaunchRecord>? launchHistory,
   }) => DeskPreferencesData(
     themeMode: themeMode ?? this.themeMode,
     wallpaperIndex: wallpaperIndex ?? this.wallpaperIndex,
     snapEnabled: snapEnabled ?? this.snapEnabled,
+    windowGeometry: windowGeometry ?? this.windowGeometry,
+    pinnedPackages: pinnedPackages ?? this.pinnedPackages,
+    launchHistory: launchHistory ?? this.launchHistory,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'themeMode': themeMode.name,
     'wallpaperIndex': wallpaperIndex,
     'snapEnabled': snapEnabled,
+    'windowGeometry': windowGeometry.map(
+      (String packageName, StoredWindowGeometry geometry) =>
+          MapEntry<String, Object?>(packageName, geometry.toJson()),
+    ),
+    'pinnedPackages': pinnedPackages,
+    'launchHistory': launchHistory.map(
+      (String packageName, LaunchRecord record) =>
+          MapEntry<String, Object?>(packageName, record.toJson()),
+    ),
   };
 
   /// Tolerant of anything: an unknown theme name, a wrong type, or a missing
@@ -53,10 +167,48 @@ class DeskPreferencesData {
     }
     final Object? idx = json['wallpaperIndex'];
     final Object? snap = json['snapEnabled'];
+
+    // Each entry decodes independently: one malformed record is dropped rather
+    // than costing the user every remembered window.
+    final Map<String, StoredWindowGeometry> geometry =
+        <String, StoredWindowGeometry>{};
+    final Object? rawGeometry = json['windowGeometry'];
+    if (rawGeometry is Map<String, Object?>) {
+      for (final MapEntry<String, Object?> entry in rawGeometry.entries) {
+        final StoredWindowGeometry? decoded = StoredWindowGeometry.fromJson(
+          entry.value,
+        );
+        if (decoded != null) geometry[entry.key] = decoded;
+      }
+    }
+
+    final List<String> pinned = <String>[];
+    final Set<String> seenPinned = <String>{};
+    final Object? rawPinned = json['pinnedPackages'];
+    if (rawPinned is List) {
+      for (final Object? entry in rawPinned) {
+        if (entry is String && entry.isNotEmpty && seenPinned.add(entry)) {
+          pinned.add(entry);
+        }
+      }
+    }
+
+    final Map<String, LaunchRecord> history = <String, LaunchRecord>{};
+    final Object? rawHistory = json['launchHistory'];
+    if (rawHistory is Map<String, Object?>) {
+      for (final MapEntry<String, Object?> entry in rawHistory.entries) {
+        final LaunchRecord? decoded = LaunchRecord.fromJson(entry.value);
+        if (decoded != null) history[entry.key] = decoded;
+      }
+    }
+
     return DeskPreferencesData(
       themeMode: mode,
       wallpaperIndex: idx is int && idx >= 0 ? idx : 0,
       snapEnabled: snap is bool ? snap : true,
+      windowGeometry: geometry,
+      pinnedPackages: pinned,
+      launchHistory: history,
     );
   }
 }

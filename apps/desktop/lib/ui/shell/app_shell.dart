@@ -7,9 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_drawer.dart';
+import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
+import 'shortcut_sheet.dart';
+import 'shortcuts.dart';
 import '../theme/dex_colors.dart';
 import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
@@ -21,6 +24,7 @@ import '../theme/wallpapers.dart';
 import '../workspace/app_window.dart';
 import '../workspace/window_input.dart';
 import '../workspace/window_switcher.dart';
+import '../workspace/window_geometry_store.dart';
 import '../workspace/window_model.dart';
 import '../workspace/workspace.dart';
 
@@ -44,6 +48,9 @@ import '../workspace/workspace.dart';
 void _ignoreTheme(ThemeMode _) {}
 void _ignoreBool(bool _) {}
 void _ignoreInt(int _) {}
+void _ignoreHistory(Map<String, AppLaunchStats> _) {}
+void _ignorePins(List<String> _) {}
+void _ignoreRemembered(Map<String, RememberedWindow> _) {}
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -56,6 +63,12 @@ class AppShell extends StatefulWidget {
     this.onSnapChanged = _ignoreBool,
     this.wallpaperIndex = 0,
     this.onWallpaperChanged = _ignoreInt,
+    this.launchHistory = const <String, AppLaunchStats>{},
+    this.onLaunchHistoryChanged = _ignoreHistory,
+    this.pinnedPackages = const <String>[],
+    this.onPinnedChanged = _ignorePins,
+    this.rememberedWindows = const <String, RememberedWindow>{},
+    this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
   });
 
@@ -79,6 +92,25 @@ class AppShell extends StatefulWidget {
   /// [kWallpaperChoices] — and its setter. Persisted alongside the theme.
   final int wallpaperIndex;
   final ValueChanged<int> onWallpaperChanged;
+
+  /// Launch counts and recency per package, and its setter. Lifted out of the
+  /// shell exactly as [snapEnabled] is, because the file it persists to is
+  /// owned by the bootstrap lane rather than by the UI.
+  ///
+  /// Empty by default, in which case drawer search ranks on match quality
+  /// alone — the behaviour before any of this existed.
+  final Map<String, AppLaunchStats> launchHistory;
+  final ValueChanged<Map<String, AppLaunchStats>> onLaunchHistoryChanged;
+
+  /// Packages pinned to the top of the drawer, in pin order, and its setter.
+  /// Lifted for the same reason as [launchHistory].
+  final List<String> pinnedPackages;
+  final ValueChanged<List<String>> onPinnedChanged;
+
+  /// Where each application's window was last left, and its setter. Lifted for
+  /// the same reason as [launchHistory].
+  final Map<String, RememberedWindow> rememberedWindows;
+  final ValueChanged<Map<String, RememberedWindow>> onRememberedWindowsChanged;
 
   /// Fixed clock, for tests only.
   ///
@@ -258,7 +290,6 @@ class _AppShellState extends State<AppShell> {
   /// and waiting for one is how a person ends up staring at a boot screen.
   void _scheduleAutoConnectRetry() {
     if (_autoConnectDone || _autoConnectAttempts >= _autoConnectLimit) return;
-    _moveFlush?.cancel();
     _autoConnectRetry?.cancel();
     _autoConnectRetry = Timer(_autoConnectBackoff, () {
       if (mounted) setState(() {});
@@ -300,8 +331,16 @@ class _AppShellState extends State<AppShell> {
         // which is the same for every window — so two opened in a row would
         // land exactly on top of each other. Cascade it and tell the backend,
         // which then echoes our position back as the authoritative one.
+        // Where a brand-new window goes. A remembered placement wins; failing
+        // that the cascade keeps two windows opened in a row from landing
+        // exactly on top of each other.
+        final WindowGeometry? remembered = recallWindow(
+          widget.rememberedWindows,
+          session.application.packageName,
+          approx,
+        );
         final WindowGeometry placed = _isUnplaced(session.geometry)
-            ? cascadeGeometry(_workspace.length, approx)
+            ? (remembered ?? cascadeGeometry(_workspace.length, approx))
             : session.geometry;
         _workspace[session.id] = WorkspaceWindow(
           session: session,
@@ -311,6 +350,24 @@ class _AppShellState extends State<AppShell> {
           surface: session.surface,
           presentedFramesPerSecond: session.presentedFramesPerSecond,
         );
+        // A window remembered as maximised comes back maximised.
+        final RememberedWindow? record =
+            widget.rememberedWindows[session.application.packageName];
+        if (record != null &&
+            record.maximised &&
+            session.displayState != WindowDisplayState.maximised) {
+          final String id = session.id;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              unawaited(
+                widget.facade.setWindowDisplayState(
+                  id,
+                  WindowDisplayState.maximised,
+                ),
+              );
+            }
+          });
+        }
         if (placed != session.geometry) {
           // Deferred to after the frame on purpose. `_windows` runs during
           // build, and a facade command can emit a new snapshot synchronously —
@@ -491,6 +548,24 @@ class _AppShellState extends State<AppShell> {
     _moveFlush ??= Timer(_moveThrottle, _flushMoves);
   }
 
+  /// Remembers where a window was left, so relaunching reopens it there.
+  ///
+  /// Called on commit rather than continuously: `_queueMove`/`_flushMoves`
+  /// already coalesce a drag, and recording per pointer sample would write the
+  /// settings file dozens of times per second.
+  void _rememberGeometry(String id) {
+    final WorkspaceWindow? w = _workspace[id];
+    if (w == null) return;
+    widget.onRememberedWindowsChanged(
+      rememberWindow(
+        widget.rememberedWindows,
+        w.session.application.packageName,
+        w.geometry,
+        maximised: w.displayState == WindowDisplayState.maximised,
+      ),
+    );
+  }
+
   void _flushMoves() {
     _moveFlush = null;
     if (_pendingMoves.isEmpty) return;
@@ -498,6 +573,7 @@ class _AppShellState extends State<AppShell> {
         Map<String, WindowGeometry>.from(_pendingMoves);
     _pendingMoves.clear();
     for (final MapEntry<String, WindowGeometry> e in sending.entries) {
+      _rememberGeometry(e.key);
       unawaited(
         widget.facade.moveWindow(e.key, e.value).then((_) {
           // Authority goes back to the backend only once it has the position.
@@ -514,6 +590,9 @@ class _AppShellState extends State<AppShell> {
   String? _dragging;
 
   bool _diagnosticsOpen = false;
+
+  /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
+  bool _sheetOpen = false;
 
   /// One line per window that has gone away, most recent first.
   ///
@@ -607,6 +686,10 @@ class _AppShellState extends State<AppShell> {
           _workspace[id] = w.copyWith(displayState: state);
         }
       });
+      // Maximised is part of the placement, so a change to it is worth
+      // remembering as much as a move is. Minimised is not: a window you come
+      // back to should not reopen hidden.
+      if (state != WindowDisplayState.minimised) _rememberGeometry(id);
       unawaited(widget.facade.setWindowDisplayState(id, state));
     },
     close: (String id) => widget.facade.closeWindow(id),
@@ -623,6 +706,35 @@ class _AppShellState extends State<AppShell> {
     HardwareKeyboard.instance.removeHandler(_onKey);
     super.dispose();
   }
+
+  /// The shell's half of the shortcut registry: what each accelerator asks
+  /// about the shell, and what it does to it. The list itself, and its order,
+  /// live in `shortcuts.dart`.
+  ShellShortcutHooks get _shortcutHooks => ShellShortcutHooks(
+    openSheet: () => setState(() => _sheetOpen = true),
+    isSheetOpen: () => _sheetOpen,
+    closeSheet: () => setState(() => _sheetOpen = false),
+    keyboardIsFree: () => !_deskOwnsKeyboard,
+    toggleDiagnostics: () =>
+        setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+    toggleDrawer: _toggleDrawer,
+    toggleFullscreen: _toggleFullscreen,
+    cycleFocus: _cycleFocus,
+    isFullscreen: () => _fullscreenId != null,
+    exitFullscreen: _exitFullscreen,
+    isDiagnosticsOpen: () => _diagnosticsOpen,
+    closeDiagnostics: () => setState(() => _diagnosticsOpen = false),
+    isSwitcherOpen: () => _switcherOpen,
+    cancelSwitch: () => setState(() => _switcherOpen = false),
+    isDeskSurfaceOpen: () => _drawerOpen || _permissionsOpen || _settingsOpen,
+    closeDeskSurfaces: () => setState(() {
+      _drawerOpen = false;
+      _permissionsOpen = false;
+      _settingsOpen = false;
+    }),
+    isConnectOpen: () => _connectOpen,
+    closeConnect: () => setState(() => _connectOpen = false),
+  );
 
   /// App-global accelerators.
   ///
@@ -644,60 +756,40 @@ class _AppShellState extends State<AppShell> {
       // held down forever. Accelerators only ever fire on down.
       return _forwardKeyToWindow(event);
     }
-    final bool control = HardwareKeyboard.instance.isControlPressed;
-    if (control &&
-        HardwareKeyboard.instance.isShiftPressed &&
-        event.logicalKey == LogicalKeyboardKey.keyD) {
-      setState(() => _diagnosticsOpen = !_diagnosticsOpen);
+    final HardwareKeyboard keys = HardwareKeyboard.instance;
+    final DexShortcut? hit = matchShortcut(
+      buildShortcuts(_shortcutHooks),
+      event.logicalKey,
+      control: keys.isControlPressed,
+      shift: keys.isShiftPressed,
+      alt: keys.isAltPressed,
+    );
+    if (hit != null) {
+      hit.run();
       return true;
-    }
-    if (control && event.logicalKey == LogicalKeyboardKey.space) {
-      _toggleDrawer();
-      return true;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.f11) {
-      _toggleFullscreen();
-      return true;
-    }
-    if (HardwareKeyboard.instance.isAltPressed &&
-        event.logicalKey == LogicalKeyboardKey.tab) {
-      _cycleFocus();
-      return true;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
-      // Fullscreen is the most immersive layer, so Escape leaves it first.
-      if (_fullscreenId != null) {
-        _exitFullscreen();
-        return true;
-      }
-      if (_diagnosticsOpen) {
-        setState(() => _diagnosticsOpen = false);
-        return true;
-      }
-      if (_switcherOpen) {
-        // Cancels the switch rather than committing it, which is the whole
-        // reason a person reaches for Escape mid-Alt+Tab.
-        setState(() => _switcherOpen = false);
-        return true;
-      }
-      if (_drawerOpen || _permissionsOpen || _settingsOpen) {
-        setState(() {
-          _drawerOpen = false;
-          _permissionsOpen = false;
-          _settingsOpen = false;
-        });
-        return true;
-      }
-      // One layer, so one Escape. Closing it also stops discovery and cancels
-      // any pairing — see [ConnectionScreen.dispose].
-      if (_connectOpen) {
-        setState(() => _connectOpen = false);
-        return true;
-      }
     }
     // Nothing above claimed it, so it belongs to the app the person is
     // actually typing into.
     return _forwardKeyToWindow(event);
+  }
+
+  /// Whether the desk's own chrome should keep every plain keystroke.
+  ///
+  /// True while any desk surface is open, or while a text field anywhere in our
+  /// chrome has focus. Two callers need exactly this question and must not
+  /// drift apart: forwarding to the phone, and the bare `?` cheat-sheet
+  /// binding. Without the second, typing a question mark into the launcher
+  /// search would throw a help panel over what you were searching for.
+  bool get _deskOwnsKeyboard {
+    if (_drawerOpen ||
+        _settingsOpen ||
+        _permissionsOpen ||
+        _connectOpen ||
+        _sheetOpen) {
+      return true;
+    }
+    final FocusNode? focus = FocusManager.instance.primaryFocus;
+    return focus?.context?.widget is EditableText;
   }
 
   /// Sends a key to the focused Android window, if one should have it.
@@ -707,13 +799,7 @@ class _AppShellState extends State<AppShell> {
   /// desk's own text fields need, so the search box in the drawer would stop
   /// accepting letters the moment an app window existed.
   bool _forwardKeyToWindow(KeyEvent event) {
-    // Any desk surface that is open owns the keyboard.
-    if (_drawerOpen || _settingsOpen || _permissionsOpen || _connectOpen) {
-      return false;
-    }
-    // A focused text field anywhere in our own chrome owns it too.
-    final FocusNode? focus = FocusManager.instance.primaryFocus;
-    if (focus?.context?.widget is EditableText) return false;
+    if (_deskOwnsKeyboard) return false;
 
     final WorkspaceWindow? target = _workspace.values
         .cast<WorkspaceWindow?>()
@@ -732,6 +818,22 @@ class _AppShellState extends State<AppShell> {
     if (sample == null) return false;
     unawaited(widget.facade.sendKey(target.id, sample));
     return true;
+  }
+
+  /// Notes that [packageName] was opened, so the drawer can rank on habit.
+  ///
+  /// Counted on launch rather than on window creation: a launch that fails to
+  /// produce a window is still what the person asked for, and ranking should
+  /// follow intent rather than the transport's luck.
+  void _recordLaunch(String packageName) {
+    final AppLaunchStats? previous = widget.launchHistory[packageName];
+    final Map<String, AppLaunchStats> next =
+        Map<String, AppLaunchStats>.of(widget.launchHistory);
+    next[packageName] = AppLaunchStats(
+      count: (previous?.count ?? 0) + 1,
+      lastLaunchedMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+    );
+    widget.onLaunchHistoryChanged(next);
   }
 
   void _toggleDrawer() {
@@ -1018,8 +1120,12 @@ class _AppShellState extends State<AppShell> {
       return AppDrawer(
         status: _s.applicationStatus,
         applications: _s.applications,
+        launchHistory: widget.launchHistory,
+        pinnedPackages: widget.pinnedPackages,
+        onPinnedChanged: widget.onPinnedChanged,
         onLaunch: (String pkg) {
           widget.facade.launchApplication(pkg);
+          _recordLaunch(pkg);
           // Launching returns you to the desk; the window opens beside it.
           setState(() => _drawerOpen = false);
         },
@@ -1050,6 +1156,15 @@ class _AppShellState extends State<AppShell> {
             setState(() => _settingsOpen = false);
             widget.facade.disconnect();
           },
+        ),
+      );
+    }
+    if (_sheetOpen) {
+      return _Overlay(
+        onDismiss: () => setState(() => _sheetOpen = false),
+        child: ShortcutSheet(
+          shortcuts: buildShortcuts(_shortcutHooks),
+          onClose: () => setState(() => _sheetOpen = false),
         ),
       );
     }
