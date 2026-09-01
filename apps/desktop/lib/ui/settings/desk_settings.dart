@@ -101,6 +101,13 @@ class DeskSettings extends StatelessWidget {
                     _Group(
                       title: 'Appearance',
                       colors: c,
+                      onReset: () {
+                        onThemeChanged(ThemeMode.system);
+                        onAccentChanged(0);
+                        onWallpaperChanged(0);
+                        onGlassChanged(true);
+                        onReduceMotionChanged(false);
+                      },
                       children: <Widget>[
                         _ChoiceRow(
                           title: 'Theme',
@@ -149,6 +156,7 @@ class DeskSettings extends StatelessWidget {
                     _Group(
                       title: 'Desktop mode',
                       colors: c,
+                      onReset: () => onSnapChanged(true),
                       children: <Widget>[
                         _SwitchRow(
                           title: 'Window snapping',
@@ -268,24 +276,58 @@ class _Group extends StatelessWidget {
     required this.title,
     required this.children,
     required this.colors,
+    this.onReset,
   });
 
   final String title;
   final List<Widget> children;
   final DexColors colors;
 
+  /// Restores this section's defaults. Null for sections that hold no
+  /// preferences — Connection and About — because a reset there would do
+  /// nothing, and a control that does nothing is worse than no control.
+  final VoidCallback? onReset;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          title.toUpperCase(),
-          style: DexTheme.data(
-            colors,
-            size: 10,
-            color: colors.muted,
-          ).copyWith(letterSpacing: 1.4),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                title.toUpperCase(),
+                style: DexTheme.data(
+                  colors,
+                  size: 10,
+                  color: colors.muted,
+                ).copyWith(letterSpacing: 1.4),
+              ),
+            ),
+            if (onReset case final VoidCallback reset)
+              Tooltip(
+                message: 'Reset $title',
+                child: InkWell(
+                  onTap: reset,
+                  borderRadius: BorderRadius.circular(DexRadius.control),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DexSpace.sm,
+                      vertical: DexSpace.xs,
+                    ),
+                    child: Text(
+                      'Reset',
+                      style: DexTheme.data(
+                        colors,
+                        size: 10,
+                        color: colors.muted,
+                      ).copyWith(letterSpacing: 1.4),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: DexSpace.sm),
         Container(
