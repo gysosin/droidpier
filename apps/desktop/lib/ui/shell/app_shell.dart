@@ -48,6 +48,7 @@ void _ignoreTheme(ThemeMode _) {}
 void _ignoreBool(bool _) {}
 void _ignoreInt(int _) {}
 void _ignoreHistory(Map<String, AppLaunchStats> _) {}
+void _ignorePins(List<String> _) {}
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -62,6 +63,8 @@ class AppShell extends StatefulWidget {
     this.onWallpaperChanged = _ignoreInt,
     this.launchHistory = const <String, AppLaunchStats>{},
     this.onLaunchHistoryChanged = _ignoreHistory,
+    this.pinnedPackages = const <String>[],
+    this.onPinnedChanged = _ignorePins,
     super.key,
   });
 
@@ -94,6 +97,11 @@ class AppShell extends StatefulWidget {
   /// alone — the behaviour before any of this existed.
   final Map<String, AppLaunchStats> launchHistory;
   final ValueChanged<Map<String, AppLaunchStats>> onLaunchHistoryChanged;
+
+  /// Packages pinned to the top of the drawer, in pin order, and its setter.
+  /// Lifted for the same reason as [launchHistory].
+  final List<String> pinnedPackages;
+  final ValueChanged<List<String>> onPinnedChanged;
 
   /// Fixed clock, for tests only.
   ///
@@ -1056,6 +1064,8 @@ class _AppShellState extends State<AppShell> {
         status: _s.applicationStatus,
         applications: _s.applications,
         launchHistory: widget.launchHistory,
+        pinnedPackages: widget.pinnedPackages,
+        onPinnedChanged: widget.onPinnedChanged,
         onLaunch: (String pkg) {
           widget.facade.launchApplication(pkg);
           _recordLaunch(pkg);

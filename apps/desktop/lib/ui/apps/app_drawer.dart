@@ -10,6 +10,7 @@ import '../theme/dex_glass.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
 import '../util/app_display_name.dart';
+import '../widgets/context_menu.dart';
 import 'app_glyph.dart';
 import 'app_ranking.dart';
 
@@ -28,6 +29,8 @@ class AppDrawer extends StatefulWidget {
     required this.onRefresh,
     required this.onDismiss,
     this.launchHistory = const <String, AppLaunchStats>{},
+    this.pinnedPackages = const <String>[],
+    this.onPinnedChanged = _ignorePins,
     super.key,
   });
 
@@ -43,6 +46,13 @@ class AppDrawer extends StatefulWidget {
   /// search ranking. Empty until the host supplies it, in which case ranking
   /// falls back to match quality alone.
   final Map<String, AppLaunchStats> launchHistory;
+
+  /// Packages pinned to the top of the drawer, in pin order, and its setter.
+  /// Turns a four-hundred-app list into a five-app launcher.
+  final List<String> pinnedPackages;
+  final ValueChanged<List<String>> onPinnedChanged;
+
+  static void _ignorePins(List<String> _) {}
 
   @override
   State<AppDrawer> createState() => _AppDrawerState();
@@ -90,6 +100,42 @@ class _AppDrawerState extends State<AppDrawer> {
   List<AndroidApplication> get _userApps => _results
       .where((AndroidApplication a) => !a.isSystemApp)
       .toList();
+
+  /// The pinned apps that are actually installed, in pin order.
+  ///
+  /// A pin naming a package that is gone is skipped rather than rendered as a
+  /// broken tile — uninstalling an app should not leave wreckage behind.
+  List<AndroidApplication> get _pinnedApps {
+    final Map<String, AndroidApplication> byPackage =
+        <String, AndroidApplication>{
+          for (final AndroidApplication a in widget.applications)
+            a.packageName: a,
+        };
+    return <AndroidApplication>[
+      for (final String p in widget.pinnedPackages)
+        if (byPackage[p] case final AndroidApplication a) a,
+    ];
+  }
+
+  void _togglePin(AndroidApplication a) {
+    final List<String> next = List<String>.of(widget.pinnedPackages);
+    if (!next.remove(a.packageName)) next.add(a.packageName);
+    widget.onPinnedChanged(next);
+  }
+
+  void _showTileMenu(BuildContext context, Offset at, AndroidApplication a) {
+    final bool pinned = widget.pinnedPackages.contains(a.packageName);
+    showDexContextMenu(
+      context: context,
+      globalPosition: at,
+      actions: <DexMenuAction>[
+        DexMenuAction(
+          label: pinned ? 'Unpin from top' : 'Pin to top',
+          onSelected: () => _togglePin(a),
+        ),
+      ],
+    );
+  }
 
   void _launchSelected() {
     final List<AndroidApplication> r = _results;
@@ -220,6 +266,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
     final List<AndroidApplication> system = _systemApps;
     final List<AndroidApplication> user = _userApps;
+    final List<AndroidApplication> pinned = _pinnedApps;
 
     if (system.isEmpty && user.isEmpty) {
       return _Notice(
@@ -264,15 +311,38 @@ class _AppDrawerState extends State<AppDrawer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          // Pinned first: the whole point is that these are reachable
+          // without reading anything else. An empty pin list drops the
+          // section and its header together, as the other sections do.
+          if (pinned.isNotEmpty) ...<Widget>[
+            _SectionHeader(label: 'Pinned', colors: c),
+            _AppGrid(
+              apps: pinned,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
+            const SizedBox(height: DexSpace.lg),
+          ],
           if (system.isNotEmpty) ...<Widget>[
             _SectionHeader(label: 'System apps', colors: c),
-            _AppGrid(apps: system, colors: c, onLaunch: widget.onLaunch),
+            _AppGrid(
+              apps: system,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
           ],
           if (system.isNotEmpty && user.isNotEmpty)
             const SizedBox(height: DexSpace.lg),
           if (user.isNotEmpty) ...<Widget>[
             _SectionHeader(label: 'User apps', colors: c),
-            _AppGrid(apps: user, colors: c, onLaunch: widget.onLaunch),
+            _AppGrid(
+              apps: user,
+              colors: c,
+              onLaunch: widget.onLaunch,
+              onContextMenu: _showTileMenu,
+            ),
           ],
         ],
       ),
@@ -314,11 +384,13 @@ class _AppGrid extends StatelessWidget {
     required this.apps,
     required this.colors,
     required this.onLaunch,
+    this.onContextMenu,
   });
 
   final List<AndroidApplication> apps;
   final DexColors colors;
   final ValueChanged<String> onLaunch;
+  final void Function(BuildContext, Offset, AndroidApplication)? onContextMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +408,7 @@ class _AppGrid extends StatelessWidget {
         app: apps[i],
         colors: colors,
         onLaunch: () => onLaunch(apps[i].packageName),
+        onContextMenu: onContextMenu,
       ),
     );
   }
@@ -400,11 +473,13 @@ class _AppTile extends StatelessWidget {
     required this.app,
     required this.colors,
     required this.onLaunch,
+    this.onContextMenu,
   });
 
   final AndroidApplication app;
   final DexColors colors;
   final VoidCallback onLaunch;
+  final void Function(BuildContext, Offset, AndroidApplication)? onContextMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -420,6 +495,10 @@ class _AppTile extends StatelessWidget {
       child: HoverLift(
         builder: (BuildContext context, bool hovered) => InkWell(
           onTap: onLaunch,
+          onSecondaryTapDown: onContextMenu == null
+              ? null
+              : (TapDownDetails d) =>
+                    onContextMenu!(context, d.globalPosition, app),
           borderRadius: BorderRadius.circular(DexRadius.card),
           child: AnimatedContainer(
             duration: DexDuration.micro,
