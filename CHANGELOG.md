@@ -27,6 +27,25 @@ Desktop shell improvements. Keyboard, launcher and window management.
 - Fixed: the auto-connect retry cancelled the window-move flush timer, a
   latent fault that would have shown up as a dragged window forgetting its
   position once the two paths could overlap.
+- Appearance settings: choose an accent colour from six swatches, turn the
+  frosted panels off for a flatter and cheaper desk, and reduce motion beyond
+  whatever the system already asks for. Each section of Settings can be reset
+  on its own.
+- `Ctrl+Shift+P` opens a command palette: launch an app, switch to a window,
+  or reach any shell surface by name.
+- Fullscreen now says how to leave it, and keeps an exit control a
+  pointer-move away. Previously `Esc` and `F11` both worked and neither was
+  discoverable.
+- Dragging a snapped window off its edge restores the size it had before it
+  snapped, instead of sliding around the desk at half-screen size.
+- `Ctrl+Shift+D` offers Copy diagnostics: a paste-ready report of build, phone,
+  latency, throughput and per-window frame rate, carrying no device serial.
+- Settings and the shortcut sheet show which build is running, including when
+  it was built, so a fresh install can be told from a stale one.
+- Fixed: a window-management helper allocated seven geometry objects per window
+  per frame over the live video texture, which cost playback smoothness.
+- Every corner radius is back on the token scale; several were one or two
+  pixels off it, which is what made edges read as unfinished.
 
 ## 0.1.0-beta.2 — 2026-09-01
 
