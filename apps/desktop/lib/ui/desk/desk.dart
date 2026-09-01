@@ -10,6 +10,7 @@ import '../workspace/window_model.dart';
 import 'analog_clock.dart';
 import 'control_center.dart';
 import 'desk_icons.dart';
+import 'desk_widgets.dart';
 import 'desk_search.dart';
 import 'notification_center.dart';
 import 'taskbar_bar.dart';
@@ -193,6 +194,8 @@ class _DeskState extends State<Desk> {
               onLaunch: widget.onLaunchApplication,
               onWebSearch: widget.onWebSearch,
               liveClock: widget.liveClock,
+              snapshot: snapshot,
+              onMediaAction: widget.onMediaAction,
             ),
           ),
         // App windows: over the desk's furniture, under its taskbar, and inset
@@ -309,7 +312,14 @@ class _Furniture extends StatelessWidget {
     required this.onLaunch,
     required this.onWebSearch,
     required this.liveClock,
+    required this.snapshot,
+    required this.onMediaAction,
   });
+
+  /// Everything the right-hand column reads. All of it is already on the
+  /// snapshot the desk is given, so the column costs no new plumbing.
+  final OpenDexSnapshot snapshot;
+  final ValueChanged<MediaAction> onMediaAction;
 
   final DateTime now;
   final bool recessive;
@@ -323,12 +333,23 @@ class _Furniture extends StatelessWidget {
   static const double _clockSize = 300;
   static const double _clockMinWidth = 860;
 
+  /// The right-hand column's width, and the desk width below which it is
+  /// dropped entirely. The icons and the search bar are what the desk is for;
+  /// a status card squeezed against them is worse than no status card.
+  static const double _columnWidth = 320;
+  static const double _columnMinWidth = 1180;
+  static const double _columnMinHeight = 760;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double w = constraints.maxWidth;
         final bool showClock = w >= _clockMinWidth;
+        // Height matters as much as width: the column hangs below the clock,
+        // and on a short desk there is nothing left for it to hang into.
+        final bool showColumn =
+            w >= _columnMinWidth && constraints.maxHeight >= _columnMinHeight;
         // Leave the clock its corner: cap the search bars so a wide window does
         // not run them under the clock.
         final double searchMax =
@@ -392,6 +413,58 @@ class _Furniture extends StatelessWidget {
                         ],
                       ),
                       child: AnalogClock(now: now, live: liveClock),
+                    ),
+                  ),
+                ),
+              ),
+            // The right-hand column, under the clock.
+            //
+            // These four widgets existed and were placed nowhere: no import,
+            // no test, no instantiation. The clock among them is deliberately
+            // left out — the desk already has a large bare one in this corner,
+            // and a second carded one beside it is not composition.
+            if (showColumn)
+              Positioned(
+                top: DexSpace.xl + _clockSize + DexSpace.xl,
+                right: DexSpace.xl,
+                bottom: DexSpace.xl,
+                width: _columnWidth,
+                child: AnimatedOpacity(
+                  duration: DexDuration.standard,
+                  curve: DexMotion.arrive,
+                  opacity: recessive ? 0.5 : 1,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Entrance(
+                          order: 3,
+                          child: NowPlayingWidget(
+                            media: snapshot.media,
+                            onAction: onMediaAction,
+                            recessive: recessive,
+                          ),
+                        ),
+                        const SizedBox(height: DexSpace.md),
+                        Entrance(
+                          order: 4,
+                          child: PhoneWidget(
+                            telemetry: snapshot.telemetry,
+                            device: snapshot.selectedDevice,
+                            recessive: recessive,
+                          ),
+                        ),
+                        const SizedBox(height: DexSpace.md),
+                        Entrance(
+                          order: 5,
+                          child: NotificationsWidget(
+                            notifications: snapshot.notifications,
+                            status: snapshot.notificationStatus,
+                            now: now,
+                            recessive: recessive,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
