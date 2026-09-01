@@ -9,11 +9,11 @@
 
 Proposals for the desktop shell, the Android companion and the test surface that
 guards both. Nothing here is a release commitment; see [Roadmap](ROADMAP.md) for
-shipping plans and [Design](DESIGN.md) for the visual language already in force.
+shipping plans. The committed visual language lives with the maintainers.
 
 Scoring: **impact** is how much a user notices, **effort** is engineering days for
 one person. Anything touching `apps/desktop/lib/ui/**` is Claude-owned, anything
-under `android/**` is Codex-owned; see [`CLAUDE.md`](../CLAUDE.md).
+under `android/**` is Codex-owned.
 
 ## 1. Desktop shell — what is missing
 
