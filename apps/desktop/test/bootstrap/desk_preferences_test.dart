@@ -19,6 +19,9 @@ void main() {
     final DeskPreferencesData data = await prefs.load();
     expect(data.themeMode, ThemeMode.system);
     expect(data.wallpaperIndex, 0);
+    expect(data.accentIndex, 0);
+    expect(data.glassEnabled, true);
+    expect(data.reduceMotion, false);
     expect(data.snapEnabled, true);
     expect(data.windowGeometry, isEmpty);
     expect(data.pinnedPackages, isEmpty);
@@ -31,6 +34,9 @@ void main() {
       const DeskPreferencesData(
         themeMode: ThemeMode.light,
         wallpaperIndex: 3,
+        accentIndex: 4,
+        glassEnabled: false,
+        reduceMotion: true,
         snapEnabled: false,
         windowGeometry: <String, StoredWindowGeometry>{
           'com.example.notes': StoredWindowGeometry(
@@ -54,6 +60,9 @@ void main() {
         .load();
     expect(data.themeMode, ThemeMode.light);
     expect(data.wallpaperIndex, 3);
+    expect(data.accentIndex, 4);
+    expect(data.glassEnabled, false);
+    expect(data.reduceMotion, true);
     expect(data.snapEnabled, false);
     final StoredWindowGeometry geometry =
         data.windowGeometry['com.example.notes']!;
@@ -126,13 +135,19 @@ void main() {
       <String, Object?>{'themeMode': 'dark'},
     );
 
+    expect(data.accentIndex, 0);
+    expect(data.glassEnabled, true);
+    expect(data.reduceMotion, false);
     expect(data.windowGeometry, isEmpty);
     expect(data.pinnedPackages, isEmpty);
     expect(data.launchHistory, isEmpty);
   });
 
-  test('copyWith replaces persisted collections', () {
+  test('copyWith replaces persisted values', () {
     final DeskPreferencesData data = const DeskPreferencesData().copyWith(
+      accentIndex: 5,
+      glassEnabled: false,
+      reduceMotion: true,
       windowGeometry: const <String, StoredWindowGeometry>{
         'com.example.app': StoredWindowGeometry(
           x: 10,
@@ -147,6 +162,9 @@ void main() {
       },
     );
 
+    expect(data.accentIndex, 5);
+    expect(data.glassEnabled, false);
+    expect(data.reduceMotion, true);
     expect(data.windowGeometry.keys, <String>['com.example.app']);
     expect(data.pinnedPackages, <String>['com.example.app']);
     expect(data.launchHistory['com.example.app']?.count, 1);
@@ -165,13 +183,17 @@ void main() {
   test('an unknown theme name degrades to system', () async {
     dir.createSync(recursive: true);
     File('${dir.path}/settings.json').writeAsStringSync(
-      '{"themeMode":"neon","wallpaperIndex":-2,"snapEnabled":"yes"}',
+      '{"themeMode":"neon","wallpaperIndex":-2,"accentIndex":-1,'
+      '"glassEnabled":"yes","reduceMotion":1,"snapEnabled":"yes"}',
     );
     final DeskPreferencesData data = await DeskPreferences(configDir: dir)
         .load();
     expect(data.themeMode, ThemeMode.system);
     // Negative index and non-bool snap fall back too.
     expect(data.wallpaperIndex, 0);
+    expect(data.accentIndex, 0);
+    expect(data.glassEnabled, true);
+    expect(data.reduceMotion, false);
     expect(data.snapEnabled, true);
   });
 }

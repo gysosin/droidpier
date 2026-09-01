@@ -77,6 +77,21 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
       ..showSnackBar(SnackBar(content: Text(error.message)));
   }
 
+  Future<void> _copyText(String text) async {
+    try {
+      await _clipboardCoordinator.writeHostText(text);
+    } on Object catch (error) {
+      if (!mounted) return;
+      _showError(
+        OpenDexError(
+          code: OpenDexErrorCode.internal,
+          message: 'Could not copy diagnostics to the desktop clipboard.',
+          technicalDetails: error.toString(),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     unawaited(_disposeServices());
@@ -94,8 +109,8 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
       title: 'DroidPier',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _messengerKey,
-      theme: DexTheme.light(),
-      darkTheme: DexTheme.dark(),
+      theme: DexTheme.light(accentIndex: _prefs.accentIndex),
+      darkTheme: DexTheme.dark(accentIndex: _prefs.accentIndex),
       themeMode: _prefs.themeMode,
       home: StreamBuilder<OpenDexSnapshot>(
         stream: _facade.states,
@@ -115,6 +130,16 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
               wallpaperIndex: _prefs.wallpaperIndex,
               onWallpaperChanged: (int i) =>
                   _updatePreferences(_prefs.copyWith(wallpaperIndex: i)),
+              accentIndex: _prefs.accentIndex,
+              onAccentChanged: (int i) =>
+                  _updatePreferences(_prefs.copyWith(accentIndex: i)),
+              glassEnabled: _prefs.glassEnabled,
+              onGlassChanged: (bool v) =>
+                  _updatePreferences(_prefs.copyWith(glassEnabled: v)),
+              reduceMotion: _prefs.reduceMotion,
+              onReduceMotionChanged: (bool v) =>
+                  _updatePreferences(_prefs.copyWith(reduceMotion: v)),
+              onCopyText: (String text) => unawaited(_copyText(text)),
               launchHistory: <String, AppLaunchStats>{
                 for (final MapEntry<String, LaunchRecord> entry
                     in _prefs.launchHistory.entries)
