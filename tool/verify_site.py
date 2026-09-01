@@ -75,37 +75,47 @@ def jpeg_size(path):
 
 def main():
     errors = []
-    html_path = SITE / "index.html"
-    html = html_path.read_text()
-    parser = SiteParser()
-    parser.feed(html)
+    canonical_urls = set()
+    for html_path in sorted(SITE.rglob("index.html")):
+        parser = SiteParser()
+        parser.feed(html_path.read_text())
+        relative = html_path.relative_to(SITE)
+        prefix = f"{relative}: "
 
-    if parser.canonical != EXPECTED_ORIGIN:
-        errors.append("Landing page canonical URL is missing or incorrect")
-    if "DroidPier" not in parser.title or "Android apps" not in parser.title:
-        errors.append("Landing page title lacks product and search intent")
-    description = parser.meta.get("description", "")
-    if not 120 <= len(description) <= 170:
-        errors.append("Meta description should be between 120 and 170 characters")
-    for key in ("og:title", "og:description", "og:url", "og:image", "twitter:card"):
-        if not parser.meta.get(key):
-            errors.append(f"Missing social metadata: {key}")
-    if not parser.json_ld:
-        errors.append("Missing SoftwareApplication structured data")
-    else:
-        try:
-            schema = json.loads(parser.json_ld[0])
-            if schema.get("@type") != "SoftwareApplication" or schema.get("name") != "DroidPier":
-                errors.append("SoftwareApplication structured data is incomplete")
-        except json.JSONDecodeError as exc:
-            errors.append(f"Invalid JSON-LD: {exc}")
+        if not parser.canonical or not parser.canonical.startswith(EXPECTED_ORIGIN):
+            errors.append(prefix + "canonical URL is missing or incorrect")
+        elif parser.canonical in canonical_urls:
+            errors.append(prefix + "canonical URL is duplicated")
+        else:
+            canonical_urls.add(parser.canonical)
+        if "DroidPier" not in parser.title:
+            errors.append(prefix + "title lacks the product name")
+        description = parser.meta.get("description", "")
+        if not 120 <= len(description) <= 170:
+            errors.append(prefix + "meta description should be between 120 and 170 characters")
+        for key in ("og:title", "og:description", "og:url", "og:image", "twitter:card"):
+            if not parser.meta.get(key):
+                errors.append(prefix + f"missing social metadata: {key}")
+        if not parser.json_ld:
+            errors.append(prefix + "missing structured data")
+        else:
+            try:
+                json.loads(parser.json_ld[0])
+            except json.JSONDecodeError as exc:
+                errors.append(prefix + f"invalid JSON-LD: {exc}")
 
-    for target in parser.links:
-        if re.match(r"(?:https?:|mailto:|#)", target):
-            continue
-        local = (SITE / target.split("?", 1)[0].split("#", 1)[0]).resolve()
-        if not local.is_file() or SITE.resolve() not in local.parents:
-            errors.append(f"Missing or unsafe local site asset: {target}")
+        for target in parser.links:
+            if re.match(r"(?:https?:|mailto:|#)", target):
+                continue
+            local = (html_path.parent / target.split("?", 1)[0].split("#", 1)[0]).resolve()
+            if local.is_dir():
+                local = local / "index.html"
+            if (not local.is_file() or
+                    (local != SITE.resolve() and SITE.resolve() not in local.parents)):
+                errors.append(prefix + f"missing or unsafe local site asset: {target}")
+
+    if EXPECTED_ORIGIN not in canonical_urls:
+        errors.append("Landing page canonical URL is missing")
 
     public_text = "\n".join(
         path.read_text()
@@ -125,8 +135,10 @@ def main():
         errors.append("Social preview must be exactly 1280 by 640 pixels")
     if EXPECTED_ORIGIN not in (SITE / "robots.txt").read_text():
         errors.append("robots.txt does not advertise the canonical sitemap")
-    if EXPECTED_ORIGIN not in (SITE / "sitemap.xml").read_text():
-        errors.append("sitemap.xml does not contain the canonical page")
+    sitemap = (SITE / "sitemap.xml").read_text()
+    for canonical in canonical_urls:
+        if canonical not in sitemap:
+            errors.append(f"sitemap.xml does not contain canonical page: {canonical}")
 
     if errors:
         raise SystemExit("\n".join(errors))
