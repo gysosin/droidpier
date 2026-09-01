@@ -1,12 +1,14 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_android_dex/bootstrap/desk_preferences.dart';
 import 'package:open_android_dex/bootstrap/reporting_facade.dart';
 import 'package:open_android_dex/main.dart';
 import 'package:open_android_dex/ui/apps/app_ranking.dart';
 import 'package:open_android_dex/ui/shell/app_shell.dart';
+import 'package:open_android_dex/ui/theme/dex_theme.dart';
 import 'package:open_android_dex/ui/workspace/window_geometry_store.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_dex_core/open_dex_core.dart';
@@ -141,6 +143,163 @@ void main() {
     expect(rebuilt.geometry.width, 700);
     expect(rebuilt.geometry.height, 500);
     expect(rebuilt.maximised, false);
+
+    for (var step = 0; step < 10; step++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('bootstrap restores and persists appearance preferences', (
+    tester,
+  ) async {
+    final preferences = _ControlledDeskPreferences(
+      const DeskPreferencesData(
+        accentIndex: 3,
+        glassEnabled: false,
+        reduceMotion: true,
+      ),
+    );
+    final facade = MockOpenDexFacade(scenario: MockScenario.ready);
+
+    await tester.pumpWidget(
+      OpenDexApplication(facade: facade, preferences: preferences),
+    );
+    await tester.pump();
+
+    MaterialApp application = tester.widget<MaterialApp>(
+      find.byType(MaterialApp),
+    );
+    expect(
+      application.theme?.colorScheme.primary,
+      DexTheme.light(accentIndex: 3).colorScheme.primary,
+    );
+    expect(
+      application.darkTheme?.colorScheme.primary,
+      DexTheme.dark(accentIndex: 3).colorScheme.primary,
+    );
+
+    AppShell shell = tester.widget<AppShell>(find.byType(AppShell));
+    expect(shell.accentIndex, 3);
+    expect(shell.glassEnabled, false);
+    expect(shell.reduceMotion, true);
+    shell.onAccentChanged(4);
+    shell.onGlassChanged(true);
+    shell.onReduceMotionChanged(false);
+    await tester.pump();
+
+    expect(preferences.startedSaves, hasLength(1));
+    preferences.completeNextSave();
+    await tester.pump();
+    expect(preferences.startedSaves, hasLength(2));
+    preferences.completeNextSave();
+    await tester.pump();
+    expect(preferences.startedSaves, hasLength(3));
+    preferences.completeNextSave();
+    await tester.pump();
+    expect(preferences.data.accentIndex, 4);
+    expect(preferences.data.glassEnabled, true);
+    expect(preferences.data.reduceMotion, false);
+
+    application = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(
+      application.theme?.colorScheme.primary,
+      DexTheme.light(accentIndex: 4).colorScheme.primary,
+    );
+    expect(
+      application.darkTheme?.colorScheme.primary,
+      DexTheme.dark(accentIndex: 4).colorScheme.primary,
+    );
+    shell = tester.widget<AppShell>(find.byType(AppShell));
+    expect(shell.accentIndex, 4);
+    expect(shell.glassEnabled, true);
+    expect(shell.reduceMotion, false);
+
+    for (var step = 0; step < 10; step++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('bootstrap supplies a desktop clipboard writer', (tester) async {
+    final List<MethodCall> platformCalls = <MethodCall>[];
+    final TestDefaultBinaryMessenger messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall call,
+    ) async {
+      platformCalls.add(call);
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    final facade = MockOpenDexFacade(scenario: MockScenario.ready);
+
+    await tester.pumpWidget(OpenDexApplication(facade: facade));
+    await tester.pump();
+
+    final AppShell shell = tester.widget<AppShell>(find.byType(AppShell));
+    expect(shell.onCopyText, isNotNull);
+    shell.onCopyText!('### synthetic diagnostics');
+    await tester.pump();
+
+    expect(
+      platformCalls,
+      contains(
+        isA<MethodCall>()
+            .having(
+              (MethodCall call) => call.method,
+              'method',
+              'Clipboard.setData',
+            )
+            .having(
+              (MethodCall call) => call.arguments,
+              'arguments',
+              <String, String>{'text': '### synthetic diagnostics'},
+            ),
+      ),
+    );
+
+    for (var step = 0; step < 10; step++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('clipboard write failure is reported in the shell', (
+    tester,
+  ) async {
+    final TestDefaultBinaryMessenger messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (
+      MethodCall call,
+    ) async {
+      if (call.method == 'Clipboard.setData') {
+        throw PlatformException(code: 'synthetic-copy-failure');
+      }
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    final facade = MockOpenDexFacade(scenario: MockScenario.ready);
+
+    await tester.pumpWidget(OpenDexApplication(facade: facade));
+    await tester.pump();
+
+    final AppShell shell = tester.widget<AppShell>(find.byType(AppShell));
+    shell.onCopyText!('### synthetic diagnostics');
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text('Could not copy diagnostics to the desktop clipboard.'),
+      findsOneWidget,
+    );
 
     for (var step = 0; step < 10; step++) {
       await tester.pump(const Duration(milliseconds: 120));
