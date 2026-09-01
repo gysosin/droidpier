@@ -78,13 +78,30 @@ class _WorkspaceState extends State<Workspace> {
   /// under the cursor rather than jumping away from it.
   final Map<String, Offset> _pointer = <String, Offset>{};
 
-  /// Whether [g] is sitting exactly on one of the snap rectangles for [size].
+  /// The snap rectangles for the current workspace size, computed once.
+  ///
+  /// Cached rather than rebuilt per call. `build` runs on every telemetry
+  /// snapshot — constantly while a window streams — and the first cut of this
+  /// allocated seven `WindowGeometry` objects per window per build, which is
+  /// per-frame garbage over a live video texture.
+  Size? _snapRectsFor;
+  List<WindowGeometry> _snapRects = const <WindowGeometry>[];
+
+  List<WindowGeometry> _snapRectsIn(Size size) {
+    if (_snapRectsFor == size) return _snapRects;
+    _snapRectsFor = size;
+    _snapRects = <WindowGeometry>[
+      for (final WindowSnap snap in WindowSnap.values) snap.geometryIn(size),
+    ];
+    return _snapRects;
+  }
+
+  /// Whether [g] is sitting on one of the snap rectangles for [size].
   ///
   /// Compared with a tolerance because the geometry makes a round trip through
   /// the backend and back, and an exact double match is not guaranteed.
-  static bool _isSnapped(WindowGeometry g, Size size) {
-    for (final WindowSnap snap in WindowSnap.values) {
-      final WindowGeometry r = snap.geometryIn(size);
+  bool _isSnapped(WindowGeometry g, Size size) {
+    for (final WindowGeometry r in _snapRectsIn(size)) {
       if ((g.x - r.x).abs() < 2 &&
           (g.y - r.y).abs() < 2 &&
           (g.width - r.width).abs() < 2 &&
@@ -192,13 +209,27 @@ class _WorkspaceState extends State<Workspace> {
         for (final WorkspaceWindow w in widget.windows) {
           if (w.id == _interactingId) continue;
           if (w.displayState != WindowDisplayState.normal) continue;
+          // Cheapest test first: an unchanged geometry needs no snap check at
+          // all, which is the common case on a telemetry-driven rebuild.
+          final WindowGeometry? known = _lastFree[w.id];
+          if (known != null &&
+              known.x == w.geometry.x &&
+              known.y == w.geometry.y &&
+              known.width == w.geometry.width &&
+              known.height == w.geometry.height) {
+            continue;
+          }
           if (_isSnapped(w.geometry, size)) continue;
           _lastFree[w.id] = w.geometry;
         }
-        _lastFree.removeWhere(
-          (String id, _) =>
-              !widget.windows.any((WorkspaceWindow w) => w.id == id),
-        );
+        // Only when a window has actually gone: removeWhere allocates a closure
+        // and walks the map, and it ran on every frame.
+        if (_lastFree.length > widget.windows.length) {
+          _lastFree.removeWhere(
+            (String id, _) =>
+                !widget.windows.any((WorkspaceWindow w) => w.id == id),
+          );
+        }
 
         // Minimised windows live in the dock, not the workspace.
         final List<WorkspaceWindow> visible =
