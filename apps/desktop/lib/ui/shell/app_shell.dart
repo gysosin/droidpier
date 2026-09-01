@@ -9,6 +9,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../apps/app_drawer.dart';
 import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
+import '../boot/first_run_tour.dart';
 import '../desk/desk.dart';
 import '../diagnostics/diagnostics_report.dart';
 import '../diagnostics/stream_diagnostics.dart';
@@ -58,6 +59,7 @@ void _ignoreBool(bool _) {}
 void _ignoreInt(int _) {}
 void _ignoreHistory(Map<String, AppLaunchStats> _) {}
 void _ignorePins(List<String> _) {}
+void _ignoreVoid() {}
 void _ignoreRemembered(Map<String, RememberedWindow> _) {}
 
 class AppShell extends StatefulWidget {
@@ -82,6 +84,8 @@ class AppShell extends StatefulWidget {
     this.reduceMotion = false,
     this.onReduceMotionChanged = _ignoreBool,
     this.onCopyText,
+    this.tourCompleted = true,
+    this.onTourCompleted = _ignoreVoid,
     this.rememberedWindows = const <String, RememberedWindow>{},
     this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
@@ -147,6 +151,14 @@ class AppShell extends StatefulWidget {
   /// system clipboard itself — see `lib/bootstrap/desktop_clipboard_coordinator`
   /// — so without this the Copy diagnostics button is simply absent.
   final ValueChanged<String>? onCopyText;
+
+  /// Whether the first-run tour has already been shown, and the setter that
+  /// records it.
+  ///
+  /// Defaults to true so a harness never meets the tour by accident; the host
+  /// passes the stored value, which starts false on a fresh install.
+  final bool tourCompleted;
+  final VoidCallback onTourCompleted;
 
   /// Where each application's window was last left, and its setter. Lifted for
   /// the same reason as [launchHistory].
@@ -723,7 +735,13 @@ class _AppShellState extends State<AppShell> {
               widget.facade.retryBoot();
             },
           ),
-          if (_connectOpen) _connectionScreen(),
+          // Only once the desk exists. Shown over the connection screen it would
+        // be describing surfaces the person cannot see yet.
+        if (!widget.tourCompleted && !_connectOpen && !_recovering)
+          Positioned.fill(
+            child: FirstRunTour(onFinished: widget.onTourCompleted),
+          ),
+        if (_connectOpen) _connectionScreen(),
         ],
       );
     }
