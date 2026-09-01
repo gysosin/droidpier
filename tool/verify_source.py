@@ -9,7 +9,7 @@ from version import ROOT, release_version
 def main():
     names = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], cwd=ROOT).decode().split('\0')
     errors = []
-    source_roots = {'.github', 'android', 'apps', 'docs', 'licenses', 'packages', 'plugins', 'release', 'tool'}
+    source_roots = {'.github', 'android', 'apps', 'docs', 'licenses', 'packages', 'plugins', 'release', 'site', 'tool'}
     root_files = {'.gitignore', 'README.md', 'LICENSE', 'NOTICE', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'version.properties'}
     for name in sorted(set(filter(None, names))):
         p = ROOT / name

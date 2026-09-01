@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DroidPier application mark.
+
+  Original artwork for this repository. Nothing here is traced from, or derived
+  from, any third-party reference material.
+
+  The idea is the product: a pier is where a vessel berths against solid ground.
+  The phone is the vessel, the desktop is the shore, and the signal-blue deck
+  between them is the link this application exists to hold open. It is the same
+  two-bodies-and-a-link figure the in-app `DexMark` draws, laid horizontal and
+  thickened so it survives a 48 px launcher slot.
+
+  Colours are the committed tokens, not new values:
+    ground  #0B1120  DexColors.dark.bg
+    line    #334155  DexColors.dark.line
+    muted   #94A3B8  DexColors.dark.muted   — structure, the two bodies
+    signal  #60A5FA  DexColors.dark.signal  — the link, and the only hot colour
+
+  Geometry is centred on (512, 512): the mark's bounding box is 756 x 468,
+  about 74% of the canvas. For an Android adaptive-icon foreground, scale the
+  #mark group to ~0.72 about the centre so it clears the circular mask.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="DroidPier">
+  <title>DroidPier</title>
+
+  <defs>
+    <!-- Lit from the top-right, darkened toward the bottom, after the desk
+         wallpaper's own lighting. -->
+    <linearGradient id="ground" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16244A"/>
+      <stop offset="0.55" stop-color="#0E1730"/>
+      <stop offset="1" stop-color="#0B1120"/>
+    </linearGradient>
+
+    <!-- Ambient bloom behind the deck. The link is the lit thing on the bench. -->
+    <radialGradient id="bloom" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#60A5FA" stop-opacity="0.20"/>
+      <stop offset="0.6" stop-color="#60A5FA" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#60A5FA" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="url(#ground)"/>
+  <circle cx="512" cy="512" r="340" fill="url(#bloom)"/>
+  <!-- Elevation here is a luminance step plus a hairline, never a drop shadow. -->
+  <rect x="6" y="6" width="1012" height="1012" rx="218"
+        fill="none" stroke="#334155" stroke-width="4" stroke-opacity="0.6"/>
+
+  <g id="mark">
+    <!-- The deck, drawn first so the two bodies close over its ends and it
+         reads as joining them rather than floating between them. -->
+    <rect x="332" y="488" width="248" height="48" rx="24" fill="#60A5FA"/>
+
+    <g fill="none" stroke="#94A3B8" stroke-width="52">
+      <!-- The vessel: the phone, portrait. -->
+      <rect x="160" y="304" width="184" height="416" rx="44"/>
+      <!-- The shore: the desktop, landscape. -->
+      <rect x="568" y="392" width="296" height="240" rx="44"/>
+    </g>
+  </g>
+</svg>

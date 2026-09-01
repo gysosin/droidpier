@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DroidPier | Run Android apps in desktop windows on Linux</title>
+  <meta name="description" content="DroidPier is an open-source Linux workspace for running Android apps in separate desktop windows over USB or Wi-Fi using ADB and scrcpy.">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://gysosin.github.io/droidpier/">
+  <link rel="icon" href="assets/droidpier.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/workspace.webp" as="image" type="image/webp" fetchpriority="high">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DroidPier">
+  <meta property="og:title" content="DroidPier | Android apps in desktop windows on Linux">
+  <meta property="og:description" content="Open Android apps in separate Linux desktop windows over USB or Wi-Fi. Free and open source.">
+  <meta property="og:url" content="https://gysosin.github.io/droidpier/">
+  <meta property="og:image" content="https://gysosin.github.io/droidpier/assets/social-preview.jpg">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:image:alt" content="DroidPier branding beside its Android app drawer on a dark blue background">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DroidPier | Android apps in desktop windows on Linux">
+  <meta name="twitter:description" content="Open Android apps in separate Linux desktop windows over USB or Wi-Fi.">
+  <meta name="twitter:image" content="https://gysosin.github.io/droidpier/assets/social-preview.jpg">
+
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DroidPier",
+    "description": "An open-source Linux workspace for running Android apps in separate desktop windows over USB or Wi-Fi.",
+    "url": "https://gysosin.github.io/droidpier/",
+    "codeRepository": "https://github.com/gysosin/droidpier",
+    "downloadUrl": "https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2",
+    "image": "https://gysosin.github.io/droidpier/assets/social-preview.jpg",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Linux, Android",
+    "softwareVersion": "0.1.0-beta.2",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="DroidPier home">
+      <img src="assets/droidpier.svg" alt="" width="36" height="36">
+      <span>DroidPier</span>
+    </a>
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a href="#features">Features</a>
+      <a href="#connect">Connect</a>
+      <a href="#compatibility">Compatibility</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="header-link" href="https://github.com/gysosin/droidpier">GitHub</a>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy" data-reveal>
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Linux and Android beta</p>
+        <h1>Run Android apps in desktop windows on Linux</h1>
+        <p class="hero-summary">Launch separate app windows over USB or Wi-Fi. Your Android phone runs the apps. Linux becomes the workspace.</p>
+        <div class="actions">
+          <a class="button button-primary" href="https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2">Download beta.2</a>
+          <a class="button button-secondary" href="https://github.com/gysosin/droidpier">View source</a>
+        </div>
+        <p class="release-note">Free under Apache-2.0. Linux x86-64 packages available now.</p>
+      </div>
+      <figure class="hero-visual" data-reveal>
+        <div class="window-bar" aria-hidden="true">
+          <span>WORKSPACE / LIVE</span>
+          <span>ANDROID 13</span>
+        </div>
+        <img src="assets/workspace.webp" width="1280" height="800" alt="DroidPier workspace showing two Android apps in separate desktop windows" fetchpriority="high">
+        <figcaption>Rendered DroidPier interface with synthetic demo data.</figcaption>
+      </figure>
+    </section>
+
+    <section class="fact-strip" aria-label="Project facts">
+      <div><span class="fact-label">Host</span><strong>Linux x86-64</strong></div>
+      <div><span class="fact-label">Phone</span><strong>Android 8+</strong></div>
+      <div><span class="fact-label">Link</span><strong>USB or Wi-Fi</strong></div>
+      <div><span class="fact-label">License</span><strong>Apache-2.0</strong></div>
+    </section>
+
+    <section class="section features" id="features">
+      <div class="section-intro" data-reveal>
+        <p class="section-index">01 / Workspace</p>
+        <h2>Your phone stays in charge. Each app gets room to work.</h2>
+        <p>DroidPier launches apps on your phone and presents them as movable desktop windows. Keyboard and pointer input travel back through the authenticated ADB connection.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature feature-large" data-reveal>
+          <div class="feature-copy">
+            <span class="telemetry">WINDOWS / MULTI-APP</span>
+            <h3>Arrange separate app windows</h3>
+            <p>Open, resize, maximize, minimize, and close multiple Android activities from one Linux workspace.</p>
+          </div>
+          <img src="assets/apps.webp" width="1100" height="780" loading="lazy" alt="DroidPier app drawer listing Android applications">
+        </article>
+        <article class="feature feature-connect" data-reveal>
+          <div class="feature-copy">
+            <span class="telemetry">LINK / GUIDED</span>
+            <h3>Connect the way your setup allows</h3>
+            <p>Start with USB, discover nearby wireless debugging endpoints, scan a local QR code, or enter pairing details manually.</p>
+          </div>
+          <img src="assets/connect.webp" width="1180" height="860" loading="lazy" alt="DroidPier connection screen with USB, nearby, QR code, and manual pairing options">
+        </article>
+        <article class="feature feature-privacy" data-reveal>
+          <span class="telemetry">DATA / LOCAL</span>
+          <h3>No account or cloud relay</h3>
+          <p>The device link stays between your computer and phone. Clipboard sync and notification access remain optional.</p>
+          <a class="text-link" href="https://github.com/gysosin/droidpier/blob/main/docs/PRIVACY.md">Read the privacy model <span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section connect" id="connect">
+      <div class="section-intro compact" data-reveal>
+        <p class="section-index">02 / Connection</p>
+        <h2>From cable to workspace in three clear moves</h2>
+      </div>
+      <ol class="link-rail">
+        <li data-reveal>
+          <span class="rail-node">01</span>
+          <div><h3>Connect a phone</h3><p>Enable Android developer options and approve USB debugging, or use wireless debugging on a trusted network.</p></div>
+        </li>
+        <li data-reveal>
+          <span class="rail-node">02</span>
+          <div><h3>Pick an app</h3><p>DroidPier discovers launchable applications after its signed companion and shell agent are ready.</p></div>
+        </li>
+        <li data-reveal>
+          <span class="rail-node">03</span>
+          <div><h3>Arrange your workspace</h3><p>Move and resize app windows while your phone continues to execute the Android applications.</p></div>
+        </li>
+      </ol>
+      <p class="inline-note" data-reveal><strong>Good to know:</strong> DroidPier is not an Android emulator. A compatible phone remains connected while you work.</p>
+    </section>
+
+    <section class="section compatibility" id="compatibility">
+      <div class="section-intro" data-reveal>
+        <p class="section-index">03 / Availability</p>
+        <h2>Built for a transparent Linux beta</h2>
+        <p>Download the package for your system. Every release includes checksums, notices, matching dependency sources, and the same signed companion APK.</p>
+      </div>
+      <div class="package-table" role="table" aria-label="DroidPier platform availability" data-reveal>
+        <div class="package-row package-head" role="row">
+          <span role="columnheader">Platform</span><span role="columnheader">Package</span><span role="columnheader">Status</span>
+        </div>
+        <div class="package-row" role="row">
+          <strong role="cell">Ubuntu, Debian, Mint</strong><span role="cell">DEB</span><span class="status beta" role="cell">Beta</span>
+        </div>
+        <div class="package-row" role="row">
+          <strong role="cell">Fedora</strong><span role="cell">RPM</span><span class="status beta" role="cell">Beta</span>
+        </div>
+        <div class="package-row" role="row">
+          <strong role="cell">Other compatible Linux</strong><span role="cell">AppImage, tar.gz</span><span class="status beta" role="cell">Beta</span>
+        </div>
+        <div class="package-row" role="row">
+          <strong role="cell">Android companion</strong><span role="cell">APK</span><span class="status beta" role="cell">Beta</span>
+        </div>
+        <div class="package-row" role="row">
+          <strong role="cell">Windows, macOS</strong><span role="cell">Native builds</span><span class="status planned" role="cell">In development</span>
+        </div>
+      </div>
+      <div class="limitations" data-reveal>
+        <h3>Current beta limits</h3>
+        <p>Desktop audio forwarding is not available. DRM-protected or secondary-display-restricted apps may refuse to run. Performance and behavior vary by device, Android version, network, and Linux graphics stack.</p>
+        <a class="text-link" href="https://github.com/gysosin/droidpier/blob/main/docs/COMPATIBILITY.md">Check compatibility details <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+
+    <section class="section faq" id="faq">
+      <div class="section-intro compact" data-reveal>
+        <p class="section-index">04 / Answers</p>
+        <h2>Common questions</h2>
+      </div>
+      <div class="faq-list">
+        <details data-reveal>
+          <summary>How can I run Android apps on Linux?</summary>
+          <p>Install DroidPier, connect an Android phone with USB debugging or wireless debugging, and select an app from the desktop drawer. The app executes on your phone and appears in a Linux window.</p>
+        </details>
+        <details data-reveal>
+          <summary>Does DroidPier use an emulator?</summary>
+          <p>No. DroidPier uses your connected Android device. This avoids installing a separate Android system image, but the phone must remain available.</p>
+        </details>
+        <details data-reveal>
+          <summary>Can DroidPier connect over Wi-Fi?</summary>
+          <p>Yes, on Android versions that support wireless debugging. DroidPier offers nearby discovery, QR pairing, and manual pairing. Network isolation or blocked multicast can prevent discovery.</p>
+        </details>
+        <details data-reveal>
+          <summary>Can I open multiple Android apps?</summary>
+          <p>Yes, when the device and app permit secondary displays. Each supported app can occupy its own movable desktop window.</p>
+        </details>
+        <details data-reveal>
+          <summary>Does DroidPier forward Android audio?</summary>
+          <p>Not in the current beta. Media controls can control supported playback on the phone, but desktop audio forwarding is not implemented.</p>
+        </details>
+        <details data-reveal>
+          <summary>Is DroidPier private and open source?</summary>
+          <p>DroidPier requires no account, analytics, advertising, or cloud relay. The original project code is available under Apache-2.0. Bundled components retain their own licenses.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="download" data-reveal>
+      <div>
+        <p class="section-index">v0.1.0-beta.2</p>
+        <h2>Your Android. A bigger workspace.</h2>
+        <p>Start with the Linux package that fits your system and follow the guided connection screen.</p>
+      </div>
+      <div class="actions">
+        <a class="button button-primary" href="https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2">Get DroidPier</a>
+        <a class="button button-secondary" href="https://github.com/gysosin/droidpier/wiki">Read the wiki</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="assets/droidpier.svg" alt="" width="30" height="30">
+      <div><strong>DroidPier</strong><span>Open source Android workspace for Linux</span></div>
+    </div>
+    <nav aria-label="Project links">
+      <a href="https://github.com/gysosin/droidpier/releases">Releases</a>
+      <a href="https://github.com/gysosin/droidpier/wiki">Wiki</a>
+      <a href="https://github.com/gysosin/droidpier/blob/main/docs/USER_GUIDE.md">Guide</a>
+      <a href="https://github.com/gysosin/droidpier/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/gysosin/droidpier/security/policy">Security</a>
+      <a href="https://github.com/gysosin/droidpier/blob/main/LICENSE">License</a>
+    </nav>
+    <p class="legal">Independent of and not endorsed by Google, Samsung, or Genymobile.</p>
+  </footer>
+  <script src="site.js" defer></script>
+</body>
+</html>
