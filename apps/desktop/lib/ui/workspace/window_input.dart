@@ -52,13 +52,39 @@ class ForwardInputToBackend implements WindowInput {
   final void Function(PointerEvent event, Offset surfacePosition) onPointer;
   final void Function(KeyEvent event)? onKey;
 
+  /// Maps a pointer in widget space onto the video's own pixels.
+  ///
+  /// The surface is drawn with `BoxFit.contain` inside a black frame — a phone
+  /// is a different shape from its window, so the picture is centred with bars
+  /// on one axis. Dividing by the whole widget, which this used to do, ignores
+  /// those bars: every tap lands progressively further from where it looked as
+  /// the mismatch grows, and a tap on a bar maps into the middle of the app.
+  ///
+  /// The mismatch is not an edge case. It is guaranteed between a resize and
+  /// the debounced surface replacement, and permanent whenever the app's aspect
+  /// never matches the window's.
   Offset _toSurface(Offset local, Size widgetSize) {
-    if (widgetSize.isEmpty) {
+    if (widgetSize.isEmpty || surfacePixelSize.isEmpty) {
       return Offset.zero;
     }
+
+    // BoxFit.contain: the larger of the two ratios is what has to give.
+    final double scaleX = widgetSize.width / surfacePixelSize.width;
+    final double scaleY = widgetSize.height / surfacePixelSize.height;
+    final double scale = scaleX < scaleY ? scaleX : scaleY;
+
+    final double pictureWidth = surfacePixelSize.width * scale;
+    final double pictureHeight = surfacePixelSize.height * scale;
+    final double left = (widgetSize.width - pictureWidth) / 2;
+    final double top = (widgetSize.height - pictureHeight) / 2;
+
+    // Clamped rather than dropped: a press that began on the picture and
+    // dragged onto a bar still needs a coherent move and release, or the app
+    // sees a gesture that never ends. The nearest edge is the honest answer —
+    // there is no app under a letterbox bar.
     return Offset(
-      local.dx * surfacePixelSize.width / widgetSize.width,
-      local.dy * surfacePixelSize.height / widgetSize.height,
+      ((local.dx - left) / scale).clamp(0, surfacePixelSize.width),
+      ((local.dy - top) / scale).clamp(0, surfacePixelSize.height),
     );
   }
 
