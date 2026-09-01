@@ -15,6 +15,7 @@ import 'connection_controller.dart';
 import 'shortcut_sheet.dart';
 import 'window_controller.dart';
 import 'shortcuts.dart';
+import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
@@ -74,6 +75,8 @@ class AppShell extends StatefulWidget {
     this.onAccentChanged = _ignoreInt,
     this.glassEnabled = true,
     this.onGlassChanged = _ignoreBool,
+    this.reduceMotion = false,
+    this.onReduceMotionChanged = _ignoreBool,
     this.rememberedWindows = const <String, RememberedWindow>{},
     this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
@@ -127,6 +130,11 @@ class AppShell extends StatefulWidget {
   /// entirely rather than softening it.
   final bool glassEnabled;
   final ValueChanged<bool> onGlassChanged;
+
+  /// Whether to cut motion beyond whatever the platform already asks for, and
+  /// its setter. Can only ever reduce: see [DexMotion.enabled].
+  final bool reduceMotion;
+  final ValueChanged<bool> onReduceMotionChanged;
 
   /// Where each application's window was last left, and its setter. Lifted for
   /// the same reason as [launchHistory].
@@ -621,7 +629,13 @@ class _AppShellState extends State<AppShell> {
       // The desk nests a narrower scope for the streaming case.
       child: GlassBlurScope(
         enabled: widget.glassEnabled,
-        child: Material(color: Colors.transparent, child: _content(context)),
+        child: ReduceMotionScope(
+          reduce: widget.reduceMotion,
+          child: Material(
+            color: Colors.transparent,
+            child: _content(context),
+          ),
+        ),
       ),
     );
   }
@@ -801,6 +815,8 @@ class _AppShellState extends State<AppShell> {
           onAccentChanged: widget.onAccentChanged,
           glassEnabled: widget.glassEnabled,
           onGlassChanged: widget.onGlassChanged,
+          reduceMotion: widget.reduceMotion,
+          onReduceMotionChanged: widget.onReduceMotionChanged,
           deviceLabel: _s.selectedDevice?.name,
           onManagePhones: () => setState(() {
             _settingsOpen = false;
