@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_drawer.dart';
+import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
 import '../diagnostics/stream_diagnostics.dart';
@@ -46,6 +47,7 @@ import '../workspace/workspace.dart';
 void _ignoreTheme(ThemeMode _) {}
 void _ignoreBool(bool _) {}
 void _ignoreInt(int _) {}
+void _ignoreHistory(Map<String, AppLaunchStats> _) {}
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -58,6 +60,8 @@ class AppShell extends StatefulWidget {
     this.onSnapChanged = _ignoreBool,
     this.wallpaperIndex = 0,
     this.onWallpaperChanged = _ignoreInt,
+    this.launchHistory = const <String, AppLaunchStats>{},
+    this.onLaunchHistoryChanged = _ignoreHistory,
     super.key,
   });
 
@@ -81,6 +85,15 @@ class AppShell extends StatefulWidget {
   /// [kWallpaperChoices] — and its setter. Persisted alongside the theme.
   final int wallpaperIndex;
   final ValueChanged<int> onWallpaperChanged;
+
+  /// Launch counts and recency per package, and its setter. Lifted out of the
+  /// shell exactly as [snapEnabled] is, because the file it persists to is
+  /// owned by the bootstrap lane rather than by the UI.
+  ///
+  /// Empty by default, in which case drawer search ranks on match quality
+  /// alone — the behaviour before any of this existed.
+  final Map<String, AppLaunchStats> launchHistory;
+  final ValueChanged<Map<String, AppLaunchStats>> onLaunchHistoryChanged;
 
   /// Fixed clock, for tests only.
   ///
@@ -742,6 +755,22 @@ class _AppShellState extends State<AppShell> {
     return true;
   }
 
+  /// Notes that [packageName] was opened, so the drawer can rank on habit.
+  ///
+  /// Counted on launch rather than on window creation: a launch that fails to
+  /// produce a window is still what the person asked for, and ranking should
+  /// follow intent rather than the transport's luck.
+  void _recordLaunch(String packageName) {
+    final AppLaunchStats? previous = widget.launchHistory[packageName];
+    final Map<String, AppLaunchStats> next =
+        Map<String, AppLaunchStats>.of(widget.launchHistory);
+    next[packageName] = AppLaunchStats(
+      count: (previous?.count ?? 0) + 1,
+      lastLaunchedMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+    );
+    widget.onLaunchHistoryChanged(next);
+  }
+
   void _toggleDrawer() {
     setState(() {
       _drawerOpen = !_drawerOpen;
@@ -1026,8 +1055,10 @@ class _AppShellState extends State<AppShell> {
       return AppDrawer(
         status: _s.applicationStatus,
         applications: _s.applications,
+        launchHistory: widget.launchHistory,
         onLaunch: (String pkg) {
           widget.facade.launchApplication(pkg);
+          _recordLaunch(pkg);
           // Launching returns you to the desk; the window opens beside it.
           setState(() => _drawerOpen = false);
         },
