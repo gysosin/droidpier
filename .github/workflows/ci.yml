@@ -37,6 +37,7 @@ jobs:
       - name: Check public source and metadata
         run: |
           python3 tool/verify_source.py
+          python3 tool/verify_site.py
           git diff --check
           for script in tool/*.sh; do bash -n "$script"; done
           python3 -m compileall -q tool

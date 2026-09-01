@@ -11,11 +11,11 @@ Your apps run on your phone. Your computer provides the workspace.
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/gysosin/droidpier)](https://github.com/gysosin/droidpier/stargazers)
 
-![DroidPier desktop preview](apps/desktop/assets/branding/desktop-preview.png)
+![DroidPier desktop preview](site/assets/workspace.webp)
 
 *Actual Flutter UI rendered with synthetic demo data; this preview is not a device compatibility test.*
 
-[Documentation](docs/README.md) · [Wiki](https://github.com/gysosin/droidpier/wiki)
+[Website](https://gysosin.github.io/droidpier/) · [Documentation](docs/README.md) · [Wiki](https://github.com/gysosin/droidpier/wiki)
 
 ## Download
 
