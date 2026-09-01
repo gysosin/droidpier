@@ -664,7 +664,21 @@ class _SurfaceState extends State<_Surface> {
       ),
     );
 
-    if (surface == null || intents == null) return video;
+    // Nothing wrapped around the video unless there is something to say.
+    //
+    // This is a frame-cost decision, not a tidiness one. `TweenAnimationBuilder`
+    // takes a `Tween`, and constructing one in build allocates an object per
+    // window per frame — directly over the live texture, which is exactly the
+    // shape of the allocation regression that cost playback smoothness before.
+    // A healthy window now returns the texture untouched, and the fade only
+    // exists while a window is actually silent, where there is no video being
+    // dropped to pay for it.
+    //
+    // The cost is that recovery has no fade out: when frames start arriving the
+    // notice disappears at once rather than dissolving. That is the right way
+    // round — the animation exists to delay an accusation, not to decorate its
+    // withdrawal.
+    if (!stalled) return video;
 
     return Stack(
       fit: StackFit.expand,
