@@ -232,7 +232,10 @@ void main() {
   group('the built registry', () {
     ShellShortcutHooks hooks({required bool keyboardIsFree}) =>
         ShellShortcutHooks(
-          openSheet: () {},
+          openPalette: () {},
+  isPaletteOpen: () => false,
+  closePalette: () {},
+  openSheet: () {},
           isSheetOpen: () => false,
           closeSheet: () {},
           keyboardIsFree: () => keyboardIsFree,

@@ -51,6 +51,9 @@ Future<void> _loadFonts() async {
 /// The real registry, with inert callbacks — the sheet renders labels and
 /// strokes, never invokes anything.
 ShellShortcutHooks _hooks() => ShellShortcutHooks(
+  openPalette: () {},
+  isPaletteOpen: () => false,
+  closePalette: () {},
   openSheet: () {},
   isSheetOpen: () => true,
   closeSheet: () {},
