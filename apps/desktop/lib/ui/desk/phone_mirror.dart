@@ -67,10 +67,13 @@ class PhoneMirror extends StatelessWidget {
           fill: glass.substrate,
           stroke: glass.strokeStrong,
           blurred: !overVideo,
-          padding: const EdgeInsets.all(7),
+          padding: const EdgeInsets.all(DexSpace.sm),
           child: AspectRatio(
             aspectRatio: 9 / 18.5,
             child: ClipRRect(
+              // Deliberately off the DexRadius scale. This corner is not desk
+              // chrome, it is the depicted phone's own screen, and the token
+              // scale describes panels rather than hardware.
               borderRadius: BorderRadius.circular(24),
               // The phone's screen is always dark, whatever the desk's theme
               // is. Two reasons, and they agree: we are mirroring a device

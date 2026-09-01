@@ -368,7 +368,7 @@ class _Meter extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(DexRadius.pill),
           child: SizedBox(
             height: 4,
             child: Stack(
@@ -469,7 +469,7 @@ class NotificationsWidget extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: c.signal.withValues(alpha: 0.55),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(DexRadius.pill),
                           ),
                         ),
                         Expanded(
