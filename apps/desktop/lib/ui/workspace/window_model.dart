@@ -223,3 +223,64 @@ enum WindowSnap {
     return null;
   }
 }
+
+/// The height of a window's title bar. Chrome, not content.
+const double kWindowChrome = 34;
+
+/// [current] turned from landscape to portrait, or back.
+///
+/// A one-shot orientation change rather than a rotation lock: the Android app
+/// stays free to request its own orientation afterwards. The caller is expected
+/// to leave snap or maximise first, since neither survives a resize
+/// meaningfully.
+///
+/// The *content* aspect inverts, not the frame. Swapping the frame's own width
+/// and height would leave the video letterboxed by exactly the title bar's
+/// height, which is the kind of one-off error that looks like a rendering bug.
+WindowGeometry rotatedGeometry(
+  WindowGeometry current,
+  Size workspace, {
+  double chrome = kWindowChrome,
+}) {
+  final double contentWidth = current.width;
+  final double contentHeight = (current.height - chrome).clamp(1, double.infinity);
+
+  double width = contentHeight;
+  double height = contentWidth + chrome;
+
+  // A very wide window rotates into something taller than the desk, which
+  // cannot be dragged back into view. Scale the pair down rather than clipping
+  // one side and distorting the aspect.
+  final double maxWidth = workspace.width;
+  final double maxHeight = workspace.height;
+  if (width > maxWidth || height > maxHeight) {
+    final double scale =
+        (maxWidth / width) < (maxHeight / height)
+        ? maxWidth / width
+        : maxHeight / height;
+    width *= scale;
+    height = (height - chrome) * scale + chrome;
+  }
+
+  width = width.clamp(WindowGeometry.minimumWidth, maxWidth);
+  height = height.clamp(WindowGeometry.minimumHeight, maxHeight);
+
+  // Turn about the centre, so the window does not appear to jump across the
+  // desk when it changes shape.
+  final double centreX = current.x + current.width / 2;
+  final double centreY = current.y + current.height / 2;
+
+  return WindowGeometry(
+    x: centreX - width / 2,
+    y: centreY - height / 2,
+    width: width,
+    height: height,
+  ).clampedTo(workspace);
+}
+
+/// What the rotate control should be called, given what it will do next.
+///
+/// Names the destination rather than the current state: a control labelled with
+/// what you already have is the ambiguous-expand-icon problem again.
+String rotateActionLabel(WindowGeometry current, {double chrome = kWindowChrome}) =>
+    (current.height - chrome) >= current.width ? 'Landscape' : 'Portrait';

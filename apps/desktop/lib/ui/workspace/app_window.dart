@@ -181,6 +181,10 @@ class _TitleBar extends StatelessWidget {
             ),
         const DexMenuAction.separator(),
         DexMenuAction(
+          label: rotateActionLabel(window.geometry),
+          onSelected: _rotate,
+        ),
+        DexMenuAction(
           // Says what the click will do, not what the window currently is.
           label: maximised ? 'Restore' : 'Maximise',
           onSelected: _toggleMaximise,
@@ -207,6 +211,24 @@ class _TitleBar extends StatelessWidget {
         if (onCloseOthers != null)
           DexMenuAction(label: 'Close others', onSelected: onCloseOthers!),
       ],
+    );
+  }
+
+  /// Turns the window portrait or landscape.
+  ///
+  /// Leaves snap or maximise first: neither survives a resize meaningfully, and
+  /// a maximised window that quietly became portrait while still flagged
+  /// maximised would confuse every later Restore.
+  ///
+  /// One-shot. The Android app remains free to request its own orientation
+  /// afterwards; this is not a rotation lock, which would need backend policy.
+  void _rotate() {
+    if (window.displayState != WindowDisplayState.normal) {
+      intents.setDisplayState(window.id, WindowDisplayState.normal);
+    }
+    intents.move(
+      window.id,
+      rotatedGeometry(window.geometry, workspaceSize),
     );
   }
 
@@ -297,6 +319,17 @@ class _TitleBar extends StatelessWidget {
               label: 'Fullscreen ${window.session.application.label}',
               onPressed: () => intents.fullscreen!(window.id),
             ),
+          // Named for what it will do — Portrait or Landscape — rather than
+          // being another ambiguous expand glyph.
+          _WindowButton(
+            icon: rotateActionLabel(window.geometry) == 'Portrait'
+                ? Icons.stay_current_portrait
+                : Icons.stay_current_landscape,
+            label:
+                '${rotateActionLabel(window.geometry)} '
+                '${window.session.application.label}',
+            onPressed: _rotate,
+          ),
           _WindowButton(
             icon: Icons.remove,
             label: 'Minimise ${window.session.application.label}',
