@@ -4,6 +4,7 @@ import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
+import '../util/app_version.dart';
 import 'shortcuts.dart';
 
 /// The keyboard cheat sheet.
@@ -90,9 +91,22 @@ class ShortcutSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: DexSpace.xs),
-          Text(
-            'Esc closes whatever is open, one layer at a time.',
-            style: t.bodySmall?.copyWith(color: c.muted),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Esc closes whatever is open, one layer at a time.',
+                  style: t.bodySmall?.copyWith(color: c.muted),
+                ),
+              ),
+              // Which build this is, one key press away. Settings is the
+              // conventional home for it, but "am I running what I just
+              // installed?" is a question you ask in a hurry.
+              Text(
+                versionLabel(),
+                style: DexTheme.data(c, size: 10, color: c.muted),
+              ),
+            ],
           ),
           const SizedBox(height: DexSpace.lg),
           Flexible(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../util/app_version.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
@@ -168,6 +169,7 @@ class DeskSettings extends StatelessWidget {
                         _NoteRow(
                           title: 'DroidPier',
                           detail: 'Desktop workspace for Android.',
+                          mono: versionLabel(),
                           colors: c,
                         ),
                         Divider(
