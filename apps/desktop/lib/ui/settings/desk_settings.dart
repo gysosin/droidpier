@@ -5,6 +5,7 @@ import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
+import '../theme/dex_accent.dart';
 import '../theme/wallpapers.dart';
 import '../widgets/bench_backdrop.dart';
 
@@ -28,6 +29,8 @@ class DeskSettings extends StatelessWidget {
     required this.onThemeChanged,
     required this.wallpaperIndex,
     required this.onWallpaperChanged,
+    this.accentIndex = 0,
+    this.onAccentChanged = _ignoreAccent,
     required this.onDisconnect,
     this.onOpenPermissions,
     this.onManagePhones,
@@ -41,6 +44,13 @@ class DeskSettings extends StatelessWidget {
   final ValueChanged<ThemeMode> onThemeChanged;
   final int wallpaperIndex;
   final ValueChanged<int> onWallpaperChanged;
+
+  /// Which accent tints links, focus rings and selected rows. 0 is the
+  /// product's own blue.
+  final int accentIndex;
+  final ValueChanged<int> onAccentChanged;
+
+  static void _ignoreAccent(int _) {}
   final VoidCallback onDisconnect;
 
   /// The tray no longer carries these; Settings is the hub. Null hides the row
@@ -87,6 +97,12 @@ class DeskSettings extends StatelessWidget {
                           onChanged: onThemeChanged,
                         ),
                         const SizedBox(height: DexSpace.md),
+                        _AccentRow(
+                          selected: accentIndex,
+                          onSelected: onAccentChanged,
+                          colors: c,
+                        ),
+                        const SizedBox(height: DexSpace.lg),
                         _WallpaperRow(
                           title: 'Wallpaper',
                           detail: 'The desk background.',
@@ -245,7 +261,14 @@ class _Group extends StatelessWidget {
             borderRadius: BorderRadius.circular(DexRadius.card),
             border: Border.all(color: colors.line, width: DexStroke.hairline),
           ),
-          child: Column(children: children),
+          // Stretch, not the default centre. Every row here is meant to be
+          // left-aligned and full width; the wide ones only looked that way by
+          // accident, and the first narrow row added — the accent swatches —
+          // rendered visibly centred.
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
         ),
       ],
     );
@@ -581,6 +604,100 @@ class _Swatch extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A row of accent swatches; the selected one carries a ring.
+///
+/// Each swatch previews the value for the theme currently on screen, so the
+/// light-mode swatches show their darker light-mode colours rather than the
+/// dark-mode ones that would be unreadable there.
+class _AccentRow extends StatelessWidget {
+  const _AccentRow({
+    required this.selected,
+    required this.onSelected,
+    required this.colors,
+  });
+
+  final int selected;
+  final ValueChanged<int> onSelected;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final Brightness brightness = Theme.of(context).brightness;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('Accent', style: t.titleSmall),
+        const SizedBox(height: 2),
+        Text(
+          'Tints links, focus rings and the selected row.',
+          style: t.bodySmall?.copyWith(color: colors.muted),
+        ),
+        const SizedBox(height: DexSpace.md),
+        Wrap(
+          spacing: DexSpace.md,
+          runSpacing: DexSpace.md,
+          children: <Widget>[
+            for (int i = 0; i < kAccents.length; i++)
+              _AccentSwatch(
+                accent: kAccents[i],
+                colour: accentFor(i, brightness),
+                selected: i == selected || (selected < 0 && i == 0),
+                colors: colors,
+                onTap: () => onSelected(i),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _AccentSwatch extends StatelessWidget {
+  const _AccentSwatch({
+    required this.accent,
+    required this.colour,
+    required this.selected,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final DexAccent accent;
+  final Color colour;
+  final bool selected;
+  final DexColors colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: accent.name,
+      child: Tooltip(
+        message: accent.name,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(DexRadius.pill),
+          child: Container(
+            width: DexHit.comfortable,
+            height: DexHit.comfortable,
+            decoration: BoxDecoration(
+              color: colour,
+              shape: BoxShape.circle,
+              // Selection out-contrasts hover, which out-contrasts rest.
+              border: Border.all(
+                color: selected ? colors.text : colors.line,
+                width: selected ? DexStroke.focusRing : DexStroke.hairline,
+              ),
+            ),
           ),
         ),
       ),

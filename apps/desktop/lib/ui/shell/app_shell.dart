@@ -69,6 +69,8 @@ class AppShell extends StatefulWidget {
     this.onLaunchHistoryChanged = _ignoreHistory,
     this.pinnedPackages = const <String>[],
     this.onPinnedChanged = _ignorePins,
+    this.accentIndex = 0,
+    this.onAccentChanged = _ignoreInt,
     this.rememberedWindows = const <String, RememberedWindow>{},
     this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
@@ -108,6 +110,12 @@ class AppShell extends StatefulWidget {
   /// Lifted for the same reason as [launchHistory].
   final List<String> pinnedPackages;
   final ValueChanged<List<String>> onPinnedChanged;
+
+  /// Which accent tints links, focus rings and selected rows, and its setter.
+  /// Applied to the theme by whoever builds the `MaterialApp`, as `themeMode`
+  /// already is — the shell sits inside it and cannot change it from within.
+  final int accentIndex;
+  final ValueChanged<int> onAccentChanged;
 
   /// Where each application's window was last left, and its setter. Lifted for
   /// the same reason as [launchHistory].
@@ -769,6 +777,8 @@ class _AppShellState extends State<AppShell> {
           onThemeChanged: widget.onThemeChanged,
           wallpaperIndex: widget.wallpaperIndex,
           onWallpaperChanged: widget.onWallpaperChanged,
+          accentIndex: widget.accentIndex,
+          onAccentChanged: widget.onAccentChanged,
           deviceLabel: _s.selectedDevice?.name,
           onManagePhones: () => setState(() {
             _settingsOpen = false;

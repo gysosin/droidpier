@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'dex_accent.dart';
 import 'dex_colors.dart';
 import 'dex_glass.dart';
 import 'dex_tokens.dart';
@@ -9,11 +10,17 @@ import 'dex_tokens.dart';
 /// Both brightnesses are first-class: the light theme is a full parity
 /// translation, not a washed-out dark theme.
 abstract final class DexTheme {
-  static ThemeData dark() =>
-      _build(Brightness.dark, DexColors.dark, DexGlass.dark);
+  static ThemeData dark({int accentIndex = 0}) => _build(
+    Brightness.dark,
+    withAccent(DexColors.dark, accentIndex, Brightness.dark),
+    DexGlass.dark,
+  );
 
-  static ThemeData light() =>
-      _build(Brightness.light, DexColors.light, DexGlass.light);
+  static ThemeData light({int accentIndex = 0}) => _build(
+    Brightness.light,
+    withAccent(DexColors.light, accentIndex, Brightness.light),
+    DexGlass.light,
+  );
 
   static ThemeData _build(Brightness brightness, DexColors c, DexGlass g) {
     final ColorScheme scheme = ColorScheme(
