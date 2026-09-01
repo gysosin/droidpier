@@ -20,6 +20,9 @@ void main() {
     expect(data.themeMode, ThemeMode.system);
     expect(data.wallpaperIndex, 0);
     expect(data.snapEnabled, true);
+    expect(data.windowGeometry, isEmpty);
+    expect(data.pinnedPackages, isEmpty);
+    expect(data.launchHistory, isEmpty);
   });
 
   test('saved settings round-trip', () async {
@@ -29,22 +32,131 @@ void main() {
         themeMode: ThemeMode.light,
         wallpaperIndex: 3,
         snapEnabled: false,
+        windowGeometry: <String, StoredWindowGeometry>{
+          'com.example.notes': StoredWindowGeometry(
+            x: 12.5,
+            y: 24,
+            width: 900,
+            height: 640,
+            maximised: true,
+          ),
+        },
+        pinnedPackages: <String>['com.example.notes', 'com.example.mail'],
+        launchHistory: <String, LaunchRecord>{
+          'com.example.notes': LaunchRecord(
+            count: 7,
+            lastLaunchedMs: 1788256200000,
+          ),
+        },
       ),
     );
-    final DeskPreferencesData data = await DeskPreferences(
-      configDir: dir,
-    ).load();
+    final DeskPreferencesData data = await DeskPreferences(configDir: dir)
+        .load();
     expect(data.themeMode, ThemeMode.light);
     expect(data.wallpaperIndex, 3);
     expect(data.snapEnabled, false);
+    final StoredWindowGeometry geometry =
+        data.windowGeometry['com.example.notes']!;
+    expect(geometry.x, 12.5);
+    expect(geometry.y, 24);
+    expect(geometry.width, 900);
+    expect(geometry.height, 640);
+    expect(geometry.maximised, true);
+    expect(data.pinnedPackages, <String>[
+      'com.example.notes',
+      'com.example.mail',
+    ]);
+    final LaunchRecord launch = data.launchHistory['com.example.notes']!;
+    expect(launch.count, 7);
+    expect(launch.lastLaunchedMs, 1788256200000);
+  });
+
+  test('malformed records are dropped without losing valid siblings', () async {
+    dir.createSync(recursive: true);
+    File('${dir.path}/settings.json').writeAsStringSync('''
+{
+  "windowGeometry": {
+    "com.example.valid": {
+      "x": 1,
+      "y": 2.5,
+      "width": 800,
+      "height": 600,
+      "maximised": false
+    },
+    "com.example.invalid": {
+      "x": 1,
+      "y": 2,
+      "width": 0,
+      "height": 600
+    },
+    "com.example.infinite": {
+      "x": 1,
+      "y": 2,
+      "width": 1e999,
+      "height": 600
+    }
+  },
+  "pinnedPackages": [
+    "com.example.valid",
+    42,
+    "",
+    "com.example.valid",
+    "com.example.other"
+  ],
+  "launchHistory": {
+    "com.example.valid": {"count": 3, "lastLaunchedMs": 1788256200000},
+    "com.example.invalid": {"count": -1, "lastLaunchedMs": 0}
+  }
+}
+''');
+
+    final DeskPreferencesData data = await DeskPreferences(configDir: dir)
+        .load();
+
+    expect(data.windowGeometry.keys, <String>['com.example.valid']);
+    expect(data.pinnedPackages, <String>[
+      'com.example.valid',
+      'com.example.other',
+    ]);
+    expect(data.launchHistory.keys, <String>['com.example.valid']);
+  });
+
+  test('missing persisted collection keys use empty defaults', () {
+    final DeskPreferencesData data = DeskPreferencesData.fromJson(
+      <String, Object?>{'themeMode': 'dark'},
+    );
+
+    expect(data.windowGeometry, isEmpty);
+    expect(data.pinnedPackages, isEmpty);
+    expect(data.launchHistory, isEmpty);
+  });
+
+  test('copyWith replaces persisted collections', () {
+    final DeskPreferencesData data = const DeskPreferencesData().copyWith(
+      windowGeometry: const <String, StoredWindowGeometry>{
+        'com.example.app': StoredWindowGeometry(
+          x: 10,
+          y: 20,
+          width: 640,
+          height: 480,
+        ),
+      },
+      pinnedPackages: const <String>['com.example.app'],
+      launchHistory: const <String, LaunchRecord>{
+        'com.example.app': LaunchRecord(count: 1, lastLaunchedMs: 1234),
+      },
+    );
+
+    expect(data.windowGeometry.keys, <String>['com.example.app']);
+    expect(data.pinnedPackages, <String>['com.example.app']);
+    expect(data.launchHistory['com.example.app']?.count, 1);
   });
 
   test('a corrupt file falls back to defaults instead of throwing', () async {
     dir.createSync(recursive: true);
     File('${dir.path}/settings.json').writeAsStringSync('{ not json ]');
-    final DeskPreferencesData data = await DeskPreferences(
-      configDir: dir,
-    ).load();
+    final DeskPreferencesData data = await DeskPreferences(configDir: dir)
+        .load();
     expect(data.themeMode, ThemeMode.system);
     expect(data.wallpaperIndex, 0);
     expect(data.snapEnabled, true);
@@ -55,9 +167,8 @@ void main() {
     File('${dir.path}/settings.json').writeAsStringSync(
       '{"themeMode":"neon","wallpaperIndex":-2,"snapEnabled":"yes"}',
     );
-    final DeskPreferencesData data = await DeskPreferences(
-      configDir: dir,
-    ).load();
+    final DeskPreferencesData data = await DeskPreferences(configDir: dir)
+        .load();
     expect(data.themeMode, ThemeMode.system);
     // Negative index and non-bool snap fall back too.
     expect(data.wallpaperIndex, 0);
