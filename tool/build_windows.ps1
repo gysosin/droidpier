@@ -5,6 +5,10 @@ $version = & python (Join-Path $PSScriptRoot 'version.py')
 if ($LASTEXITCODE -ne 0) { throw 'Version validation failed.' }
 $code = & python (Join-Path $PSScriptRoot 'version.py') androidVersionCode
 if ($LASTEXITCODE -ne 0) { throw 'Version validation failed.' }
+$builtAt = [DateTime]::UtcNow.ToString(
+  "yyyy-MM-dd'T'HH:mm:ss'Z'",
+  [System.Globalization.CultureInfo]::InvariantCulture
+)
 if (-not $env:DROIDPIER_ANDROID_PAYLOAD_DIR) {
   & python (Join-Path $PSScriptRoot 'build_android.py')
   if ($LASTEXITCODE -ne 0) { throw 'Android release build failed.' }
@@ -17,7 +21,11 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Analysis failed.' }
   & $flutterBin test --exclude-tags golden
   if ($LASTEXITCODE -ne 0) { throw 'Tests failed.' }
-  & $flutterBin build windows --release --no-tree-shake-icons "--build-name=$version" "--build-number=$code"
+  & $flutterBin build windows --release --no-tree-shake-icons `
+    "--build-name=$version" "--build-number=$code" `
+    "--dart-define=DROIDPIER_VERSION=$version" `
+    "--dart-define=DROIDPIER_BUILD=$code" `
+    "--dart-define=DROIDPIER_BUILT_AT=$builtAt"
   if ($LASTEXITCODE -ne 0) { throw 'Windows build failed.' }
 } finally { Pop-Location }
 & python (Join-Path $PSScriptRoot 'package_native.py') windows
