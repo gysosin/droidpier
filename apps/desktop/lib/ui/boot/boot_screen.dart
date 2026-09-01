@@ -182,7 +182,11 @@ class _Intent extends StatelessWidget {
         ),
         if (boot.error != null) ...<Widget>[
           const SizedBox(height: DexSpace.lg),
-          _ErrorNote(error: boot.error!, colors: c),
+          _ErrorNote(
+            error: boot.error!,
+            colors: c,
+            alreadyStated: boot.message,
+          ),
         ],
         const SizedBox(height: DexSpace.xl),
         Row(
@@ -349,9 +353,17 @@ class _Readout extends StatelessWidget {
 
 /// Errors state what happened and the next move. They do not apologise.
 class _ErrorNote extends StatelessWidget {
-  const _ErrorNote({required this.error, required this.colors});
+  const _ErrorNote({
+    required this.error,
+    required this.colors,
+    this.alreadyStated,
+  });
 
   final OpenDexError error;
+
+  /// The line shown above this box, if any. When it says the same thing as
+  /// [OpenDexError.message] the box does not repeat it.
+  final String? alreadyStated;
   final DexColors colors;
 
   @override
@@ -372,9 +384,35 @@ class _ErrorNote extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(error.message, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: DexSpace.xs),
+          // Only when it adds something. The boot line above already carries
+          // this sentence, and printing it twice in two styles reads as a
+          // rendering fault rather than emphasis.
+          if (error.message.trim() != (alreadyStated ?? '').trim()) ...<Widget>[
+            Text(
+              error.message,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: DexSpace.xs),
+          ],
           Text(error.code.name, style: DexTheme.data(colors, size: 11)),
+          // The cause, when the backend captured one.
+          //
+          // It is the only actionable part of most failures: "the companion
+          // could not start / deploymentFailed" says a thing went wrong,
+          // while the detail underneath says *why* — a signature clash, an
+          // install the phone refused, a device that went away mid-push. It
+          // was being collected into `technicalDetails` and then dropped on
+          // the floor here, leaving a dead end.
+          if (error.technicalDetails case final String detail
+              when detail.trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: DexSpace.sm),
+            SelectableText(
+              detail.trim(),
+              // Not clipped to one line: these are adb transcripts, and the
+              // clause that names the fault is usually not the first one.
+              style: DexTheme.data(colors, size: 11, color: colors.muted),
+            ),
+          ],
         ],
       ),
     );
