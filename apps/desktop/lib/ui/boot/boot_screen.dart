@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
+import '../util/error_guidance.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
@@ -196,11 +198,20 @@ class _Intent extends StatelessWidget {
                 onPressed: screen.onConnect,
                 child: const Text('Connect phone'),
               )
-            else if (screen._isFailed)
+            else if (screen._isFailed) ...<Widget>[
               FilledButton(
                 onPressed: screen.onRetry,
                 child: const Text('Try again'),
-              )
+              ),
+              const SizedBox(width: DexSpace.sm),
+              // Retrying is not the answer to every failure. Two phones
+              // connected at once is fixed by picking one, and nothing about
+              // pressing the same button again gets there.
+              OutlinedButton(
+                onPressed: screen.onConnect,
+                child: const Text('Choose a phone'),
+              ),
+            ]
             else if (screen._isReady)
               OutlinedButton(
                 onPressed: screen.onConnect,
@@ -394,22 +405,42 @@ class _ErrorNote extends StatelessWidget {
             ),
             const SizedBox(height: DexSpace.xs),
           ],
+          // What to try, before the machine-readable parts. This is the only
+          // line most people will read, so it goes above the code and above
+          // the transcript rather than after them.
+          if (guidanceFor(error) case final String advice) ...<Widget>[
+            const SizedBox(height: DexSpace.xs),
+            Text(advice, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: DexSpace.sm),
+          ],
           Text(error.code.name, style: DexTheme.data(colors, size: 11)),
-          // The cause, when the backend captured one.
+          // The transcript is offered, never shown.
           //
-          // It is the only actionable part of most failures: "the companion
-          // could not start / deploymentFailed" says a thing went wrong,
-          // while the detail underneath says *why* — a signature clash, an
-          // install the phone refused, a device that went away mid-push. It
-          // was being collected into `technicalDetails` and then dropped on
-          // the floor here, leaving a dead end.
+          // It is built from process and adb exceptions, so it can carry a
+          // device serial, a network address or a local path. Rendering it
+          // puts all of that on screen by default, for everyone standing
+          // behind you. Copying it is a decision the person makes, and the
+          // line underneath tells them to look before they pass it on.
           if (error.technicalDetails case final String detail
               when detail.trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: DexSpace.sm),
-            SelectableText(
-              detail.trim(),
-              // Not clipped to one line: these are adb transcripts, and the
-              // clause that names the fault is usually not the first one.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () => Clipboard.setData(
+                  ClipboardData(text: detail.trim()),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, DexHit.comfortable),
+                ),
+                icon: const Icon(Icons.content_copy, size: 14),
+                label: const Text('Copy technical details'),
+              ),
+            ),
+            const SizedBox(height: DexSpace.xs),
+            Text(
+              'Technical information about this computer and the phone. '
+              'Read it before sharing.',
               style: DexTheme.data(colors, size: 11, color: colors.muted),
             ),
           ],
