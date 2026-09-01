@@ -62,6 +62,7 @@ ShellShortcutHooks _hooks() => ShellShortcutHooks(
   toggleDrawer: () {},
   toggleFullscreen: () {},
   cycleFocus: () {},
+  cycleFocusBack: () {},
   isFullscreen: () => false,
   exitFullscreen: () {},
   isDiagnosticsOpen: () => false,
