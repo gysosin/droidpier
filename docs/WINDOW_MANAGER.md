@@ -64,6 +64,18 @@ to maximise. Preview overlay before release, so a snap is never a surprise.
 dimmed running-dot. Restoring returns it to its previous geometry, which the
 backend must remember — the UI deliberately does not.
 
+**Title-bar menu.** Right-click the title bar for snapping to either half or
+any quarter, Maximise or Restore, Minimise, Fullscreen, Close, and Close others.
+Entries appear only where the window API can perform them: there is no
+always-on-top, and no move-to-workspace until workspaces exist, so neither is
+offered even in a disabled form.
+
+**Remembered placement.** An application reopens where it was last left, at the
+size it was, and maximised if it was. Placements are per package and are clamped
+into the current workspace, so a window arranged on a large monitor cannot
+restore beyond the edge of a smaller one. Minimised is not remembered — a window
+you come back to should not reopen hidden.
+
 **Maximise.** Fills the workspace minus the menu bar and dock. Restore returns
 the pre-maximise geometry. Double-clicking the title bar toggles.
 
