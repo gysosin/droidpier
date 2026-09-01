@@ -71,4 +71,4 @@ __pycache__/
 /tool/prompts/
 /tool/bootstrap_skills.sh
 /tool/skills.manifest.json
-/docs/DEX_DIFFERENTIAL_REVIEW_*.md
+/docs/DEX_*REVIEW*.md
