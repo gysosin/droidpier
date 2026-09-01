@@ -54,7 +54,19 @@ class WindowController {
   /// frame revealed it. Kept so a person can freely resize afterwards.
   final Set<String> _aspectFitted = <String>{};
 
+  /// Seeded above whatever the backend has already assigned.
+  ///
+  /// Starting at 1 while backend zOrders start at 0 and climb meant the first
+  /// local raise could hand out a value *below* an existing window. Since the
+  /// local echo paints before the backend confirms, the raised window could
+  /// appear behind the one it replaced for a frame.
   int _nextZ = 1;
+
+  void _seedZ(Iterable<WindowSessionState> sessions) {
+    for (final WindowSessionState s in sessions) {
+      if (s.zOrder >= _nextZ) _nextZ = s.zOrder + 1;
+    }
+  }
 
   /// The window being dragged. While a drag is in flight the backend's echo of
   /// that window's geometry is ignored.
@@ -92,6 +104,8 @@ class WindowController {
     required Size workspaceSize,
     required void Function(WorkspaceWindow closed) onClosed,
   }) {
+    _seedZ(sessions);
+
     for (final WindowSessionState session in sessions) {
       final WorkspaceWindow? existing = windows[session.id];
       final bool isDragging = dragging == session.id;
@@ -235,17 +249,40 @@ class WindowController {
   }
 
   /// Windows Alt+Tab can reach, most recently raised first.
-  List<WorkspaceWindow> get switchable =>
-      windows.values
-          .where(
-            (WorkspaceWindow w) =>
-                w.session.status != WindowSessionStatus.closed,
-          )
-          .toList()
-        ..sort(
-          (WorkspaceWindow a, WorkspaceWindow b) =>
-              b.zOrder.compareTo(a.zOrder),
-        );
+  ///
+  /// Cached against the z-order it was built from. The shell reads this from
+  /// `build`, which runs on every telemetry snapshot, and allocating a list and
+  /// sorting it per frame over a live video texture is the same shape of
+  /// mistake as the snap rectangles that cost playback smoothness.
+  List<WorkspaceWindow>? _switchableCache;
+  int _switchableStamp = -1;
+
+  List<WorkspaceWindow> get switchable {
+    // Cheap fingerprint: z-orders and count. Anything that reorders the list
+    // changes one of them.
+    int stamp = windows.length;
+    for (final WorkspaceWindow w in windows.values) {
+      stamp = stamp * 31 + w.zOrder;
+      stamp = stamp * 31 + w.session.status.index;
+    }
+    final List<WorkspaceWindow>? cached = _switchableCache;
+    if (cached != null && stamp == _switchableStamp) return cached;
+
+    final List<WorkspaceWindow> built =
+        windows.values
+            .where(
+              (WorkspaceWindow w) =>
+                  w.session.status != WindowSessionStatus.closed,
+            )
+            .toList()
+          ..sort(
+            (WorkspaceWindow a, WorkspaceWindow b) =>
+                b.zOrder.compareTo(a.zOrder),
+          );
+    _switchableCache = built;
+    _switchableStamp = stamp;
+    return built;
+  }
 
   void raiseAndFocus(String id) {
     final WorkspaceWindow? w = windows[id];
@@ -268,7 +305,18 @@ class WindowController {
   /// the minimise/restore round trip was broken.
   void focusOrRestore(String id) {
     final WorkspaceWindow? w = windows[id];
-    if (w != null && w.isMinimised) {
+    if (w == null) return;
+
+    // Raise as well as focus. Focusing alone leaves zOrder untouched — the
+    // backend is explicit about that — so a window clicked in the dock came
+    // forward visually while the switcher went on listing it where it was.
+    if (!w.isMinimised) {
+      windows[id] = w.copyWith(zOrder: _nextZ++);
+      notify();
+      unawaited(facade.raiseWindow(id));
+    }
+
+    if (w.isMinimised) {
       windows[id] = w.copyWith(
         displayState: WindowDisplayState.normal,
         zOrder: _nextZ++,
