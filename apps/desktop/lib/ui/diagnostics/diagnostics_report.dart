@@ -64,7 +64,13 @@ String diagnosticsReport({
   }
 
   final List<String> errors = <String>[
-    if (snapshot.boot.error?.message case final String m) 'Boot: $m',
+    // The code and the capability, never the transcript. `technicalDetails`
+    // is built from process exceptions and can carry a serial, an address or
+    // a local path, and this report says plainly that nothing identifying
+    // goes in it. Putting a raw transcript here would break that promise.
+    if (snapshot.boot.error case final OpenDexError e)
+      'Boot: ${e.message} (${e.code.name}'
+          '${e.capability == null ? '' : ', ${e.capability}'})',
     for (final WindowSessionState w in snapshot.windows)
       if (w.error?.message case final String m) '${w.application.label}: $m',
   ];

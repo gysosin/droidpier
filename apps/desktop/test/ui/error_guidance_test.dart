@@ -24,6 +24,8 @@ void main() {
     }
   });
 
+  wirelessReasonTests();
+
   test('cancelling says nothing, because the person did it', () {
     expect(guidanceFor(err(OpenDexErrorCode.cancelled)), isNull);
   });
@@ -46,6 +48,41 @@ void main() {
       final String? g = guidanceFor(err(code, message: message));
       if (g == null) continue;
       expect(g.trim(), isNot(equalsIgnoringCase(message.trim())));
+    }
+  });
+}
+
+/// The wireless reason is more specific than the code that carries it: a
+/// pairing that was refused and a pairing that never reached the phone are
+/// both `connectionFailed`, and they need opposite advice.
+void wirelessReasonTests() {
+  test('a refused code is not described as a network problem', () {
+    const OpenDexError e = OpenDexError(
+      code: OpenDexErrorCode.connectionFailed,
+      message: 'Pairing failed.',
+      wirelessReason: WirelessFailureReason.rejected,
+    );
+    expect(guidanceFor(e)!.toLowerCase(), contains('code'));
+  });
+
+  test('a phone that could not be reached talks about the network', () {
+    const OpenDexError e = OpenDexError(
+      code: OpenDexErrorCode.connectionFailed,
+      message: 'Pairing failed.',
+      wirelessReason: WirelessFailureReason.unreachable,
+    );
+    expect(guidanceFor(e)!.toLowerCase(), contains('network'));
+  });
+
+  test('every wireless reason a person can act on carries advice', () {
+    for (final WirelessFailureReason r in WirelessFailureReason.values) {
+      if (r == WirelessFailureReason.cancelled) continue;
+      final OpenDexError e = OpenDexError(
+        code: OpenDexErrorCode.connectionFailed,
+        message: 'Pairing failed.',
+        wirelessReason: r,
+      );
+      expect(guidanceFor(e), isNotNull, reason: '$r has no advice');
     }
   });
 }

@@ -16,7 +16,53 @@ import 'package:open_dex_api/open_dex_api.dart';
 /// **Point at the thing that must change.** Most of these are fixed on the
 /// phone, not on the desktop, and saying which one saves the person checking
 /// the wrong device first.
-String? guidanceFor(OpenDexError error) => switch (error.code) {
+String? guidanceFor(OpenDexError error) {
+  // A wireless failure carries a reason that is strictly more specific than
+  // the code wrapping it: a refused code and a phone that was never reached
+  // are both `connectionFailed`, and the advice for them is opposite.
+  if (error.wirelessReason case final WirelessFailureReason r) {
+    final String? specific = _wireless(r);
+    if (specific != null) return specific;
+  }
+  return _byCode(error);
+}
+
+String? _wireless(WirelessFailureReason reason) => switch (reason) {
+  // The person stopped it. Nothing to advise.
+  WirelessFailureReason.cancelled => null,
+
+  WirelessFailureReason.invalidInput =>
+    'Check the address and the code. The address needs the port after the '
+        'colon, and the code is six digits — leading zeros count.',
+
+  WirelessFailureReason.unreachable =>
+    'The phone did not answer at that address. It must be on the same network '
+        'as this computer, and some networks stop devices talking to each '
+        'other even when both are connected.',
+
+  WirelessFailureReason.rejected =>
+    'The phone refused the code. Android shows a fresh one every time that '
+        'screen opens, so a code copied a minute ago is usually already dead — '
+        'read the digits again and retry.',
+
+  WirelessFailureReason.authorization =>
+    'The phone has not allowed this computer yet. Unlock it and accept the '
+        'prompt; it only appears while the screen is on.',
+
+  WirelessFailureReason.discoveryUnavailable =>
+    'This computer cannot search the network for phones. Pairing by QR code or '
+        'by typing the address still works.',
+
+  WirelessFailureReason.unexpectedResponse =>
+    'The phone answered with something DroidPier did not expect, which usually '
+        'means the two sides are different versions. Update both.',
+
+  WirelessFailureReason.timeout =>
+    'The phone did not answer in time. Keep the Wireless debugging screen open '
+        'while pairing — it stops listening the moment it closes.',
+};
+
+String? _byCode(OpenDexError error) => switch (error.code) {
   // Nothing to advise: the person cancelled it themselves.
   OpenDexErrorCode.cancelled => null,
 
