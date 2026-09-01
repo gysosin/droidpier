@@ -24,6 +24,7 @@ class StreamDiagnostics extends StatelessWidget {
     required this.snapshot,
     required this.recentExits,
     required this.onClose,
+    this.onCopyDiagnostics,
     super.key,
   });
 
@@ -35,6 +36,13 @@ class StreamDiagnostics extends StatelessWidget {
   final List<String> recentExits;
 
   final VoidCallback onClose;
+
+  /// Puts a paste-ready report on the desktop clipboard.
+  ///
+  /// Null where the host has not supplied a clipboard, in which case the button
+  /// is absent rather than inert — `lib/ui` never touches the system clipboard
+  /// itself, that belongs to the bootstrap lane.
+  final VoidCallback? onCopyDiagnostics;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +84,16 @@ class StreamDiagnostics extends StatelessWidget {
                             Expanded(
                               child: Text('Streams', style: t.titleLarge),
                             ),
+                            if (onCopyDiagnostics case final VoidCallback copy)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  right: DexSpace.md,
+                                ),
+                                child: OutlinedButton(
+                                  onPressed: copy,
+                                  child: const Text('Copy diagnostics'),
+                                ),
+                              ),
                             Text(
                               'Ctrl+Shift+D to close',
                               style: DexTheme.data(c, size: 10),

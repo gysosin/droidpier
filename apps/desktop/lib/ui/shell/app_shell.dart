@@ -10,6 +10,7 @@ import '../apps/app_drawer.dart';
 import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../desk/desk.dart';
+import '../diagnostics/diagnostics_report.dart';
 import '../diagnostics/stream_diagnostics.dart';
 import 'connection_controller.dart';
 import 'shortcut_sheet.dart';
@@ -23,6 +24,7 @@ import '../motion/sustained.dart';
 import '../recovery/recovery_overlay.dart';
 import '../settings/desk_settings.dart';
 import '../theme/dex_tokens.dart';
+import '../util/app_version.dart';
 import '../theme/glass.dart';
 import '../theme/wallpapers.dart';
 import '../workspace/app_window.dart';
@@ -77,6 +79,7 @@ class AppShell extends StatefulWidget {
     this.onGlassChanged = _ignoreBool,
     this.reduceMotion = false,
     this.onReduceMotionChanged = _ignoreBool,
+    this.onCopyText,
     this.rememberedWindows = const <String, RememberedWindow>{},
     this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
@@ -135,6 +138,13 @@ class AppShell extends StatefulWidget {
   /// its setter. Can only ever reduce: see [DexMotion.enabled].
   final bool reduceMotion;
   final ValueChanged<bool> onReduceMotionChanged;
+
+  /// Puts text on the desktop clipboard, for the diagnostics report.
+  ///
+  /// Null where the host has not supplied one. `lib/ui` never touches the
+  /// system clipboard itself — see `lib/bootstrap/desktop_clipboard_coordinator`
+  /// — so without this the Copy diagnostics button is simply absent.
+  final ValueChanged<String>? onCopyText;
 
   /// Where each application's window was last left, and its setter. Lifted for
   /// the same reason as [launchHistory].
@@ -696,6 +706,15 @@ class _AppShellState extends State<AppShell> {
         if (_diagnosticsOpen)
           StreamDiagnostics(
             snapshot: _s,
+            onCopyDiagnostics: widget.onCopyText == null
+                ? null
+                : () => widget.onCopyText!(
+                    diagnosticsReport(
+                      snapshot: _s,
+                      buildLabel: versionLabel(),
+                      platform: Platform.operatingSystem,
+                    ),
+                  ),
             recentExits: _recentExits,
             onClose: () => setState(() => _diagnosticsOpen = false),
           ),
