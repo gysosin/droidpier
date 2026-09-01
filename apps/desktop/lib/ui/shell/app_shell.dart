@@ -24,6 +24,7 @@ import '../theme/wallpapers.dart';
 import '../workspace/app_window.dart';
 import '../workspace/window_input.dart';
 import '../workspace/window_switcher.dart';
+import '../workspace/window_geometry_store.dart';
 import '../workspace/window_model.dart';
 import '../workspace/workspace.dart';
 
@@ -49,6 +50,7 @@ void _ignoreBool(bool _) {}
 void _ignoreInt(int _) {}
 void _ignoreHistory(Map<String, AppLaunchStats> _) {}
 void _ignorePins(List<String> _) {}
+void _ignoreRemembered(Map<String, RememberedWindow> _) {}
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -65,6 +67,8 @@ class AppShell extends StatefulWidget {
     this.onLaunchHistoryChanged = _ignoreHistory,
     this.pinnedPackages = const <String>[],
     this.onPinnedChanged = _ignorePins,
+    this.rememberedWindows = const <String, RememberedWindow>{},
+    this.onRememberedWindowsChanged = _ignoreRemembered,
     super.key,
   });
 
@@ -102,6 +106,11 @@ class AppShell extends StatefulWidget {
   /// Lifted for the same reason as [launchHistory].
   final List<String> pinnedPackages;
   final ValueChanged<List<String>> onPinnedChanged;
+
+  /// Where each application's window was last left, and its setter. Lifted for
+  /// the same reason as [launchHistory].
+  final Map<String, RememberedWindow> rememberedWindows;
+  final ValueChanged<Map<String, RememberedWindow>> onRememberedWindowsChanged;
 
   /// Fixed clock, for tests only.
   ///
@@ -323,8 +332,16 @@ class _AppShellState extends State<AppShell> {
         // which is the same for every window — so two opened in a row would
         // land exactly on top of each other. Cascade it and tell the backend,
         // which then echoes our position back as the authoritative one.
+        // Where a brand-new window goes. A remembered placement wins; failing
+        // that the cascade keeps two windows opened in a row from landing
+        // exactly on top of each other.
+        final WindowGeometry? remembered = recallWindow(
+          widget.rememberedWindows,
+          session.application.packageName,
+          approx,
+        );
         final WindowGeometry placed = _isUnplaced(session.geometry)
-            ? cascadeGeometry(_workspace.length, approx)
+            ? (remembered ?? cascadeGeometry(_workspace.length, approx))
             : session.geometry;
         _workspace[session.id] = WorkspaceWindow(
           session: session,
@@ -334,6 +351,24 @@ class _AppShellState extends State<AppShell> {
           surface: session.surface,
           presentedFramesPerSecond: session.presentedFramesPerSecond,
         );
+        // A window remembered as maximised comes back maximised.
+        final RememberedWindow? record =
+            widget.rememberedWindows[session.application.packageName];
+        if (record != null &&
+            record.maximised &&
+            session.displayState != WindowDisplayState.maximised) {
+          final String id = session.id;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              unawaited(
+                widget.facade.setWindowDisplayState(
+                  id,
+                  WindowDisplayState.maximised,
+                ),
+              );
+            }
+          });
+        }
         if (placed != session.geometry) {
           // Deferred to after the frame on purpose. `_windows` runs during
           // build, and a facade command can emit a new snapshot synchronously —
@@ -514,6 +549,24 @@ class _AppShellState extends State<AppShell> {
     _moveFlush ??= Timer(_moveThrottle, _flushMoves);
   }
 
+  /// Remembers where a window was left, so relaunching reopens it there.
+  ///
+  /// Called on commit rather than continuously: `_queueMove`/`_flushMoves`
+  /// already coalesce a drag, and recording per pointer sample would write the
+  /// settings file dozens of times per second.
+  void _rememberGeometry(String id) {
+    final WorkspaceWindow? w = _workspace[id];
+    if (w == null) return;
+    widget.onRememberedWindowsChanged(
+      rememberWindow(
+        widget.rememberedWindows,
+        w.session.application.packageName,
+        w.geometry,
+        maximised: w.displayState == WindowDisplayState.maximised,
+      ),
+    );
+  }
+
   void _flushMoves() {
     _moveFlush = null;
     if (_pendingMoves.isEmpty) return;
@@ -521,6 +574,7 @@ class _AppShellState extends State<AppShell> {
         Map<String, WindowGeometry>.from(_pendingMoves);
     _pendingMoves.clear();
     for (final MapEntry<String, WindowGeometry> e in sending.entries) {
+      _rememberGeometry(e.key);
       unawaited(
         widget.facade.moveWindow(e.key, e.value).then((_) {
           // Authority goes back to the backend only once it has the position.
@@ -633,6 +687,10 @@ class _AppShellState extends State<AppShell> {
           _workspace[id] = w.copyWith(displayState: state);
         }
       });
+      // Maximised is part of the placement, so a change to it is worth
+      // remembering as much as a move is. Minimised is not: a window you come
+      // back to should not reopen hidden.
+      if (state != WindowDisplayState.minimised) _rememberGeometry(id);
       unawaited(widget.facade.setWindowDisplayState(id, state));
     },
     close: (String id) => widget.facade.closeWindow(id),
