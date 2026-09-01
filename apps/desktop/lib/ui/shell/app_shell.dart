@@ -290,7 +290,6 @@ class _AppShellState extends State<AppShell> {
   /// and waiting for one is how a person ends up staring at a boot screen.
   void _scheduleAutoConnectRetry() {
     if (_autoConnectDone || _autoConnectAttempts >= _autoConnectLimit) return;
-    _moveFlush?.cancel();
     _autoConnectRetry?.cancel();
     _autoConnectRetry = Timer(_autoConnectBackoff, () {
       if (mounted) setState(() {});
