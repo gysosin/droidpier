@@ -8,6 +8,7 @@ import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
+import '../util/error_guidance.dart';
 
 // The small pieces the connection screen's three panels share.
 //
@@ -113,6 +114,11 @@ class InlineError extends StatelessWidget {
 
   /// What to do next, in the product's words. The backend says what went
   /// wrong; this says what the person can do about it.
+  ///
+  /// Left null, the shared advice for this error code is used. Passing a
+  /// string overrides it, for the places that know something the code alone
+  /// does not — a pairing screen can say the phone shows a fresh code each
+  /// time, which is true there and nowhere else.
   final String? guidance;
 
   @override
@@ -143,13 +149,14 @@ class InlineError extends StatelessWidget {
                     error.message,
                     style: t.bodyMedium?.copyWith(color: c.text),
                   ),
-                  if (guidance != null) ...<Widget>[
-                    const SizedBox(height: DexSpace.xs),
-                    Text(
-                      guidance!,
-                      style: t.bodySmall?.copyWith(color: c.muted),
-                    ),
-                  ],
+                  if (guidance ?? guidanceFor(error) case final String advice)
+                    ...<Widget>[
+                      const SizedBox(height: DexSpace.xs),
+                      Text(
+                        advice,
+                        style: t.bodySmall?.copyWith(color: c.muted),
+                      ),
+                    ],
                 ],
               ),
             ),
