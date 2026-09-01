@@ -68,6 +68,7 @@ the shortcuts themselves, so it cannot fall out of date.
 | `Ctrl + Space` | Open or close the launcher |
 | `Ctrl + /`, `F1`, `?` | Show every keyboard shortcut |
 | `Alt + Tab` | Switch window |
+| `Alt + Shift + Tab` | Switch window, backwards |
 | `F11` | Fullscreen the focused window |
 | `Ctrl + Shift + D` | Stream diagnostics |
 | `Esc` | Close whatever is open, one layer at a time |
@@ -175,6 +176,17 @@ Do not downgrade Android version codes or replace published binaries in place.
 
 ## Troubleshooting
 
+**Read what the app says first.** Every failure now carries a line telling you
+what to do about it, and it names the device that has to change — most of these
+are fixed on the phone, not on the computer. A failed start also offers to
+choose a different phone, which is the answer when the real problem is that two
+are connected.
+
+Where a failure has an underlying technical cause, there is a **Copy technical
+details** button rather than the text on screen. It can contain your device's
+identifier, network addresses and local paths, so read it before you paste it
+anywhere.
+
 | Symptom | What to check |
 | --- | --- |
 | No phone listed | Data cable, unlocked phone, USB debugging and udev permissions |
@@ -182,7 +194,7 @@ Do not downgrade Android version codes or replace published binaries in place.
 | Wireless connection fails | Same trusted network, correct pairing and connection ports, firewall rules |
 | Companion install fails | Android version, permission prompt, or debug/release signature conflict |
 | No notifications | Notification permission and separate notification-listener access |
-| Black app window | Try an ordinary non-DRM app; check Android/display support and GPU drivers |
+| Black app window | The window now says when no video is arriving and offers to reopen. If it stays black without saying so, the app is drawing black — try an ordinary non-DRM app, and check Android/display support and GPU drivers |
 | Resize or orientation fails | Some apps lock orientation or reject secondary displays |
 | No desktop sound | Audio forwarding is not implemented; media controls do not play audio |
 | AppImage cannot mount | Use the extraction fallback above |
