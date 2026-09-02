@@ -65,10 +65,27 @@ dimmed running-dot. Restoring returns it to its previous geometry, which the
 backend must remember — the UI deliberately does not.
 
 **Title-bar menu.** Right-click the title bar for snapping to either half or
-any quarter, Maximise or Restore, Minimise, Fullscreen, Close, and Close others.
+any quarter, Maximise or Restore, Minimise, Fullscreen, Close, Close others,
+and turning the window Portrait or Landscape. The orientation entry names where
+it will go rather than where it is, and it inverts the *content* aspect rather
+than the frame's — swapping the frame's own width and height would leave the
+video letterboxed by exactly the title bar's height.
 Entries appear only where the window API can perform them: there is no
 always-on-top, and no move-to-workspace until workspaces exist, so neither is
 offered even in a disabled form.
+
+**When no video arrives.** A window can be streaming, hold a texture, and never
+have a frame painted into it. That renders as a black rectangle with a lit Live
+badge, which is indistinguishable from an app showing black, so the window says
+so instead and offers to reopen.
+
+Saying it accurately is harder than it looks. A still app — a paused video, a
+page nobody scrolls — also presents zero frames per second and is working
+perfectly, and no amount of waiting separates the two, because a still screen
+stays still for as long as the person keeps reading. What separates them is
+whether the window has *ever* painted, so that is what is tracked. A rate that
+has not been reported yet is also not the same as a reported zero, and is not
+treated as one.
 
 **Remembered placement.** An application reopens where it was last left, at the
 size it was, and maximised if it was. Placements are per package and are clamped
@@ -85,8 +102,15 @@ Android app keeps running on the phone, so nothing is destroyed.
 **Keyboard.** Keys reach the focused window's Android app. The shell keeps only
 Ctrl+Space (launcher) and Escape (dismiss overlay) — every other combination
 belongs to the app, or Android apps become unusable. Alt+Tab cycles focus and
-raises; the launcher and control centre remain reachable while a window has
-focus.
+raises, Alt+Shift+Tab does the same backwards; the launcher and control centre
+remain reachable while a window has focus.
+
+The switcher's order is captured when it opens and held until it closes. The
+shell rebuilds on every telemetry snapshot, which during streaming is
+continuous, so a list re-derived on each rebuild could reorder underneath the
+highlight — and releasing Alt would then focus a window the person never
+selected. A window closing mid-hold drops out of the list rather than leaving a
+stale entry behind.
 
 ## States every window frame must render
 

@@ -62,85 +62,149 @@ class TaskbarBar extends StatelessWidget {
         )
         .toList();
 
-    final double width = MediaQuery.sizeOf(context).width;
-    final bool showMedia =
-        media != null &&
-        media!.playback != PlaybackState.unavailable &&
-        onMediaAction != null &&
-        width >= 900;
-    // The nav pill is dropped on a narrow desk so the fixed clusters cannot
-    // push the full-width bar past the screen edge.
-    final bool showNav = onNavKey != null && width >= 760;
+    // The width the bar is actually given, not the window's.
+    // `MediaQuery.sizeOf` answers for the window, which is a different number
+    // whenever the bar is inset — and in a widget test driven by
+    // `setSurfaceSize` it stays at the default view size entirely, so every
+    // threshold below silently evaluated against 800 no matter what the test
+    // asked for. That is why a tray meant to shed controls at 480 never shed
+    // any.
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double width = constraints.maxWidth;
+        final bool showMedia =
+            media != null &&
+            media!.playback != PlaybackState.unavailable &&
+            onMediaAction != null &&
+            // 1100, not 900. At exactly 900 the strip is admitted at the very
+            // width where it does not fit: the nav pill, the grid button and
+            // the tray already fill the bar, and adding media overflowed it by
+            // 35px. The strip is a convenience and the dock's own transport
+            // reaches the same controls, so it is the right thing to lose
+            // first.
+            width >= 1100;
+        // The nav pill is dropped on a narrow desk so the fixed clusters cannot
+        // push the full-width bar past the screen edge.
+        final bool showNav = onNavKey != null && width >= 760;
 
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: DexSpace.lg,
-        right: DexSpace.lg,
-        bottom: DexSpace.md,
-      ),
-      child: Row(
-        children: <Widget>[
-          // LEFT cluster: nav pill and the running apps share one pill so the
-          // bar reads as clean segments, not a row of touching borders.
-          if (showNav || live.isNotEmpty)
-            _Pill(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (showNav)
-                    _NavPill(
-                      onNavKey: onNavKey!,
-                      enabled: navEnabled,
-                      colors: c,
-                    ),
-                  if (showNav && live.isNotEmpty)
-                    Container(
-                      width: DexStroke.hairline,
-                      height: 28,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: DexSpace.xs,
-                      ),
-                      color: c.line,
-                    ),
-                  if (live.isNotEmpty)
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            for (int i = 0; i < live.length; i++) ...<Widget>[
-                              if (i > 0) const SizedBox(width: DexSpace.xs),
-                              _TaskEntry(
-                                window: live[i],
-                                minimised: minimised.contains(live[i].id),
-                                colors: c,
-                                onFocus: () => onFocus(live[i].id),
-                                onClose: () => onClose(live[i].id),
-                              ),
-                            ],
-                          ],
+        // What the running-apps strip may take: everything the fixed furniture
+        // does not need. 760 is that furniture measured — nav pill, grid button,
+        // tray and the bar's own padding — and 420 remains the ceiling so a dozen
+        // open apps cannot run the strip across a wide desk.
+        final double appsMax = (width - 760).clamp(0, 420).toDouble();
+
+        // What is left for the tray once the bar's padding, the grid button and a
+        // minimum left cluster are accounted for.
+        final double trayMax = (width - 140)
+            .clamp(0, double.infinity)
+            .toDouble();
+
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: DexSpace.lg,
+            right: DexSpace.lg,
+            bottom: DexSpace.md,
+          ),
+          child: Row(
+            children: <Widget>[
+              // LEFT cluster: nav pill and the running apps share one pill so the
+              // bar reads as clean segments, not a row of touching borders.
+              if (showNav || live.isNotEmpty)
+                _Pill(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (showNav)
+                        _NavPill(
+                          onNavKey: onNavKey!,
+                          enabled: navEnabled,
+                          colors: c,
                         ),
-                      ),
-                    ),
-                ],
+                      if (showNav && live.isNotEmpty)
+                        Container(
+                          width: DexStroke.hairline,
+                          height: 28,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: DexSpace.xs,
+                          ),
+                          color: c.line,
+                        ),
+                      if (live.isNotEmpty)
+                        ConstrainedBox(
+                          // Bounded by what is actually left, not by a fixed 420.
+                          // The nav pill, the grid button and the tray are all
+                          // effectively fixed, so a running-apps strip that always
+                          // claimed 420 pushed the bar past the screen edge on a
+                          // narrower desk — 35 pixels at 900. The strip already
+                          // scrolls, so giving ground costs reach, not entries.
+                          constraints: BoxConstraints(maxWidth: appsMax),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                for (
+                                  int i = 0;
+                                  i < live.length;
+                                  i++
+                                ) ...<Widget>[
+                                  if (i > 0) const SizedBox(width: DexSpace.xs),
+                                  _TaskEntry(
+                                    window: live[i],
+                                    minimised: minimised.contains(live[i].id),
+                                    colors: c,
+                                    onFocus: () => onFocus(live[i].id),
+                                    onClose: () => onClose(live[i].id),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              if (showMedia) ...<Widget>[
+                const SizedBox(width: DexSpace.sm),
+                _Pill(
+                  child: _MediaMini(
+                    media: media!,
+                    onAction: onMediaAction!,
+                    colors: c,
+                  ),
+                ),
+              ],
+              const Spacer(),
+              // CENTRE: the apps-grid button.
+              _AppsGridButton(onPressed: onOpenLauncher, colors: c),
+              const Spacer(),
+              // RIGHT: the system tray, bounded and scrollable.
+              //
+              // Even after shedding the date, the fullscreen toggle and the
+              // settings gear, the tray still wants ~356px — more than a 480px bar
+              // can give it alongside the grid button. Rather than shedding
+              // controls until it fits a width nobody runs the shell at, it is
+              // capped at what is actually spare and scrolls inside that. Reversed,
+              // so the clock stays visible and the bell scrolls away first.
+              //
+              // Bounded here rather than made Flexible on purpose: a loose
+              // Flexible claims a share of the free space and wastes whatever it
+              // does not use, which pulled the tray off the right edge and left
+              // the grid button off-centre.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: trayMax),
+                child: _Pill(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: trailing,
+                  ),
+                ),
               ),
-            ),
-          if (showMedia) ...<Widget>[
-            const SizedBox(width: DexSpace.sm),
-            _Pill(
-              child: _MediaMini(media: media!, onAction: onMediaAction!, colors: c),
-            ),
-          ],
-          const Spacer(),
-          // CENTRE: the apps-grid button.
-          _AppsGridButton(onPressed: onOpenLauncher, colors: c),
-          const Spacer(),
-          // RIGHT: the system tray.
-          _Pill(child: trailing),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -297,7 +361,11 @@ class _AppsGridButton extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.grid_view_rounded, size: 20, color: Colors.white),
+              child: const Icon(
+                Icons.grid_view_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -351,7 +419,8 @@ class _MediaMini extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: t.labelSmall?.copyWith(color: colors.muted),
                   ),
-                if (media.durationMs != null && media.durationMs! > 0) ...<Widget>[
+                if (media.durationMs != null &&
+                    media.durationMs! > 0) ...<Widget>[
                   const SizedBox(height: 4),
                   _MediaProgress(media: media, colors: colors),
                 ],
@@ -654,8 +723,18 @@ class SystemTray extends StatelessWidget {
   final bool fullscreenActive;
 
   static const List<String> _months = <String>[
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   @override
@@ -664,6 +743,11 @@ class SystemTray extends StatelessWidget {
     final int h = now.hour % 12 == 0 ? 12 : now.hour % 12;
     final String m = now.minute.toString().padLeft(2, '0');
     final String ap = now.hour < 12 ? 'AM' : 'PM';
+
+    // On a bar this narrow the tray sheds rather than overflows. The date is
+    // the first to go — the time is the readout people glance at — and the
+    // fullscreen toggle follows it, because F11 still does the same job and
+    // the title bar carries its own control.
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -769,11 +853,7 @@ class _StatusCluster extends StatelessWidget {
                   if (battery != null) ...<Widget>[
                     if (telemetry.charging)
                       Icon(Icons.bolt, size: 14, color: colors.signal),
-                    Icon(
-                      Icons.battery_full,
-                      size: 15,
-                      color: colors.muted,
-                    ),
+                    Icon(Icons.battery_full, size: 15, color: colors.muted),
                     const SizedBox(width: 4),
                     Text('$battery%', style: DexTheme.data(colors, size: 11)),
                   ],
@@ -841,7 +921,9 @@ class _Bell extends StatelessWidget {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: colors.signal,
-                          borderRadius: BorderRadius.circular(DexRadius.control),
+                          borderRadius: BorderRadius.circular(
+                            DexRadius.control,
+                          ),
                         ),
                         child: Text(
                           count > 9 ? '9+' : '$count',

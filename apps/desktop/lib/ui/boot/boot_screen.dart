@@ -21,12 +21,26 @@ class BootScreen extends StatelessWidget {
     required this.boot,
     required this.onConnect,
     required this.onRetry,
+    this.device,
+    this.deviceCount = 0,
     super.key,
   });
 
   final BootState boot;
   final VoidCallback onConnect;
   final VoidCallback onRetry;
+
+  /// The phone the desk is coming up on, once one has been chosen.
+  ///
+  /// The screen used to be handed the boot state and nothing else, so it could
+  /// not name the phone even in principle. With one attached that is merely
+  /// incurious; with two it means the app connects to one of them and never
+  /// says which.
+  final DeviceSummary? device;
+
+  /// How many phones are attached, which decides whether there is a choice to
+  /// offer at all. Naming one of two is only half an answer.
+  final int deviceCount;
 
   bool get _isFailed => boot.phase == BootPhase.failed;
   bool get _isIdle => boot.phase == BootPhase.idle;
@@ -182,6 +196,15 @@ class _Intent extends StatelessWidget {
             color: screen._isFailed ? c.fault : c.muted,
           ),
         ),
+        // Which phone, and how it is attached.
+        //
+        // The name alone is not enough when someone has two of the same model
+        // on the desk — the cable is what tells them apart — and the whole
+        // complaint this answers is not knowing which one the desk came up on.
+        if (screen.device case final DeviceSummary d) ...<Widget>[
+          const SizedBox(height: DexSpace.sm),
+          _DeviceLine(device: d, colors: c),
+        ],
         if (boot.error != null) ...<Widget>[
           const SizedBox(height: DexSpace.lg),
           _ErrorNote(
@@ -198,6 +221,17 @@ class _Intent extends StatelessWidget {
                 onPressed: screen.onConnect,
                 child: const Text('Connect phone'),
               )
+            // More than one attached, and the desk picked one. Offer the
+            // choice while it still matters — by the time it has failed, which
+            // phone it was going to use is beside the point.
+            else if (!screen._isFailed && screen.deviceCount > 1) ...<Widget>[
+              const _WorkingLabel(),
+              const SizedBox(width: DexSpace.lg),
+              OutlinedButton(
+                onPressed: screen.onConnect,
+                child: const Text('Choose a phone'),
+              ),
+            ]
             else if (screen._isFailed) ...<Widget>[
               FilledButton(
                 onPressed: screen.onRetry,
@@ -221,6 +255,42 @@ class _Intent extends StatelessWidget {
               const _WorkingLabel(),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Which phone, and over what.
+class _DeviceLine extends StatelessWidget {
+  const _DeviceLine({required this.device, required this.colors});
+
+  final DeviceSummary device;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final String how = switch (device.connectionKind) {
+      DeviceConnectionKind.usb => 'USB',
+      DeviceConnectionKind.wifi => 'Wi-Fi',
+    };
+    final String label = <String>[
+      device.model ?? device.name,
+      how,
+      if (device.androidVersion case final String v) 'Android $v',
+    ].join('  ·  ');
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(
+          device.connectionKind == DeviceConnectionKind.usb
+              ? Icons.usb
+              : Icons.wifi,
+          size: 14,
+          color: colors.muted,
+        ),
+        const SizedBox(width: DexSpace.sm),
+        Text(label, style: DexTheme.data(colors, size: 12)),
       ],
     );
   }

@@ -430,7 +430,7 @@ class _Body extends StatelessWidget {
       case WindowSessionStatus.closed:
         return const SizedBox.shrink();
       case WindowSessionStatus.streaming:
-        return _Surface(window: window, colors: c);
+        return _Surface(window: window, colors: c, intents: intents);
     }
     // Unreachable: the switch above is exhaustive over WindowSessionStatus.
     // ignore: dead_code
@@ -547,16 +547,47 @@ class _Notice extends StatelessWidget {
 /// outside the desk and belonged to no one. [WindowSurface.textureId] is the
 /// handle the host registers for that window's video, and Flutter's [Texture]
 /// composites it into our tree like any other widget.
-class _Surface extends StatelessWidget {
-  const _Surface({required this.window, required this.colors});
+class _Surface extends StatefulWidget {
+  const _Surface({
+    required this.window,
+    required this.colors,
+    this.intents,
+  });
 
   final WorkspaceWindow window;
   final DexColors colors;
 
+  /// Null where there is nothing to offer. A dimmed window is paused or
+  /// reconnecting by design, so telling its owner that no video is arriving
+  /// would be describing the state they asked for — and a notice with no
+  /// action behind it is a dead end.
+  final WorkspaceIntents? intents;
+
+  @override
+  State<_Surface> createState() => _SurfaceState();
+}
+
+class _SurfaceState extends State<_Surface> {
+  /// Whether this window has ever put a frame on screen.
+  ///
+  /// This is the whole of what separates a stalled stream from a still one. A
+  /// motionless app — a paused video, a page nobody is scrolling — presents
+  /// zero frames in an interval and is working perfectly; the Live badge says
+  /// as much, that the rate "counts changes, not speed". Only a window that
+  /// has never once painted is broken, and no amount of waiting distinguishes
+  /// the two, because a still screen stays still for as long as it likes.
+  bool _everPresented = false;
+
   @override
   Widget build(BuildContext context) {
+    final WorkspaceWindow window = widget.window;
+    final DexColors colors = widget.colors;
+    final WorkspaceIntents? intents = widget.intents;
     final WindowSurface? surface = window.surface;
     final WidgetBuilder? preview = window.previewBuilder;
+
+    final double? rate = window.presentedFramesPerSecond;
+    if (rate != null && rate > 0) _everPresented = true;
 
     if (surface == null && preview == null) {
       // Streaming, but the host has not registered a texture for this window.
@@ -580,7 +611,31 @@ class _Surface extends StatelessWidget {
           )
         : const Size(1080, 1920);
 
-    return ColoredBox(
+    // A texture exists and no frame has ever been painted into it. The window
+    // is then a black rectangle with a lit Live badge, which is
+    // indistinguishable from an app that happens to be showing black — so it
+    // says so instead.
+    //
+    // The fade is the whole delay mechanism: every healthy stream reports no
+    // frames for its first moments, and by animating up from nothing the
+    // notice is cancelled long before it becomes visible. No timer ticks, and
+    // once either end is reached the animation rests.
+    //
+    // Three seconds is now a courtesy rather than a guess: the condition is
+    // already specific — a completed measurement of zero, on a window that has
+    // never painted — so the delay only spares a window whose very first
+    // interval happens to land empty while it is still opening.
+    // Null is not zero. The backend emits a numeric rate on every completed
+    // one-second sample, so null means no interval has finished yet, while an
+    // explicit 0.0 means one finished and presented nothing. Coalescing the
+    // two would accuse every window that has only just opened.
+    final bool stalled = surface != null &&
+        intents != null &&
+        !_everPresented &&
+        rate != null &&
+        rate <= 0;
+
+    final Widget video = ColoredBox(
       // Letterbox in black: a phone is taller than its window, and tinting the
       // bars would make the app look like it has a coloured border.
       color: const Color(0xFF000000),
@@ -607,6 +662,54 @@ class _Surface extends StatelessWidget {
               : Builder(builder: preview!),
         ),
       ),
+    );
+
+    // Nothing wrapped around the video unless there is something to say.
+    //
+    // This is a frame-cost decision, not a tidiness one. `TweenAnimationBuilder`
+    // takes a `Tween`, and constructing one in build allocates an object per
+    // window per frame — directly over the live texture, which is exactly the
+    // shape of the allocation regression that cost playback smoothness before.
+    // A healthy window now returns the texture untouched, and the fade only
+    // exists while a window is actually silent, where there is no video being
+    // dropped to pay for it.
+    //
+    // The cost is that recovery has no fade out: when frames start arriving the
+    // notice disappears at once rather than dissolving. That is the right way
+    // round — the animation exists to delay an accusation, not to decorate its
+    // withdrawal.
+    if (!stalled) return video;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        video,
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: stalled ? 1 : 0),
+          duration: const Duration(seconds: 3),
+          // Nothing at all for the first seven tenths, then a fade. A notice
+          // held at a quarter opacity over live video is not a gentler
+          // warning, it is a smear — and it would report a stall that has not
+          // been established yet.
+          curve: const Interval(0.7, 1, curve: DexMotion.arrive),
+          builder: (BuildContext context, double t, Widget? child) => t == 0
+              ? const SizedBox.shrink()
+              : IgnorePointer(
+                  ignoring: t < 1,
+                  child: Opacity(opacity: t, child: child),
+                ),
+          child: _Notice(
+            colors: colors,
+            title: 'No video is arriving',
+            detail:
+                'The app is running on the phone and this window has a place '
+                'to draw it, but no frame has reached the desk. Reopening the '
+                'window starts a fresh stream.',
+            action: 'Reopen',
+            onAction: () => intents.retry(window.id),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -769,7 +872,11 @@ class _WindowStageState extends State<WindowStage> {
         children: <Widget>[
           input.wrap(
             enabled: widget.window.isFocused,
-            child: _Surface(window: widget.window, colors: c),
+            child: _Surface(
+              window: widget.window,
+              colors: c,
+              intents: widget.intents,
+            ),
           ),
           // A strip along the top rather than the whole surface: the rest of
           // the stage belongs to the app, and a MouseRegion over all of it
