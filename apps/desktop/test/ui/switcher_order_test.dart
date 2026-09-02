@@ -62,6 +62,59 @@ void main() {
     }
   }
 
+  /// One full Alt+Tab: press, release, settle.
+  Future<void> altTab(WidgetTester tester, {int taps = 1}) async {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    for (int i = 0; i < taps; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await settle(tester);
+    }
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await settle(tester);
+  }
+
+  String focusedId(WidgetTester tester, MockOpenDexFacade f) => f
+      .snapshot
+      .windows
+      .firstWhere((WindowSessionState w) => w.isFocused)
+      .id;
+
+  testWidgets('Alt+Tab goes to the window you were last in', (
+    WidgetTester tester,
+  ) async {
+    // The whole point of Alt+Tab is that it is a toggle back to what you were
+    // just doing, not a walk down a list in the order things happened to open.
+    final MockOpenDexFacade f = await pumpShell(tester);
+    await openWindows(tester, f, 3);
+
+    final String third = focusedId(tester, f);
+    await altTab(tester);
+    final String second = focusedId(tester, f);
+    expect(
+      second,
+      isNot(third),
+      reason: 'one Alt+Tab should leave the window it started in',
+    );
+  });
+
+  testWidgets('Alt+Tab twice returns you where you started', (
+    WidgetTester tester,
+  ) async {
+    // The alternation every desktop has: two presses is a round trip. It only
+    // holds if committing a switch makes that window the most recent, so this
+    // is really a test that the order is use-ordered rather than fixed.
+    final MockOpenDexFacade f = await pumpShell(tester);
+    await openWindows(tester, f, 3);
+
+    final String start = focusedId(tester, f);
+    await altTab(tester);
+    final String other = focusedId(tester, f);
+    await altTab(tester);
+
+    expect(focusedId(tester, f), start, reason: 'two presses is a round trip');
+    expect(other, isNot(start));
+  });
+
   testWidgets('the order does not shift while Alt is held', (
     WidgetTester tester,
   ) async {
