@@ -240,6 +240,7 @@ void main() {
           closeSheet: () {},
           keyboardIsFree: () => keyboardIsFree,
           toggleDiagnostics: () {},
+          toggleHealthHud: () {},
           toggleDrawer: () {},
           toggleFullscreen: () {},
           cycleFocus: () {},

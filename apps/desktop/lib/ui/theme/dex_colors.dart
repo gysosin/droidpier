@@ -17,6 +17,7 @@ class DexColors extends ThemeExtension<DexColors> {
     required this.muted,
     required this.signal,
     required this.trace,
+    required this.warn,
     required this.fault,
   });
 
@@ -46,6 +47,17 @@ class DexColors extends ThemeExtension<DexColors> {
   /// Telemetry, throughput, charts.
   final Color trace;
 
+  /// A reading that is worse than asked for but not a failure.
+  ///
+  /// Added for the health readout, which needs a caution step between "at the
+  /// rate we configured" and "broken". Without one the choice was to colour a
+  /// merely-slow link the same red as a dead one, which cries wolf, or the
+  /// same green as a healthy one, which says nothing.
+  ///
+  /// Amber rather than a second blue: it has to be legible as *between* trace
+  /// and fault at a glance, and only warm-to-hot reads that way.
+  final Color warn;
+
   /// Errors and destructive actions.
   final Color fault;
 
@@ -67,6 +79,7 @@ class DexColors extends ThemeExtension<DexColors> {
     muted: Color(0xFF94A3B8),
     signal: Color(0xFF60A5FA),
     trace: Color(0xFF34D399),
+    warn: Color(0xFFFBBF24),
     fault: Color(0xFFFB7185),
   );
 
@@ -76,7 +89,8 @@ class DexColors extends ThemeExtension<DexColors> {
   ///
   /// Every accent darkens: blue-400 measures about 2.3:1 on light paper, which
   /// no amount of taste makes readable. `signal` becomes blue-700, `trace`
-  /// emerald-700, `fault` rose-700, and `muted` slate-600 at roughly 7:1.
+  /// emerald-700, `warn` amber-700, `fault` rose-700, and `muted` slate-600 at
+  /// roughly 7:1.
   static const DexColors light = DexColors(
     bg: Color(0xFFEEF2FB),
     surface: Color(0xFFFFFFFF),
@@ -86,6 +100,7 @@ class DexColors extends ThemeExtension<DexColors> {
     muted: Color(0xFF475569),
     signal: Color(0xFF1D4ED8),
     trace: Color(0xFF047857),
+    warn: Color(0xFFB45309),
     fault: Color(0xFFBE123C),
   );
 
@@ -99,6 +114,7 @@ class DexColors extends ThemeExtension<DexColors> {
     Color? muted,
     Color? signal,
     Color? trace,
+    Color? warn,
     Color? fault,
   }) {
     return DexColors(
@@ -110,6 +126,7 @@ class DexColors extends ThemeExtension<DexColors> {
       muted: muted ?? this.muted,
       signal: signal ?? this.signal,
       trace: trace ?? this.trace,
+      warn: warn ?? this.warn,
       fault: fault ?? this.fault,
     );
   }
@@ -128,6 +145,7 @@ class DexColors extends ThemeExtension<DexColors> {
       muted: Color.lerp(muted, other.muted, t)!,
       signal: Color.lerp(signal, other.signal, t)!,
       trace: Color.lerp(trace, other.trace, t)!,
+      warn: Color.lerp(warn, other.warn, t)!,
       fault: Color.lerp(fault, other.fault, t)!,
     );
   }
