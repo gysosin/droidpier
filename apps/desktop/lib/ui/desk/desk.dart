@@ -179,9 +179,10 @@ class _DeskState extends State<Desk> {
           const DexWallpaper(),
           // Home furniture, over the wallpaper and under the app windows: the
           // two search bars top-left, the app icons filling the left below
-          // them, and a large bare analog clock top-right. There is no
-          // right-hand widget rail: media, battery and notifications live in
-          // the dock and tray instead.
+          // them, a large bare analog clock top-right, and — where the desk is
+          // big enough for it — a column of widgets under the clock. The dock
+          // and tray carry the same readings in compact form, so the column is
+          // the first thing dropped when the desk is small.
           Positioned(
             left: 0,
             right: 0,
@@ -338,7 +339,16 @@ class _Furniture extends StatelessWidget {
   /// a status card squeezed against them is worse than no status card.
   static const double _columnWidth = 320;
   static const double _columnMinWidth = 1180;
-  static const double _columnMinHeight = 760;
+
+  /// 660, measured rather than guessed. The column hangs below the clock, so
+  /// what it needs is the clock's own extent plus room for two cards: 16 + 300
+  /// + 16 of clock, then about 320 of column, then a bottom margin.
+  ///
+  /// It was 760, which sounded safe and meant the column never appeared on a
+  /// laptop at all. The desk gets the window height less the 72px taskbar, so
+  /// a 1280x800 screen leaves 691 and a 1366x768 one leaves 659 — both under
+  /// the old bar, and between them that is most laptops. Tests pin both.
+  static const double _columnMinHeight = 660;
 
   @override
   Widget build(BuildContext context) {
