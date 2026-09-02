@@ -12,6 +12,7 @@ import '../boot/boot_screen.dart';
 import '../boot/first_run_tour.dart';
 import '../desk/desk.dart';
 import '../diagnostics/diagnostics_report.dart';
+import '../diagnostics/health_hud.dart';
 import '../diagnostics/stream_diagnostics.dart';
 import 'command_palette.dart';
 import 'commands.dart';
@@ -355,6 +356,11 @@ class _AppShellState extends State<AppShell> {
 
   bool _diagnosticsOpen = false;
 
+  /// The compact health readout. Off by default: it sits over the video, and a
+  /// permanent overlay on a surface whose whole point is the picture has to be
+  /// asked for.
+  bool _healthHudOpen = false;
+
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
 
@@ -449,6 +455,11 @@ class _AppShellState extends State<AppShell> {
         run: () => setState(() => _diagnosticsOpen = !_diagnosticsOpen),
       ),
       DexCommandEntry(
+        title: 'Toggle the health readout',
+        keywords: const <String>['fps', 'latency', 'hud', 'performance'],
+        run: () => setState(() => _healthHudOpen = !_healthHudOpen),
+      ),
+      DexCommandEntry(
         title: 'Open the app launcher',
         keywords: const <String>['apps', 'drawer'],
         run: _toggleDrawer,
@@ -479,6 +490,8 @@ class _AppShellState extends State<AppShell> {
     keyboardIsFree: () => !_deskOwnsKeyboard,
     toggleDiagnostics: () =>
         setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+    toggleHealthHud: () =>
+        setState(() => _healthHudOpen = !_healthHudOpen),
     toggleDrawer: _toggleDrawer,
     toggleFullscreen: _toggleFullscreen,
     cycleFocus: _cycleFocus,
@@ -823,6 +836,30 @@ class _AppShellState extends State<AppShell> {
         // Above the dialogs: Alt+Tab is held down, so it is the most immediate
         // thing on screen for as long as it is up.
         if (_switcherOpen) _switcher(),
+        // Pinned above the taskbar rather than at the very bottom, so it does
+        // not sit on top of the tray it is reporting alongside. Per-window
+        // when a window has focus, because an unattributable rate answers
+        // "how fast" without answering "what".
+        if (_healthHudOpen)
+          Positioned(
+            right: DexSpace.lg,
+            bottom: 96,
+            child: Builder(
+              builder: (BuildContext context) {
+                final WorkspaceWindow? focused = _wm.windows.values
+                    .where((WorkspaceWindow w) => w.isFocused)
+                    .firstOrNull;
+                return HealthHud(
+                  framesPerSecond:
+                      focused?.presentedFramesPerSecond ??
+                      _s.telemetry.framesPerSecond?.value,
+                  latency: _s.telemetry.linkLatency,
+                  throughput: _s.telemetry.throughput,
+                  windowLabel: focused?.session.application.label,
+                );
+              },
+            ),
+          ),
         if (_diagnosticsOpen)
           StreamDiagnostics(
             snapshot: _s,

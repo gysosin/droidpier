@@ -135,6 +135,7 @@ class ShellShortcutHooks {
     required this.closeSheet,
     required this.keyboardIsFree,
     required this.toggleDiagnostics,
+    required this.toggleHealthHud,
     required this.toggleDrawer,
     required this.toggleFullscreen,
     required this.cycleFocus,
@@ -165,6 +166,9 @@ class ShellShortcutHooks {
   final bool Function() keyboardIsFree;
 
   final void Function() toggleDiagnostics;
+
+  /// Shows or hides the compact health readout pinned over the workspace.
+  final void Function() toggleHealthHud;
   final void Function() toggleDrawer;
   final void Function() toggleFullscreen;
   final void Function() cycleFocus;
@@ -211,6 +215,17 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
     group: DexShortcutGroup.diagnostics,
     when: _always,
     run: hooks.toggleDiagnostics,
+  ),
+  DexShortcut(
+    stroke: const DexKeyStroke(
+      LogicalKeyboardKey.keyH,
+      control: true,
+      shift: true,
+    ),
+    label: 'Toggle the health readout',
+    group: DexShortcutGroup.diagnostics,
+    when: _always,
+    run: hooks.toggleHealthHud,
   ),
   DexShortcut(
     stroke: const DexKeyStroke(LogicalKeyboardKey.space, control: true),

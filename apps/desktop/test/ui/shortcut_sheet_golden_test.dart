@@ -59,6 +59,7 @@ ShellShortcutHooks _hooks() => ShellShortcutHooks(
   closeSheet: () {},
   keyboardIsFree: () => true,
   toggleDiagnostics: () {},
+  toggleHealthHud: () {},
   toggleDrawer: () {},
   toggleFullscreen: () {},
   cycleFocus: () {},
