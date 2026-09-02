@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../util/error_guidance.dart';
+import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -412,12 +414,19 @@ class _Body extends StatelessWidget {
 
     switch (window.session.status) {
       case WindowSessionStatus.failed:
+        final OpenDexError? failure = window.session.error;
         return _Notice(
           colors: c,
           title: 'This app stopped',
-          detail:
-              window.session.error?.message ??
-              'The window closed unexpectedly.',
+          detail: failure?.message ?? 'The window closed unexpectedly.',
+          // What to try, from the shared mapping. The message names what
+          // failed; on its own it leaves the person with a stopped window and
+          // a sentence about it.
+          guidance: failure == null ? null : guidanceFor(failure),
+          // The decoder's own account, offered rather than shown. It is built
+          // from process output and can carry paths and device detail, so it
+          // is copied on purpose — the same rule the boot screen follows.
+          technicalDetails: failure?.technicalDetails,
           action: 'Try again',
           onAction: () => intents.retry(window.id),
         );
@@ -494,6 +503,8 @@ class _Notice extends StatelessWidget {
     required this.colors,
     required this.title,
     required this.detail,
+    this.guidance,
+    this.technicalDetails,
     this.action,
     this.onAction,
   });
@@ -501,6 +512,12 @@ class _Notice extends StatelessWidget {
   final DexColors colors;
   final String title;
   final String detail;
+
+  /// What to try next. The detail says what failed.
+  final String? guidance;
+
+  /// Offered as a copy, never rendered.
+  final String? technicalDetails;
 
   /// Optional: some notices explain a state the person cannot act on, and a
   /// button that does nothing is worse than no button.
@@ -528,9 +545,36 @@ class _Notice extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: t.bodyMedium?.copyWith(color: colors.muted),
               ),
+              if (guidance case final String advice) ...<Widget>[
+                const SizedBox(height: DexSpace.sm),
+                Text(
+                  advice,
+                  textAlign: TextAlign.center,
+                  style: t.bodyMedium,
+                ),
+              ],
               if (action != null) ...<Widget>[
                 const SizedBox(height: DexSpace.md),
                 OutlinedButton(onPressed: onAction, child: Text(action!)),
+              ],
+              if (technicalDetails case final String detail
+                  when detail.trim().isNotEmpty) ...<Widget>[
+                const SizedBox(height: DexSpace.sm),
+                TextButton.icon(
+                  onPressed: () =>
+                      Clipboard.setData(ClipboardData(text: detail.trim())),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, DexHit.comfortable),
+                  ),
+                  icon: const Icon(Icons.content_copy, size: 14),
+                  label: const Text('Copy technical details'),
+                ),
+                Text(
+                  'Technical information about this computer and the phone. '
+                  'Read it before sharing.',
+                  textAlign: TextAlign.center,
+                  style: DexTheme.data(colors, size: 11, color: colors.muted),
+                ),
               ],
             ],
           ),
