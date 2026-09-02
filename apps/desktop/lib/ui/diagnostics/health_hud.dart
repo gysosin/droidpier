@@ -144,7 +144,11 @@ class _Reading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color tint = switch (grade) {
-      HealthGrade.good => colors.signal,
+      // trace, not signal. `trace` is the palette's telemetry green and this is
+      // telemetry; `signal` is the accent blue, which beside amber and red
+      // stops reading as the top of a traffic light and starts reading as a
+      // fourth, unrelated state.
+      HealthGrade.good => colors.trace,
       HealthGrade.fair => colors.warn,
       HealthGrade.poor => colors.fault,
       HealthGrade.unknown => colors.text,
