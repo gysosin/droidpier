@@ -76,7 +76,13 @@ class TaskbarBar extends StatelessWidget {
             media != null &&
             media!.playback != PlaybackState.unavailable &&
             onMediaAction != null &&
-            width >= 900;
+            // 1100, not 900. At exactly 900 the strip is admitted at the very
+            // width where it does not fit: the nav pill, the grid button and
+            // the tray already fill the bar, and adding media overflowed it by
+            // 35px. The strip is a convenience and the dock's own transport
+            // reaches the same controls, so it is the right thing to lose
+            // first.
+            width >= 1100;
         // The nav pill is dropped on a narrow desk so the fixed clusters cannot
         // push the full-width bar past the screen edge.
         final bool showNav = onNavKey != null && width >= 760;
