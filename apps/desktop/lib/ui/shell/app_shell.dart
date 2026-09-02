@@ -760,7 +760,16 @@ class _AppShellState extends State<AppShell> {
         children: <Widget>[
           BootScreen(
             boot: _s.boot,
-            onConnect: () => setState(() => _connectOpen = true),
+            // So the screen can say which phone it came up on, and offer the
+            // choice when there is more than one to choose between.
+            device: _s.selectedDevice,
+            deviceCount: _s.devices.length,
+            onConnect: () {
+              // Opening the picker is the person taking the decision, so
+              // auto-connect stops racing them for it.
+              _connection.standDown();
+              setState(() => _connectOpen = true);
+            },
             onRetry: () {
               // The person is driving now, so auto-connect stands down for
               // good — including after a later disconnect returns us here.

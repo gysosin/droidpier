@@ -88,6 +88,43 @@ void main() {
     );
   });
 
+  testWidgets('boot screen, connecting, two phones attached, dark', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 860));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: DexTheme.dark(),
+        debugShowCheckedModeBanner: false,
+        home: const BootScreen(
+          boot: BootState(
+            phase: BootPhase.awaitingHandshakes,
+            message: 'Waiting for the phone to answer',
+          ),
+          onConnect: _noop,
+          onRetry: _noop,
+          device: DeviceSummary(
+            id: 'serial-1',
+            name: 'Pixel 7a',
+            connectionKind: DeviceConnectionKind.wifi,
+            status: DeviceStatus.authorized,
+            androidVersion: '14',
+          ),
+          deviceCount: 2,
+        ),
+      ),
+    );
+    await tester.pump();
+    for (int i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+    await expectLater(
+      find.byType(BootScreen),
+      matchesGoldenFile('goldens/boot_two_phones_dark.png'),
+    );
+  });
+
   testWidgets('boot screen, failed, light', (WidgetTester tester) async {
     await pump(tester, DexTheme.light());
     await expectLater(
