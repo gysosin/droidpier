@@ -4,6 +4,7 @@ export 'src/adb_client.dart';
 export 'src/adb_device_gateway.dart';
 export 'src/agent_command_gateway.dart';
 export 'src/android_boot_components.dart';
+export 'src/fallback_window_gateway.dart';
 export 'src/embedded_scrcpy_window_gateway.dart';
 export 'src/managed_process.dart';
 export 'src/process_executor.dart';

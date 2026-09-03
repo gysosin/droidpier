@@ -31,7 +31,16 @@ class DeskIcons extends StatelessWidget {
   /// One tile plus its label. Public because the desk has to reserve room for
   /// this column before deciding whether the phone mirror also fits.
   static const double tileWidth = 92;
-  static const double _tileHeight = 96;
+
+  /// 104, not 96.
+  ///
+  /// The tile holds a 48px glyph, a gap, and up to two lines of label. At 96
+  /// that came to six pixels more than the box on a two-line name — "Ball Sort
+  /// Puzzle" is enough to trigger it — and the person got a striped overflow
+  /// banner where their app should be. Found by running the product rather
+  /// than by any widget test, because every test that renders this passes a
+  /// name short enough to fit on one line.
+  static const double _tileHeight = 104;
 
   @override
   Widget build(BuildContext context) {
@@ -131,19 +140,27 @@ class _DeskIcon extends StatelessWidget {
                     child: AppGlyph(app: app, size: 48),
                   ),
                   const SizedBox(height: DexSpace.sm),
-                  Text(
-                    shown,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: c.text,
-                      height: 1.25,
-                      // The wallpaper is bright in places; without a shadow the
-                      // label loses its edge over the lit corner.
-                      shadows: const <Shadow>[
-                        Shadow(color: Color(0x99000000), blurRadius: 6),
-                      ],
+                  // Flexible as well as taller. The height above is sized for
+                  // this app's own fonts, and a system fallback face with
+                  // taller metrics would put it back over the edge — which is
+                  // exactly how a clock overflowed here once before. Yielding
+                  // costs a clipped second line; not yielding costs a striped
+                  // banner across the icon.
+                  Flexible(
+                    child: Text(
+                      shown,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: c.text,
+                        height: 1.25,
+                        // The wallpaper is bright in places; without a shadow the
+                        // label loses its edge over the lit corner.
+                        shadows: const <Shadow>[
+                          Shadow(color: Color(0x99000000), blurRadius: 6),
+                        ],
+                      ),
                     ),
                   ),
                 ],
