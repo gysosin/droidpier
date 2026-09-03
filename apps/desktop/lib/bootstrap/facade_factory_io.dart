@@ -52,28 +52,44 @@ OpenDexFacade _createFacade({
   final applicationCatalog = ApplicationCatalogBootComponent(agent: agent);
   const textureHost = LinuxTextureHost();
   final ffmpegExecutable = _ffmpegExecutable();
+  EmbeddedScrcpyWindowGateway buildLegacy() => EmbeddedScrcpyWindowGateway(
+    executable: '$scrcpyDirectory/${_runtimeExecutableName('scrcpy')}',
+    serverPath: '$scrcpyDirectory/scrcpy-server',
+    ffmpegExecutable: ffmpegExecutable,
+    adb: adb,
+    textureHost: textureHost,
+    onDisplayCreated: onDisplayCreated,
+  );
+
   final WindowGateway windowGateway = switch (resolveWindowBackend(
     Platform.environment,
     linux: Platform.isLinux,
   )) {
-    WindowBackendSelection.legacy => EmbeddedScrcpyWindowGateway(
-      executable: '$scrcpyDirectory/${_runtimeExecutableName('scrcpy')}',
-      serverPath: '$scrcpyDirectory/scrcpy-server',
-      ffmpegExecutable: ffmpegExecutable,
-      adb: adb,
-      textureHost: textureHost,
-      onDisplayCreated: onDisplayCreated,
-    ),
-    WindowBackendSelection.direct => DirectScrcpyWindowGateway(
-      serverStarter: ScrcpyServerLauncher(adb: adb),
-      decoderStarter: const SystemH264DecoderStarter(),
-      serverJarPath: '$scrcpyDirectory/scrcpy-server',
-      ffmpegExecutable: ffmpegExecutable,
-      textureHost: textureHost,
-      // Lets the gateway read the phone's natural orientation once so a new
-      // window opens upright rather than rotated inside a landscape display.
-      adb: adb,
-      onDisplayCreated: onDisplayCreated,
+    WindowBackendSelection.legacy => buildLegacy(),
+    // Direct, with the older path kept in reserve.
+    //
+    // Measured on two phones: direct streams a Redmi Note 7 Pro (Android 13)
+    // and dies on a Galaxy F41 (Android 12) with "the scrcpy video stream
+    // ended before session metadata", while legacy streams that same Galaxy
+    // without complaint. scrcpy's own client makes a virtual display on the
+    // Galaxy without trouble, so this is our pipeline not coping rather than
+    // the device refusing — which is worth understanding separately.
+    //
+    // Until it is, an app that will not open is a worse outcome than an app
+    // opened by the older path.
+    WindowBackendSelection.direct => FallbackWindowGateway(
+      fallback: buildLegacy(),
+      preferred: DirectScrcpyWindowGateway(
+        serverStarter: ScrcpyServerLauncher(adb: adb),
+        decoderStarter: const SystemH264DecoderStarter(),
+        serverJarPath: '$scrcpyDirectory/scrcpy-server',
+        ffmpegExecutable: ffmpegExecutable,
+        textureHost: textureHost,
+        // Lets the gateway read the phone's natural orientation once so a new
+        // window opens upright rather than rotated inside a landscape display.
+        adb: adb,
+        onDisplayCreated: onDisplayCreated,
+      ),
     ),
   };
   return OpenDexController(
