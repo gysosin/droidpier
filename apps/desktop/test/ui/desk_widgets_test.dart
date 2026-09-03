@@ -67,6 +67,16 @@ void main() {
     expect(find.byType(NotificationsWidget), findsOneWidget);
   });
 
+  testWidgets('a laptop screen still gets the column', (
+    WidgetTester tester,
+  ) async {
+    // The threshold was set at 760 and the desk gets the window height less
+    // the 72px taskbar, so 1280x800 left 691 and 1366x768 left 659 — the
+    // column never appeared on a laptop at all, which is most of them.
+    await pumpDesk(tester, const Size(1280, 800));
+    expect(find.byType(PhoneWidget), findsOneWidget);
+  });
+
   testWidgets('a narrow desk keeps its icons and drops the column', (
     WidgetTester tester,
   ) async {
