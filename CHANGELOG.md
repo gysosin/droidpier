@@ -68,6 +68,23 @@ Desktop shell improvements. Keyboard, launcher and window management.
   and a tap on a black bar landed in the middle of the app.
 - A short first-run tour points out the launcher, window snapping, the taskbar
   and the tray, once.
+- The boot screen names the phone it is coming up on, and how it is attached.
+  With two phones on the desk the app connected to one of them and never said
+  which; the transport is shown because the cable is what tells two of the same
+  model apart. With more than one attached it also offers to choose, while the
+  choice still matters rather than only after a failure.
+- A window that is streaming but never receives a frame says so and offers to
+  reopen, instead of showing a black rectangle with a lit Live badge for ever.
+  A still app — a paused video, a page nobody scrolls — is deliberately not
+  treated as broken, because it presents no frames either.
+- Volume rows read Media, Ringtone, Notifications and Alarm rather than
+  Android's raw stream keys, and are ordered by what people reach for instead of
+  alphabetically, which had put Alarm above Media.
+- Fixed: the taskbar overflowed its own width in two ways — the running-apps
+  strip always claimed a fixed 420 pixels, and the media strip was admitted at
+  exactly the width where it stopped fitting. The bar also measured the window
+  rather than itself, so every width rule in it was evaluating against the wrong
+  number.
 
 ## 0.1.0-beta.2 — 2026-09-01
 
