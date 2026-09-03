@@ -83,6 +83,16 @@ abstract interface class BackendStateProvider {
 }
 
 /// Explicit user intent from an authenticated companion, not a transport loss.
+/// Opens a URL using whatever the desktop uses to open URLs.
+///
+/// Host-side, not device-side: the desk's search bar sends a query to the
+/// computer's own browser. It exists as a port so the UI does not have to start
+/// a process itself — a widget that shells out cannot be rendered in the
+/// preview app or covered by a golden.
+abstract interface class DesktopUrlLauncher {
+  Future<void> open(String url);
+}
+
 abstract interface class UserDisconnectProvider {
   bool get userDisconnectRequested;
   Stream<void> get userDisconnectRequests;

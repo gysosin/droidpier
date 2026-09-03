@@ -96,6 +96,7 @@ OpenDexFacade _createFacade({
     permissionGateway: commands,
     notificationGateway: companion,
     clipboardGateway: clipboard,
+    urlLauncher: const ProcessDesktopUrlLauncher(),
   );
 }
 

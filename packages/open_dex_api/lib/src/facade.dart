@@ -18,6 +18,13 @@ abstract interface class OpenDexFacade {
 
   Future<CommandResult<String>> launchApplication(String packageName);
 
+  /// Opens [url] with the desktop's own handler.
+  ///
+  /// Host-side rather than device-side. It lives on the facade so the
+  /// interface never has to start a process itself, which is what keeps it
+  /// renderable without a machine behind it.
+  Future<VoidResult> openUrl(String url);
+
   Future<VoidResult> closeWindow(String sessionId);
 
   Future<VoidResult> focusWindow(String sessionId);

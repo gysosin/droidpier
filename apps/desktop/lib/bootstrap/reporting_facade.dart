@@ -58,6 +58,9 @@ class ReportingOpenDexFacade implements OpenDexFacade {
       _report(delegate.launchApplication(packageName));
 
   @override
+  Future<VoidResult> openUrl(String url) => _report(delegate.openUrl(url));
+
+  @override
   Future<VoidResult> closeWindow(String sessionId) =>
       _report(delegate.closeWindow(sessionId));
 
