@@ -24,6 +24,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Drives the real application on a real Linux window, which the widget suite
+  # cannot: plugins, the texture host and the video path only exist in a running
+  # app. 47 test files and a strong golden suite cover the pieces; nothing ran
+  # the product until this.
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
 
 flutter:
