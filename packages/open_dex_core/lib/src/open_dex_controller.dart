@@ -15,6 +15,7 @@ class OpenDexController implements OpenDexFacade {
     NotificationGateway? notificationGateway,
     WirelessDeviceGateway? wirelessDeviceGateway,
     ClipboardGateway? clipboardGateway,
+    DesktopUrlLauncher? urlLauncher,
     WirelessDiscoveryGateway? wirelessDiscoveryGateway,
     int reconnectAttempts = 3,
     Duration reconnectDelay = const Duration(seconds: 1),
@@ -25,6 +26,7 @@ class OpenDexController implements OpenDexFacade {
        _components = List.unmodifiable(components),
        _windowGateway = windowGateway,
        _deviceCommandGateway = deviceCommandGateway,
+       _urlLauncher = urlLauncher,
        _permissionGateway = permissionGateway,
        _notificationGateway = notificationGateway,
        _wirelessDeviceGateway =
@@ -70,6 +72,11 @@ class OpenDexController implements OpenDexFacade {
   final List<BootComponent> _components;
   final WindowGateway? _windowGateway;
   final DeviceCommandGateway? _deviceCommandGateway;
+
+  /// Opens URLs with the desktop's own handler. Null where the host has none —
+  /// a headless test, or a platform that has not wired one — in which case the
+  /// command reports the capability as unavailable rather than doing nothing.
+  final DesktopUrlLauncher? _urlLauncher;
   final PermissionGateway? _permissionGateway;
   final NotificationGateway? _notificationGateway;
   final WirelessDeviceGateway? _wirelessDeviceGateway;
@@ -363,7 +370,33 @@ class OpenDexController implements OpenDexFacade {
   }
 
   @override
-  Future<CommandResult<String>> launchApplication(String packageName) async {
+@override
+  Future<VoidResult> openUrl(String url) async {
+    final DesktopUrlLauncher? launcher = _urlLauncher;
+    if (launcher == null) {
+      return const CommandFailure(
+        OpenDexError(
+          code: OpenDexErrorCode.capabilityUnavailable,
+          message: 'This desktop has no handler for opening links.',
+          capability: 'open-url',
+        ),
+      );
+    }
+    try {
+      await launcher.open(url);
+      return const CommandSuccess(null);
+    } on Object catch (error) {
+      return CommandFailure(
+        OpenDexError(
+          code: OpenDexErrorCode.internal,
+          message: 'The link could not be opened.',
+          technicalDetails: error.toString(),
+        ),
+      );
+    }
+  }
+
+    Future<CommandResult<String>> launchApplication(String packageName) async {
     final gateway = _windowGateway;
     final device = _snapshot.selectedDevice;
     if (gateway == null || device == null || !_snapshot.boot.isReady) {

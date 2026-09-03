@@ -627,15 +627,13 @@ class _AppShellState extends State<AppShell> {
   /// `xdg-open` is the portable Linux "open this with whatever handles it" —
   /// no `url_launcher` dependency for a single call. Failures are swallowed:
   /// a missing browser must not crash the desk.
-  Future<void> _openUrl(String url) async {
-    try {
-      await Process.start('xdg-open', <String>[
-        url,
-      ], mode: ProcessStartMode.detached);
-    } on ProcessException {
-      // No handler for the scheme; nothing sensible to do from the desk.
-    }
-  }
+  /// Hands a URL to the host through the facade.
+  ///
+  /// This used to call `Process.start('xdg-open')` directly, which was the one
+  /// place in `lib/ui` reaching past the facade — and it made the search bar
+  /// unrenderable without a real desktop behind it. `ui_boundary_test.dart`
+  /// now fails if anything here starts a process again.
+  Future<void> _openUrl(String url) => widget.facade.openUrl(url);
 
   /// Enters or leaves edge-to-edge fullscreen for the focused streaming window.
   ///

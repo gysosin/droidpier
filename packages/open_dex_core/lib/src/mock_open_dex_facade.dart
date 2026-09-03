@@ -164,7 +164,18 @@ class MockOpenDexFacade implements OpenDexFacade {
   Future<VoidResult> retryBoot() => connectSelectedDevice();
 
   @override
-  Future<CommandResult<String>> launchApplication(String packageName) async {
+@override
+  Future<VoidResult> openUrl(String url) async {
+    openedUrls.add(url);
+    return const CommandSuccess(null);
+  }
+
+  /// Every URL the desk asked the host to open, in order. The mock has no
+  /// browser, and a test that wants to know a search was dispatched should be
+  /// able to see it rather than infer it.
+  final List<String> openedUrls = <String>[];
+
+    Future<CommandResult<String>> launchApplication(String packageName) async {
     final matches = _snapshot.applications.where(
       (application) => application.packageName == packageName,
     );
