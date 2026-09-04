@@ -132,8 +132,20 @@ class TaskbarBar extends StatelessWidget {
         // under-counting overflows the bar, which they would.
         const double kSlack = 40;
 
+        // Each glass pill adds its own horizontal padding, and the bar can
+        // carry four of them. Left unaccounted, that chrome is invisible in the
+        // budget right up until the flexible clusters actually fill their caps
+        // — which is what the labelled task chips made happen.
+        const double kPillChrome = DexSpace.sm * 2;
+        final int pills =
+            ((showNav || live.isNotEmpty) ? 1 : 0) +
+            (showWorkspaces ? 1 : 0) +
+            (showMedia ? 1 : 0) +
+            1; // the tray always has one
+
         final double fixed =
             kSlack +
+            pills * kPillChrome +
             (showNav ? kNavPill : 0) +
             (showWorkspaces ? kWorkspacePill : 0) +
             (showMedia ? kMediaPill : 0) +
@@ -819,9 +831,11 @@ class _TaskEntry extends StatelessWidget {
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
               height: 44,
-              width: 48,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: DexSpace.xs),
+              padding: const EdgeInsets.symmetric(
+                horizontal: DexSpace.sm,
+                vertical: DexSpace.xs,
+              ),
               // Borderless: the entry sits inside the dock pill already, so its
               // own hairline made a double edge. State reads from the fill and
               // the running dot instead.
@@ -833,18 +847,42 @@ class _TaskEntry extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              // A dot, the icon and the name, reading left to right. It used
+              // to be an icon with a dot under it and no label, which asks a
+              // person to recognise a 24px glyph rather than read a word — and
+              // two windows of the same app were indistinguishable.
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  AppGlyph(app: window.session.application, size: 24),
-                  const SizedBox(height: 3),
                   Container(
-                    width: 5,
-                    height: 5,
+                    width: 6,
+                    height: 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _dot,
+                      // The focused entry's dot carries a glow, which is the
+                      // reference's one use of it and the only place on the
+                      // dock where anything is lit.
+                      boxShadow: active
+                          ? <BoxShadow>[
+                              BoxShadow(color: _dot, blurRadius: 6),
+                            ]
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: DexSpace.sm),
+                  AppGlyph(app: window.session.application, size: 20),
+                  const SizedBox(width: DexSpace.sm),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 92),
+                    child: Text(
+                      window.session.application.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: active ? colors.text : colors.muted,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
                   ),
                 ],
