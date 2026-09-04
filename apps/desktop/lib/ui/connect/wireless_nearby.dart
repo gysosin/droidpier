@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
@@ -88,7 +90,7 @@ class NearbyBody extends StatelessWidget {
               ),
             const SizedBox(height: DexSpace.xs),
             const ConnectHint(
-              icon: Icons.privacy_tip_outlined,
+              icon: DexIcons.privacy,
               text:
                   'These are broadcasts heard on your network, nothing more. '
                   'DroidPier has not paired with any of them and cannot '
@@ -153,7 +155,7 @@ class _AdvertisementRow extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Icon(
-              pairing ? Icons.qr_code_2 : Icons.wifi_tethering,
+              pairing ? DexIcons.qrCode : DexIcons.wifiTethering,
               size: 18,
               color: expired ? c.muted : c.text,
             ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_dex_core/open_dex_core.dart';
 
@@ -221,7 +223,7 @@ class _PreviewBar extends StatelessWidget {
                   onPressed: onToggleMode,
                   tooltip: 'Toggle light and dark',
                   icon: Icon(
-                    mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                    mode == ThemeMode.dark ? DexIcons.lightMode : DexIcons.darkMode,
                   ),
                 ),
               ],

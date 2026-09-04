@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/dex_icons.dart';
+
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
@@ -80,7 +82,7 @@ class ShortcutSheet extends StatelessWidget {
               // did not arrive by keyboard.
               IconButton(
                 onPressed: onClose,
-                icon: const Icon(Icons.close, size: 18),
+                icon: const Icon(DexIcons.close, size: 18),
                 color: c.muted,
                 tooltip: 'Close',
                 constraints: const BoxConstraints(

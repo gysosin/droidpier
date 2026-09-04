@@ -17,6 +17,7 @@ import 'package:open_android_dex/ui/widgets/link_rail.dart';
 
 Future<void> _loadFonts() async {
   const Map<String, List<String>> families = <String, List<String>>{
+    'Lucide': <String>['assets/icons/lucide.ttf'],
     'InstrumentSans': <String>['assets/fonts/InstrumentSans.ttf'],
     'SpaceGrotesk': <String>['assets/fonts/SpaceGrotesk.ttf'],
     'PublicSans': <String>['assets/fonts/PublicSans.ttf'],

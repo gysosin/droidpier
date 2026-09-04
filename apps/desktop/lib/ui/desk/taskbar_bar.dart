@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -323,25 +325,25 @@ class _NavPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _NavButton(
-            icon: Icons.menu,
+            icon: DexIcons.menu,
             label: 'Menu',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.menu) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.radio_button_unchecked,
+            icon: DexIcons.home,
             label: 'Home',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.home) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.arrow_back_ios_new,
+            icon: DexIcons.back,
             label: 'Back',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.back) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.search,
+            icon: DexIcons.search,
             label: 'Search',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.search) : null,
             colors: colors,
@@ -512,7 +514,7 @@ class _AppsGridButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   const Icon(
-                    Icons.grid_view_rounded,
+                    DexIcons.appsGrid,
                     size: 20,
                     color: Colors.white,
                   ),
@@ -591,20 +593,20 @@ class _MediaMini extends StatelessWidget {
           ),
           const SizedBox(width: DexSpace.xs),
           _MiniTransport(
-            icon: Icons.skip_previous,
+            icon: DexIcons.previous,
             label: 'Previous track',
             onPressed: () => onAction(MediaAction.previous),
             colors: colors,
           ),
           _MiniTransport(
-            icon: _playing ? Icons.pause : Icons.play_arrow,
+            icon: _playing ? DexIcons.pause : DexIcons.play,
             label: _playing ? 'Pause' : 'Play',
             accent: true,
             onPressed: () => onAction(MediaAction.playPause),
             colors: colors,
           ),
           _MiniTransport(
-            icon: Icons.skip_next,
+            icon: DexIcons.next,
             label: 'Next track',
             onPressed: () => onAction(MediaAction.next),
             colors: colors,
@@ -704,7 +706,7 @@ class _MiniArt extends StatelessWidget {
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.control),
       ),
-      child: Icon(Icons.music_note, size: 16, color: colors.muted),
+      child: Icon(DexIcons.music, size: 16, color: colors.muted),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) return fallback;
@@ -933,7 +935,7 @@ class SystemTray extends StatelessWidget {
         ),
         const SizedBox(width: DexSpace.xs),
         _TrayButton(
-          icon: Icons.settings_outlined,
+          icon: DexIcons.settings,
           label: 'Settings',
           onPressed: onOpenSettings,
           colors: c,
@@ -966,7 +968,7 @@ class SystemTray extends StatelessWidget {
         ),
         const SizedBox(width: DexSpace.xs),
         _TrayButton(
-          icon: fullscreenActive ? Icons.fullscreen_exit : Icons.fullscreen,
+          icon: fullscreenActive ? DexIcons.fullscreenExit : DexIcons.fullscreen,
           label: fullscreenActive ? 'Exit fullscreen' : 'Fullscreen',
           onPressed: onToggleFullscreen,
           colors: c,
@@ -1014,13 +1016,13 @@ class _StatusCluster extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   if (telemetry.wifiEnabled ?? false) ...<Widget>[
-                    Icon(Icons.wifi, size: 15, color: colors.muted),
+                    Icon(DexIcons.wifi, size: 15, color: colors.muted),
                     const SizedBox(width: DexSpace.sm),
                   ],
                   if (battery != null) ...<Widget>[
                     if (telemetry.charging)
-                      Icon(Icons.bolt, size: 14, color: colors.signal),
-                    Icon(Icons.battery_full, size: 15, color: colors.muted),
+                      Icon(DexIcons.charging, size: 14, color: colors.signal),
+                    Icon(DexIcons.batteryFull, size: 15, color: colors.muted),
                     const SizedBox(width: 4),
                     Text('$battery%', style: DexTheme.data(colors, size: 11)),
                   ],
@@ -1076,7 +1078,7 @@ class _Bell extends StatelessWidget {
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: <Widget>[
-                  Icon(Icons.notifications_none, size: 18, color: colors.text),
+                  Icon(DexIcons.notifications, size: 18, color: colors.text),
                   if (count > 0)
                     Positioned(
                       top: 6,

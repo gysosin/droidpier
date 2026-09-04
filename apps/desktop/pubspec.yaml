@@ -20,7 +20,6 @@ dependencies:
     path: ../../packages/open_dex_protocol
   open_dex_texture:
     path: ../../plugins/open_dex_texture
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -37,6 +36,9 @@ flutter:
   assets:
     - assets/fonts/OFL.txt
   fonts:
+    - family: Lucide
+      fonts:
+        - asset: assets/icons/lucide.ttf
     - family: InstrumentSans
       fonts:
         - asset: assets/fonts/InstrumentSans.ttf

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -139,7 +141,7 @@ class InlineError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(Icons.error_outline, size: 16, color: c.fault),
+            Icon(DexIcons.fault, size: 16, color: c.fault),
             const SizedBox(width: DexSpace.sm),
             Expanded(
               child: Column(
@@ -181,7 +183,7 @@ class ConnectHint extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon ?? Icons.info_outline, size: 14, color: c.muted),
+        Icon(icon ?? DexIcons.info, size: 14, color: c.muted),
         const SizedBox(width: DexSpace.sm),
         Expanded(
           child: Text(
@@ -381,9 +383,9 @@ class WirelessModeBar extends StatelessWidget {
   final ValueChanged<WirelessMode> onChanged;
 
   static (String, IconData) describe(WirelessMode m) => switch (m) {
-    WirelessMode.nearby => ('Nearby', Icons.wifi_tethering),
-    WirelessMode.qr => ('QR code', Icons.qr_code_2),
-    WirelessMode.manual => ('Manual', Icons.keyboard_alt_outlined),
+    WirelessMode.nearby => ('Nearby', DexIcons.wifiTethering),
+    WirelessMode.qr => ('QR code', DexIcons.qrCode),
+    WirelessMode.manual => ('Manual', DexIcons.keyboard),
   };
 
   @override

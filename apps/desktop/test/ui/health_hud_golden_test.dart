@@ -26,6 +26,7 @@ Future<void> _loadFonts() async {
     await l.load();
   }
   const Map<String, List<String>> fam = <String, List<String>>{
+    'Lucide': <String>['assets/icons/lucide.ttf'],
     'InstrumentSans': <String>['assets/fonts/InstrumentSans.ttf'],
     'SpaceGrotesk': <String>['assets/fonts/SpaceGrotesk.ttf'],
     'PublicSans': <String>['assets/fonts/PublicSans.ttf'],

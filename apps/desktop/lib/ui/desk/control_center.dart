@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -132,16 +134,16 @@ class ControlCenter extends StatelessWidget {
       clipboard.availability == ClipboardAvailability.available;
 
   static (String, IconData) _describe(DeviceControl c) => switch (c) {
-    DeviceControl.wifi => ('Wi-Fi', Icons.wifi),
-    DeviceControl.bluetooth => ('Bluetooth', Icons.bluetooth),
+    DeviceControl.wifi => ('Wi-Fi', DexIcons.wifi),
+    DeviceControl.bluetooth => ('Bluetooth', DexIcons.bluetooth),
     // "Airplane mode" does not fit the tile and rendered as "Airplane mo…".
     // A truncated label reads as a rendering fault; the shorter word is
     // unambiguous next to the aeroplane icon.
-    DeviceControl.airplaneMode => ('Airplane', Icons.airplanemode_active),
-    DeviceControl.rotationLock => ('Rotation lock', Icons.screen_lock_rotation),
-    DeviceControl.torch => ('Torch', Icons.flashlight_on),
-    DeviceControl.mobileData => ('Mobile data', Icons.signal_cellular_alt),
-    DeviceControl.location => ('Location', Icons.location_on),
+    DeviceControl.airplaneMode => ('Airplane', DexIcons.airplane),
+    DeviceControl.rotationLock => ('Rotation lock', DexIcons.rotationLock),
+    DeviceControl.torch => ('Torch', DexIcons.torch),
+    DeviceControl.mobileData => ('Mobile data', DexIcons.cellular),
+    DeviceControl.location => ('Location', DexIcons.location),
   };
 
   @override
@@ -403,7 +405,7 @@ class _WidePill extends StatelessWidget {
                 ),
                 if (locked != null)
                   Icon(
-                    Icons.lock_outline,
+                    DexIcons.locked,
                     size: 12,
                     color: on ? Colors.white : c.muted,
                   ),
@@ -594,7 +596,7 @@ class _Banner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.info_outline, size: 14, color: tint),
+          Icon(DexIcons.info, size: 14, color: tint),
           const SizedBox(width: DexSpace.sm),
           Expanded(
             child: Column(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/dex_icons.dart';
+
 import '../util/app_version.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
@@ -668,7 +670,7 @@ class _Swatch extends StatelessWidget {
                   ),
                 ),
                 child: selected
-                    ? Icon(Icons.check, color: Colors.white, size: 20)
+                    ? Icon(DexIcons.check, color: Colors.white, size: 20)
                     : null,
               ),
               const SizedBox(height: 4),

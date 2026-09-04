@@ -1,5 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -452,7 +454,7 @@ class _SearchField extends StatelessWidget {
         hintText: 'Search apps…',
         hintStyle: Theme.of(context).textTheme.bodyLarge
             ?.copyWith(color: colors.muted),
-        prefixIcon: Icon(Icons.search, size: 18, color: colors.muted),
+        prefixIcon: Icon(DexIcons.search, size: 18, color: colors.muted),
         filled: true,
         fillColor: colors.surface.withValues(alpha: 0.72),
         contentPadding: const EdgeInsets.symmetric(vertical: DexSpace.md),

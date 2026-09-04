@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -134,14 +136,14 @@ class NowPlayingWidget extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     _Transport(
-                      icon: Icons.skip_previous,
+                      icon: DexIcons.previous,
                       label: 'Previous track',
                       enabled: _available,
                       onPressed: () => onAction(MediaAction.previous),
                       colors: c,
                     ),
                     _Transport(
-                      icon: _playing ? Icons.pause : Icons.play_arrow,
+                      icon: _playing ? DexIcons.pause : DexIcons.play,
                       label: _playing ? 'Pause' : 'Play',
                       enabled: _available,
                       accent: true,
@@ -149,7 +151,7 @@ class NowPlayingWidget extends StatelessWidget {
                       colors: c,
                     ),
                     _Transport(
-                      icon: Icons.skip_next,
+                      icon: DexIcons.next,
                       label: 'Next track',
                       enabled: _available,
                       onPressed: () => onAction(MediaAction.next),
@@ -182,7 +184,7 @@ class _Artwork extends StatelessWidget {
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.card),
       ),
-      child: Icon(Icons.music_note, size: 22, color: colors.muted),
+      child: Icon(DexIcons.music, size: 22, color: colors.muted),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) {
@@ -293,17 +295,17 @@ class PhoneWidget extends StatelessWidget {
           const SizedBox(height: DexSpace.sm),
           Row(
             children: <Widget>[
-              _Radio(on: telemetry.wifiEnabled, icon: Icons.wifi, colors: c),
+              _Radio(on: telemetry.wifiEnabled, icon: DexIcons.wifi, colors: c),
               const SizedBox(width: DexSpace.md),
               _Radio(
                 on: telemetry.bluetoothEnabled,
-                icon: Icons.bluetooth,
+                icon: DexIcons.bluetooth,
                 colors: c,
               ),
               const SizedBox(width: DexSpace.md),
               _Radio(
                 on: telemetry.airplaneMode,
-                icon: Icons.airplanemode_active,
+                icon: DexIcons.airplane,
                 colors: c,
               ),
               const Spacer(),
