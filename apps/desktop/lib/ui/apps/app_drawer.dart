@@ -200,14 +200,23 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
         ),
         SafeArea(
+          // Anchored near the top and sized to what it holds, rather than
+          // centred and stretched to fill. A fixed full-height card meant three
+          // apps sat in the corner of ~850px of empty glass, and the fix for
+          // that had been to push search results down to hug the field — which
+          // moved the void to the top rather than removing it. A card that
+          // hugs its content has no void at any number of apps.
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DexSpace.xxl,
-              vertical: DexSpace.xl,
+            padding: const EdgeInsets.fromLTRB(
+              DexSpace.xxl,
+              DexSpace.xxxl,
+              DexSpace.xxl,
+              DexSpace.xl,
             ),
-            child: Center(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
+                constraints: const BoxConstraints(maxWidth: 880),
                 child: GlassPanel(
                   radius: DexRadius.panel,
                   blur: 32,
@@ -223,24 +232,24 @@ class _AppDrawerState extends State<AppDrawer> {
                     behavior: HitTestBehavior.opaque,
                     onTap: () {},
                     child: Column(
+                      // Hug the content. Flexible rather than Expanded, so the
+                      // card is as tall as what it holds until it runs out of
+                      // screen, and scrolls after that.
+                      mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Expanded(child: _body(context, c, t)),
-                        const SizedBox(height: DexSpace.md),
-                        // The search field lives along the bottom of the panel,
-                        // as the reference has it — wide, not a slim toolbar.
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 760),
-                            child: _SearchField(
-                              controller: _query,
-                              focusNode: _searchFocus,
-                              colors: c,
-                              onChanged: (_) =>
-                                  setState(() => _selected = 0),
-                              onSubmitted: (_) => _launchSelected(),
-                            ),
-                          ),
+                        // Search heads the card. What you typed belongs above
+                        // what it found, which is the shape every launcher
+                        // search has and the only one where the results read
+                        // downward from the query.
+                        _SearchField(
+                          controller: _query,
+                          focusNode: _searchFocus,
+                          colors: c,
+                          onChanged: (_) => setState(() => _selected = 0),
+                          onSubmitted: (_) => _launchSelected(),
                         ),
+                        const SizedBox(height: DexSpace.lg),
+                        Flexible(child: _body(context, c, t)),
                       ],
                     ),
                   ),
@@ -292,18 +301,15 @@ class _AppDrawerState extends State<AppDrawer> {
     // result" is a visible thing rather than an inference.
     if (_searching) {
       final List<AndroidApplication> results = _results;
-      // Bottom-aligned, growing up out of the search field. Pinned to the top
-      // of a full-height panel, two results left a screen of empty glass
-      // between what you typed and what it found.
-      return Align(
-        alignment: Alignment.bottomLeft,
-        child: _ResultsList(
-          results: results,
-          selected: _selected.clamp(0, results.length - 1),
-          colors: c,
-          onLaunch: widget.onLaunch,
-          onHover: (int i) => setState(() => _selected = i),
-        ),
+      // Top-aligned, reading down out of the search field above. This used to
+      // be bottom-aligned to close a gap between the query and its results;
+      // the card hugging its content closes that gap on its own.
+      return _ResultsList(
+        results: results,
+        selected: _selected.clamp(0, results.length - 1),
+        colors: c,
+        onLaunch: widget.onLaunch,
+        onHover: (int i) => setState(() => _selected = i),
       );
     }
 
