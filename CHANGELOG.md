@@ -29,6 +29,16 @@ Desktop shell improvements. Keyboard, launcher and window management.
   from a design direction this product no longer uses. A baseline nothing
   compares against is not a baseline; it is a picture of how things used to
   look, sitting in the folder where the record of how they do look is kept.
+- Overlay cards go through the shared glass panel like everything else. The one
+  surface that most needed the shared primitive was the one hand-rolling its
+  own fill, hairline and blur — at 28 rather than the committed 24.
+- The command palette leads with a search mark rather than a chevron, and says
+  how to drive it. It is keyboard-first and the keys were not guessable from
+  looking at it. It also gains a golden in both themes: nothing had ever looked
+  at the surface every shell action is reached through.
+- The website's three screenshots are regenerated from the current interface.
+  They showed the desk, launcher and connection screen as they were before this
+  rework.
 - Shadows match the reference exactly. Every panel had been carrying one layer
   of black at 35% with no spread — three and a half times the ink, spreading
   wider than the panel it belonged to, which over a lit wallpaper reads as a

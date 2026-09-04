@@ -113,7 +113,7 @@ class _CommandPaletteState extends State<CommandPalette> {
             decoration: InputDecoration(
               hintText: 'Type a command…',
               hintStyle: t.bodyLarge?.copyWith(color: c.muted),
-              prefixIcon: Icon(DexIcons.forward, size: 18, color: c.muted),
+              prefixIcon: Icon(DexIcons.search, size: 18, color: c.signal),
               filled: true,
               fillColor: c.surface.withValues(alpha: 0.72),
               contentPadding: const EdgeInsets.symmetric(
@@ -163,6 +163,15 @@ class _CommandPaletteState extends State<CommandPalette> {
               setState(() => _selected = i);
               _runSelected();
             }, onHover: (int i) => setState(() => _selected = i))),
+          // How to drive it. The palette is keyboard-first and the keys are
+          // not guessable from looking at it.
+          const SizedBox(height: DexSpace.md),
+          Divider(color: c.line, height: DexStroke.hairline),
+          const SizedBox(height: DexSpace.sm),
+          Text(
+            'Up and Down to choose  \u00b7  Enter to run  \u00b7  Esc to close',
+            style: DexTheme.data(c, size: 10),
+          ),
         ],
       ),
     );
