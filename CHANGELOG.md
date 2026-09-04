@@ -4,6 +4,13 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The launcher is the size of what it holds. It was a fixed full-height card,
+  so three apps sat in the corner of roughly 850 px of empty glass. Search
+  results had been pushed down to hug the field to stop a gap opening between
+  the query and its results, which moved the void to the top rather than
+  removing it. The card now hugs its content, sits near the top of the screen,
+  and heads with the search field — so results read downward from what you
+  typed, and a phone's worth of apps still fits and scrolls.
 - The Link Rail's connected state is on the desk. The rail is the one object
   this product asks you to learn, and it has three states: the full rail during
   boot, the recovery rail, and the collapsed live trace. The third — the state a
