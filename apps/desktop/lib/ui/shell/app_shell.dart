@@ -10,6 +10,7 @@ import '../apps/app_drawer.dart';
 import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../boot/first_run_tour.dart';
+import '../design/token_sheet.dart';
 import '../desk/desk.dart';
 import '../desk/phone_mirror.dart';
 import '../diagnostics/diagnostics_report.dart';
@@ -381,6 +382,11 @@ class _AppShellState extends State<AppShell> {
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
 
+  /// The token specimen sheet. Deliberately reachable in the shipped
+  /// product rather than only from the preview harness: a token that has
+  /// drifted is easiest to see beside the ones it should match.
+  bool _tokensOpen = false;
+
   /// The command palette. Ctrl+Shift+P.
   bool _paletteOpen = false;
 
@@ -462,6 +468,18 @@ class _AppShellState extends State<AppShell> {
         run: () => setState(() => _settingsOpen = true),
       ),
       DexCommandEntry(
+        title: 'Show design tokens',
+        keywords: const <String>[
+          'colours',
+          'colors',
+          'type',
+          'spacing',
+          'radius',
+          'specimen',
+        ],
+        run: () => setState(() => _tokensOpen = true),
+      ),
+      DexCommandEntry(
         title: 'Show keyboard shortcuts',
         keywords: const <String>['help', 'keys'],
         run: () => setState(() => _sheetOpen = true),
@@ -524,11 +542,13 @@ class _AppShellState extends State<AppShell> {
     closeDiagnostics: () => setState(() => _diagnosticsOpen = false),
     isSwitcherOpen: () => _switcherOpen,
     cancelSwitch: () => setState(() => _switcherOpen = false),
-    isDeskSurfaceOpen: () => _drawerOpen || _permissionsOpen || _settingsOpen,
+    isDeskSurfaceOpen: () =>
+        _drawerOpen || _permissionsOpen || _settingsOpen || _tokensOpen,
     closeDeskSurfaces: () => setState(() {
       _drawerOpen = false;
       _permissionsOpen = false;
       _settingsOpen = false;
+      _tokensOpen = false;
     }),
     isConnectOpen: () => _connectOpen,
     closeConnect: () => setState(() => _connectOpen = false),
@@ -584,6 +604,7 @@ class _AppShellState extends State<AppShell> {
         _permissionsOpen ||
         _connectOpen ||
         _sheetOpen ||
+        _tokensOpen ||
         _paletteOpen) {
       return true;
     }
@@ -1055,6 +1076,12 @@ class _AppShellState extends State<AppShell> {
           commands: _commands,
           onDismiss: () => setState(() => _paletteOpen = false),
         ),
+      );
+    }
+    if (_tokensOpen) {
+      return _Overlay(
+        onDismiss: () => setState(() => _tokensOpen = false),
+        child: TokenSheet(onClose: () => setState(() => _tokensOpen = false)),
       );
     }
     if (_sheetOpen) {
