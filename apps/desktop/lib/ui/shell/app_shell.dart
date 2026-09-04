@@ -11,6 +11,7 @@ import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../boot/first_run_tour.dart';
 import '../desk/desk.dart';
+import '../desk/phone_mirror.dart';
 import '../diagnostics/diagnostics_report.dart';
 import '../diagnostics/health_hud.dart';
 import '../diagnostics/stream_diagnostics.dart';
@@ -373,6 +374,10 @@ class _AppShellState extends State<AppShell> {
   /// asked for.
   bool _healthHudOpen = false;
 
+  /// The docked phone mirror. Off by default: it is an honest picture of the
+  /// hardware rather than a second workspace, and it costs screen space.
+  bool _phoneMirrorOpen = false;
+
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
 
@@ -465,6 +470,11 @@ class _AppShellState extends State<AppShell> {
         title: 'Toggle stream diagnostics',
         keywords: const <String>['fps', 'performance', 'debug'],
         run: () => setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+      ),
+      DexCommandEntry(
+        title: 'Toggle the phone mirror',
+        keywords: const <String>['phone', 'hardware', 'dock', 'mirror'],
+        run: () => setState(() => _phoneMirrorOpen = !_phoneMirrorOpen),
       ),
       DexCommandEntry(
         title: 'Toggle the health readout',
@@ -846,6 +856,27 @@ class _AppShellState extends State<AppShell> {
         // not sit on top of the tray it is reporting alongside. Per-window
         // when a window has focus, because an unattributable rate answers
         // "how fast" without answering "what".
+        // Docked bottom-right above the taskbar, where this widget's own doc
+        // has always said it belongs and where nothing ever put it.
+        if (_phoneMirrorOpen)
+          Positioned(
+            right: DexSpace.lg,
+            bottom: 72 + DexSpace.md,
+            child: PhoneMirror(
+              snapshot: _s,
+              now: _now,
+              // Flat whenever a window is streaming. A blurred panel over a
+              // live texture re-blurs the scene on every decoded frame, which
+              // is the most expensive mistake available on this desk.
+              overVideo: _wm.windows.values.any(
+                (WorkspaceWindow w) =>
+                    w.session.status == WindowSessionStatus.streaming,
+              ),
+              onClose: () => setState(() => _phoneMirrorOpen = false),
+              onLaunch: (AndroidApplication a) =>
+                  widget.facade.launchApplication(a.packageName),
+            ),
+          ),
         if (_healthHudOpen)
           Positioned(
             right: DexSpace.lg,
