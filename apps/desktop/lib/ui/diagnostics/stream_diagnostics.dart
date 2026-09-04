@@ -402,7 +402,7 @@ class _Row extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(DexSpace.sm),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.40),
+                  color: glass.readout,
                   borderRadius: BorderRadius.circular(DexRadius.control),
                 ),
                 child: _Rates(

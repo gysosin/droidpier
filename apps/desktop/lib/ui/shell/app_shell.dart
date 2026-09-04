@@ -1178,7 +1178,6 @@ class _Overlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Widget body = Stack(
       children: <Widget>[
@@ -1201,7 +1200,7 @@ class _Overlay extends StatelessWidget {
                 // scrims every modal: dark enough to retire the desk, light
                 // enough that its shapes still read through.
                 final Widget scrim = ColoredBox(
-                  color: Colors.black.withValues(alpha: isDark ? 0.70 : 0.35),
+                  color: DexGlass.of(context).scrim,
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
                 const double sigma = _scrimSigma;

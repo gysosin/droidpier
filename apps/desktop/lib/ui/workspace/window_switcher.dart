@@ -258,7 +258,7 @@ class _Card extends StatelessWidget {
                   width: double.infinity,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.40),
+                    color: glass.readout,
                     borderRadius: BorderRadius.circular(DexRadius.control),
                   ),
                   child: Text(

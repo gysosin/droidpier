@@ -22,6 +22,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
     required this.wallpaper,
     required this.bloom,
     required this.vignette,
+    required this.scrim,
+    required this.readout,
   });
 
   /// Standard panel: white at 8%. Taskbar entries, widgets, drawer rows.
@@ -60,6 +62,15 @@ class DexGlass extends ThemeExtension<DexGlass> {
   /// Darkening toward the bottom, so the taskbar has something to sit on.
   final Color vignette;
 
+  /// Under a modal: retires the desk without hiding it. The reference's
+  /// slate-950 at 70%; lighter over paper, where 70% would read as night.
+  final Color scrim;
+
+  /// A readout strip inside a card — the per-window rates in diagnostics,
+  /// the preview slot in the switcher. Black at 40% in both modes: it is a
+  /// well the numbers sit in, and a well is dark whatever the room is.
+  final Color readout;
+
   static const DexGlass dark = DexGlass(
     fill: Color(0x14FFFFFF),
     fillStrong: Color(0x33FFFFFF),
@@ -71,6 +82,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
     wallpaper: <Color>[Color(0xFF1E3A8A), Color(0xFF1E40AF), Color(0xFF7C3AED)],
     bloom: Color(0x26FFFFFF),
     vignette: Color(0x4D000000),
+    scrim: Color(0xB3000000),
+    readout: Color(0x66000000),
   );
 
   /// Light glass inverts what is tinted. White at 8% over pale paper is
@@ -87,6 +100,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
     wallpaper: <Color>[Color(0xFFBFD4F5), Color(0xFFC7D2FE), Color(0xFFDCC9F7)],
     bloom: Color(0x66FFFFFF),
     vignette: Color(0x140F172A),
+    scrim: Color(0x59000000),
+    readout: Color(0x66000000),
   );
 
   @override
@@ -101,6 +116,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
     List<Color>? wallpaper,
     Color? bloom,
     Color? vignette,
+    Color? scrim,
+    Color? readout,
   }) {
     return DexGlass(
       fill: fill ?? this.fill,
@@ -113,6 +130,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
       wallpaper: wallpaper ?? this.wallpaper,
       bloom: bloom ?? this.bloom,
       vignette: vignette ?? this.vignette,
+      scrim: scrim ?? this.scrim,
+      readout: readout ?? this.readout,
     );
   }
 
@@ -133,6 +152,8 @@ class DexGlass extends ThemeExtension<DexGlass> {
       ],
       bloom: Color.lerp(bloom, other.bloom, t)!,
       vignette: Color.lerp(vignette, other.vignette, t)!,
+      scrim: Color.lerp(scrim, other.scrim, t)!,
+      readout: Color.lerp(readout, other.readout, t)!,
     );
   }
 
