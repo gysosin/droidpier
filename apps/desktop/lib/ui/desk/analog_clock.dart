@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
 import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/glass.dart';
 
@@ -82,6 +83,7 @@ class _AnalogClockState extends State<AnalogClock> {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
     // The face blurs what is behind it, and stops while a window streams, for
     // the same reason every other panel does.
+    final DexGlass glass = DexGlass.of(context);
     final bool blurred = GlassBlurScope.of(context);
     return RepaintBoundary(
       child: AspectRatio(
@@ -100,6 +102,13 @@ class _AnalogClockState extends State<AnalogClock> {
                       painter: _ClockPainter(
                         now: _now,
                         signal: c.signal,
+                        // The dial is glass, so it flips with the theme like
+                        // every other panel. The reference hardcodes it dark,
+                        // which is part of its light mode being unfinished —
+                        // a near-black disc on pale paper is the single most
+                        // obvious thing wrong with that screen.
+                        face: glass.substrate,
+                        ink: c.text,
                         seconds: widget.showSeconds,
                       ),
                     ),
@@ -114,7 +123,7 @@ class _AnalogClockState extends State<AnalogClock> {
                             style: DexTheme.data(
                               c,
                               size: 10 * k,
-                              color: Colors.white.withValues(alpha: 0.40),
+                              color: c.text.withValues(alpha: 0.40),
                             ).copyWith(
                               fontWeight: FontWeight.w500,
                               letterSpacing: 2 * k,
@@ -125,7 +134,7 @@ class _AnalogClockState extends State<AnalogClock> {
                             style: DexTheme.data(
                               c,
                               size: 8 * k,
-                              color: Colors.white.withValues(alpha: 0.20),
+                              color: c.text.withValues(alpha: 0.20),
                             ).copyWith(letterSpacing: 1 * k),
                           ),
                         ],
@@ -163,11 +172,20 @@ class _ClockPainter extends CustomPainter {
   _ClockPainter({
     required this.now,
     required this.signal,
+    required this.face,
+    required this.ink,
     required this.seconds,
   });
 
   final DateTime now;
   final Color signal;
+
+  /// The dial's own fill, from the theme's glass substrate.
+  final Color face;
+
+  /// Marks, hands and the centre cap's ring.
+  final Color ink;
+
   final bool seconds;
 
   @override
@@ -175,25 +193,21 @@ class _ClockPainter extends CustomPainter {
     final Offset center = size.center(Offset.zero);
     final double r = size.shortestSide / 2;
     final double k = r / 140;
-    final Rect face = Rect.fromCircle(center: center, radius: r);
+    final Rect bounds = Rect.fromCircle(center: center, radius: r);
 
     // Glass: slate at 70%, with the wallpaper showing through, plus the
     // reference's faint radial sheen.
-    canvas.drawCircle(
-      center,
-      r,
-      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.70),
-    );
+    canvas.drawCircle(center, r, Paint()..color = face);
     canvas.drawCircle(
       center,
       r,
       Paint()
         ..shader = RadialGradient(
           colors: <Color>[
-            Colors.white.withValues(alpha: 0.04),
-            Colors.white.withValues(alpha: 0),
+            ink.withValues(alpha: 0.04),
+            ink.withValues(alpha: 0),
           ],
-        ).createShader(face),
+        ).createShader(bounds),
     );
     // The inset hairline ring from the reference's second box-shadow.
     canvas.drawCircle(
@@ -202,7 +216,7 @@ class _ClockPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = Colors.white.withValues(alpha: 0.12),
+        ..color = ink.withValues(alpha: 0.12),
     );
 
     // Twelve marks, every third one long and bright. Each sits 12px in from
@@ -218,7 +232,7 @@ class _ClockPainter extends CustomPainter {
         Paint()
           ..strokeCap = StrokeCap.round
           ..strokeWidth = 2 * k
-          ..color = Colors.white.withValues(alpha: major ? 0.70 : 0.25),
+          ..color = ink.withValues(alpha: major ? 0.70 : 0.25),
       );
     }
 
@@ -243,13 +257,8 @@ class _ClockPainter extends CustomPainter {
         (now.hour % 12 + now.minute / 60) * math.pi / 6 - math.pi / 2;
     final double minuteAngle =
         (now.minute + now.second / 60) * math.pi / 30 - math.pi / 2;
-    hand(hourAngle, 62 * k, 6 * k, Colors.white);
-    hand(
-      minuteAngle,
-      92 * k,
-      4 * k,
-      Colors.white.withValues(alpha: 0.90),
-    );
+    hand(hourAngle, 62 * k, 6 * k, ink);
+    hand(minuteAngle, 92 * k, 4 * k, ink.withValues(alpha: 0.90));
 
     if (seconds) {
       final double secondAngle = now.second * math.pi / 30 - math.pi / 2;
@@ -257,14 +266,14 @@ class _ClockPainter extends CustomPainter {
     }
 
     // Centre pin: a dark cap ringed in white, with the accent at its middle.
-    canvas.drawCircle(center, 7 * k, Paint()..color = const Color(0xFF0B1120));
+    canvas.drawCircle(center, 7 * k, Paint()..color = face);
     canvas.drawCircle(
       center,
       6 * k,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2 * k
-        ..color = Colors.white,
+        ..color = ink,
     );
     canvas.drawCircle(center, 2 * k, Paint()..color = signal);
   }
@@ -274,5 +283,7 @@ class _ClockPainter extends CustomPainter {
       old.now.minute != now.minute ||
       old.now.second != now.second ||
       old.signal != signal ||
+      old.face != face ||
+      old.ink != ink ||
       old.seconds != seconds;
 }

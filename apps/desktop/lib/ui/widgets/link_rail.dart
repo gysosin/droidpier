@@ -209,11 +209,12 @@ class _StationNodeState extends State<_StationNode>
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,
+          // The reference's station glow exactly: 12px at 40%, no spread. It
+          // was 55% with 2px of spread, which bloomed past the node.
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: widget.color.withValues(alpha: 0.55),
+              color: widget.color.withValues(alpha: 0.40),
               blurRadius: 12,
-              spreadRadius: 2,
             ),
           ],
         ),
