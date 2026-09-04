@@ -217,12 +217,12 @@ Each item is something visible. Tick it when the golden shows it.
       Phones"**; X.
 - [x] Left header "Connected Devices" + "Look again" with a refresh icon
       (`bg-white/10`).
-- [ ] Device cards: 40 px `rounded-[10px] bg-white/10` phone icon well; name;
+- [x] Device cards: 40 px `rounded-[10px] bg-white/10` phone icon well; name;
       mono `model · version`; a **transport badge** top-right (`USB` signal/20,
       `WIFI` emerald/20); a rule; a status row with an icon (check-circle
       emerald "Ready" / alert-circle amber "Tap "Allow" on the phone") and the
       button (**Connect** filled signal / **Active Link** grey).
-- [ ] Selected card `ring-1 ring-signal bg-white/20`.
+- [x] Selected card `ring-1 ring-signal bg-white/20`.
 - [x] Right: segmented **QR Code / Manual Entry / Nearby Hints** in that order;
       the QR card is white `rounded-[16px]` with the code framed in
       `border-4 slate-900`, "Scan from Developer options", instructions, "Code
@@ -232,7 +232,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 - [x] Header: **shield-check in emerald** + "What the desk can use" + subtitle +
       X.
-- [ ] Rows carry a **40 px icon well** (bell / music / copy / phone-call /
+- [x] Rows carry a **40 px icon well** (bell / music / copy / phone-call /
       volume).
 - [x] Controls: **"On"** as an emerald/20 chip with a check-circle; "Turn on"
       `bg-white/10`; "Open on phone" amber with an external-link mark; "Not on

@@ -94,7 +94,10 @@ class PermissionPanel extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Text('What the desk can use', style: t.titleLarge),
+                              Text(
+                                'What the desk can use',
+                                style: t.titleLarge,
+                              ),
                               const SizedBox(height: 2),
                               Text(
                                 'Everything here is optional. Turn on only '
@@ -196,6 +199,29 @@ class _PermissionRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // A well with the capability's glyph, as the reference tags each
+            // row: the icon is what the eye finds first when scanning for
+            // "which one is notifications".
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: DexSpace.md),
+              decoration: BoxDecoration(
+                color: colors.surface.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(DexRadius.control),
+                border: Border.all(
+                  color: colors.line,
+                  width: DexStroke.hairline,
+                ),
+              ),
+              child: Icon(
+                _iconFor(id),
+                size: 18,
+                color: grant == PermissionGrant.granted
+                    ? colors.trace
+                    : colors.muted,
+              ),
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,3 +371,14 @@ class _Empty extends StatelessWidget {
     );
   }
 }
+
+/// The glyph for a capability, by its id. Anything unknown gets the shield:
+/// a permission is a permission before it is anything else.
+IconData _iconFor(String id) => switch (id) {
+  'notifications' => DexIcons.notifications,
+  'media' => DexIcons.music,
+  'audio' => DexIcons.volume,
+  'clipboard' => DexIcons.copy,
+  'calls' => DexIcons.phone,
+  _ => DexIcons.shield,
+};
