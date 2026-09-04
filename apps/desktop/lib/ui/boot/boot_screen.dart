@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
+import '../util/app_version.dart';
 import '../theme/dex_theme.dart';
 import '../util/error_guidance.dart';
 import '../motion/dex_motion.dart';
@@ -160,15 +163,49 @@ class _Masthead extends StatelessWidget {
       child: Row(
         children: <Widget>[
           const DexMark(size: 22),
-          const SizedBox(width: DexSpace.sm),
-          Text(
-            'DROIDPIER',
-            style: DexTheme.data(
-              c,
-              size: 10,
-              color: c.muted,
-            ).copyWith(letterSpacing: 1.8),
+          const SizedBox(width: DexSpace.md),
+          // The reference's faceplate: the product, a slash, and the one word
+          // that says what it is for — with only that word carrying signal.
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.sm,
+              vertical: 3,
+            ),
+            decoration: BoxDecoration(
+              color: DexGlass.of(context).fill,
+              borderRadius: BorderRadius.circular(DexRadius.control),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  'DROIDPIER',
+                  style: DexTheme.data(
+                    c,
+                    size: 10,
+                    color: c.text,
+                  ).copyWith(letterSpacing: 1.8, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  ' / ',
+                  style: DexTheme.data(
+                    c,
+                    size: 10,
+                  ).copyWith(letterSpacing: 1.8),
+                ),
+                Text(
+                  'LINK',
+                  style: DexTheme.data(
+                    c,
+                    size: 10,
+                    color: c.signal,
+                  ).copyWith(letterSpacing: 1.8, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: DexSpace.md),
+          Text(versionLabel(), style: DexTheme.data(c, size: 10)),
         ],
       ),
     );
@@ -190,6 +227,18 @@ class _Intent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        // What this screen is, above what it is currently doing. The headline
+        // changes with the phase; this does not, so a person landing here
+        // twice recognises where they are before reading anything.
+        Text(
+          'PHYSICAL DESKTOP RUNTIME',
+          style: DexTheme.data(
+            c,
+            size: 10,
+            color: c.signal,
+          ).copyWith(letterSpacing: 2, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: DexSpace.md),
         SwapText(screen._headline, style: t.displaySmall!),
         const SizedBox(height: DexSpace.md),
         Text(
@@ -204,8 +253,46 @@ class _Intent extends StatelessWidget {
         // on the desk — the cable is what tells them apart — and the whole
         // complaint this answers is not knowing which one the desk came up on.
         if (screen.device case final DeviceSummary d) ...<Widget>[
-          const SizedBox(height: DexSpace.sm),
-          _DeviceLine(device: d, colors: c),
+          const SizedBox(height: DexSpace.lg),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: DexGlass.of(context).fillSubtle,
+              borderRadius: BorderRadius.circular(DexRadius.card),
+              border: Border.all(
+                color: DexGlass.of(context).stroke,
+                width: DexStroke.hairline,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(DexIcons.portrait, size: 18, color: c.trace),
+                const SizedBox(width: DexSpace.md),
+                // Flexible, not fixed: the device line carries a name, a
+                // transport and an Android version, and a narrow boot column
+                // has to be allowed to shorten it rather than run past the
+                // card's edge.
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        'TARGET TRANSPORT NODE',
+                        style: DexTheme.data(
+                          c,
+                          size: 9,
+                        ).copyWith(letterSpacing: 1.6),
+                      ),
+                      const SizedBox(height: 2),
+                      _DeviceLine(device: d, colors: c),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
         if (boot.error != null) ...<Widget>[
           const SizedBox(height: DexSpace.lg),
@@ -233,8 +320,7 @@ class _Intent extends StatelessWidget {
                 onPressed: screen.onConnect,
                 child: const Text('Choose a phone'),
               ),
-            ]
-            else if (screen._isFailed) ...<Widget>[
+            ] else if (screen._isFailed) ...<Widget>[
               FilledButton(
                 onPressed: screen.onRetry,
                 child: const Text('Try again'),
@@ -247,8 +333,7 @@ class _Intent extends StatelessWidget {
                 onPressed: screen.onConnect,
                 child: const Text('Choose a phone'),
               ),
-            ]
-            else if (screen._isReady)
+            ] else if (screen._isReady)
               OutlinedButton(
                 onPressed: screen.onConnect,
                 child: const Text('Open workspace'),
@@ -292,7 +377,17 @@ class _DeviceLine extends StatelessWidget {
           color: colors.muted,
         ),
         const SizedBox(width: DexSpace.sm),
-        Text(label, style: DexTheme.data(colors, size: 12)),
+        // Shortened rather than run past its container. The model is first in
+        // the line because it is what distinguishes two phones of the same
+        // name, so it is the part that survives truncation.
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: DexTheme.data(colors, size: 12),
+          ),
+        ),
       ],
     );
   }
@@ -350,15 +445,69 @@ class _RailPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
-            'LINK',
-            style: DexTheme.data(
-              c,
-              size: 10,
-              color: c.muted,
-            ).copyWith(letterSpacing: 2),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'PHYSICAL TRANSPORT RAIL',
+                      style: DexTheme.data(
+                        c,
+                        size: 10,
+                        color: c.signal,
+                      ).copyWith(letterSpacing: 2, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Five-stage hardware handshake',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: c.text,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: DexSpace.md),
+              // The two ports the whole rail is about, stated once at the top
+              // rather than only appearing as station labels partway down.
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DexSpace.sm,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: DexGlass.of(context).fillSubtle,
+                  borderRadius: BorderRadius.circular(DexRadius.pill),
+                  border: Border.all(
+                    color: DexGlass.of(context).stroke,
+                    width: DexStroke.hairline,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: c.trace,
+                      ),
+                    ),
+                    const SizedBox(width: DexSpace.xs),
+                    Text('PORT 3698/3699', style: DexTheme.data(c, size: 10)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: DexSpace.lg),
+          const SizedBox(height: DexSpace.md),
+          Divider(color: c.line, height: DexSpace.xl),
           LinkRail(stages: boot.stages),
         ],
       ),
@@ -404,6 +553,27 @@ class _BenchReadout extends StatelessWidget {
           ),
           _Readout(label: 'agent', value: 'tcp 3698', colors: c),
           _Readout(label: 'companion', value: 'ws 3699', colors: c),
+          _Readout(label: 'adb', value: 'tcp 5037', colors: c),
+          // The claim the product makes about itself, on the screen where a
+          // person is deciding whether to plug their phone in.
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.trace,
+                ),
+              ),
+              const SizedBox(width: DexSpace.sm),
+              Text(
+                'local only \u00b7 no cloud relay',
+                style: DexTheme.data(c, size: 11),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -471,10 +641,7 @@ class _ErrorNote extends StatelessWidget {
           // this sentence, and printing it twice in two styles reads as a
           // rendering fault rather than emphasis.
           if (error.message.trim() != (alreadyStated ?? '').trim()) ...<Widget>[
-            Text(
-              error.message,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text(error.message, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: DexSpace.xs),
           ],
           // What to try, before the machine-readable parts. This is the only
@@ -499,9 +666,8 @@ class _ErrorNote extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
-                onPressed: () => Clipboard.setData(
-                  ClipboardData(text: detail.trim()),
-                ),
+                onPressed: () =>
+                    Clipboard.setData(ClipboardData(text: detail.trim())),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, DexHit.comfortable),
                 ),
