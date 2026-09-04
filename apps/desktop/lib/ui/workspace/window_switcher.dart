@@ -4,6 +4,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../apps/app_glyph.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_theme.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
@@ -83,6 +84,15 @@ class WindowSwitcher extends StatelessWidget {
                               ),
                           ],
                         ),
+                        if (windows.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: DexSpace.md),
+                          Text(
+                            'Release Alt to focus '
+                            '${windows[selected.clamp(0, windows.length - 1)]
+                                .session.application.label}',
+                            style: DexTheme.data(c, size: 10),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -106,6 +116,16 @@ class _Card extends StatelessWidget {
   final WorkspaceWindow window;
   final bool current;
   final VoidCallback onPick;
+
+  /// Streaming is emerald, a fault is rose, anything paused or minimised is
+  /// muted. The taskbar reads the same way.
+  Color _dotColour(DexColors c) => switch (window.session.status) {
+    WindowSessionStatus.failed => c.fault,
+    WindowSessionStatus.reconnecting => c.signal,
+    _ when window.isMinimised => c.muted.withValues(alpha: 0.5),
+    WindowSessionStatus.streaming => c.trace,
+    _ => c.muted,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +176,30 @@ class _Card extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    // The same dot the dock draws, so one glance reads the
+                    // same in both places.
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _dotColour(c),
+                        boxShadow:
+                            window.session.status ==
+                                    WindowSessionStatus.streaming &&
+                                !window.isMinimised
+                            ? <BoxShadow>[
+                                BoxShadow(color: c.trace, blurRadius: 6),
+                              ]
+                            : null,
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+                const SizedBox(height: DexSpace.xs),
                 AppGlyph(app: app, size: 44),
                 const SizedBox(height: DexSpace.sm),
                 Text(
@@ -173,6 +217,14 @@ class _Card extends StatelessWidget {
                         ? c.fault
                         : c.muted,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  app.packageName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: DexTheme.data(c, size: 9),
                 ),
               ],
             ),

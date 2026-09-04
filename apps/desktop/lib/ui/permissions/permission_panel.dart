@@ -140,10 +140,15 @@ class _PermissionRow extends StatelessWidget {
   String get _detail => copy?.$2 ?? 'Capability reported by the phone.';
 
   /// State word plus the colour that carries it.
+  ///
+  /// "Needs phone settings" is amber, not rose. A capability waiting on a
+  /// screen you have not opened yet is a state, not a failure, and painting
+  /// states red is exactly how people learn to ignore red. Rose stays for
+  /// things that actually went wrong.
   (String, Color) get _state => switch (grant) {
-    PermissionGrant.granted => ('On', colors.signal),
+    PermissionGrant.granted => ('On', colors.trace),
     PermissionGrant.denied => ('Off', colors.muted),
-    PermissionGrant.requiresSettings => ('Needs phone settings', colors.fault),
+    PermissionGrant.requiresSettings => ('Needs phone settings', colors.warn),
     PermissionGrant.unavailable => ('Not on this phone', colors.muted),
   };
 

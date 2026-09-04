@@ -4,6 +4,16 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- "Needs phone settings" is amber rather than red. A capability waiting on a
+  screen you have not opened yet is a state, not a failure, and painting states
+  red is how people learn to ignore red. Granted is emerald, which is the
+  colour this design reserves for reported facts.
+- The window switcher shows each window's state as the same dot the dock draws,
+  names the package under the label, and says which window releasing Alt will
+  focus. Two windows of the same application were previously indistinguishable
+  in it.
+- The shortcut sheet says what happens to keys it does not claim: they go
+  straight to the focused Android window.
 - Removed eight golden images that no test referenced, two of them left over
   from a design direction this product no longer uses. A baseline nothing
   compares against is not a baseline; it is a picture of how things used to
