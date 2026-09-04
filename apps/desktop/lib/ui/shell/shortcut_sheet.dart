@@ -27,10 +27,10 @@ class ShortcutSheet extends StatelessWidget {
 
   /// What each group is called on screen.
   static String _groupLabel(DexShortcutGroup g) => switch (g) {
-    DexShortcutGroup.launcher => 'Launcher',
-    DexShortcutGroup.windows => 'Windows',
+    DexShortcutGroup.launcher => 'Launcher & Desk',
+    DexShortcutGroup.windows => 'Window Management',
     DexShortcutGroup.session => 'Session',
-    DexShortcutGroup.diagnostics => 'Diagnostics',
+    DexShortcutGroup.diagnostics => 'Hardware & Diagnostics',
   };
 
   @override

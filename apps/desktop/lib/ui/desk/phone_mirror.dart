@@ -28,7 +28,7 @@ class PhoneMirror extends StatelessWidget {
     required this.now,
     required this.onClose,
     required this.onLaunch,
-    this.width = 208,
+    this.width = 240,
     this.overVideo = false,
     super.key,
   });
@@ -64,7 +64,7 @@ class PhoneMirror extends StatelessWidget {
         child: GlassPanel(
           // A phone is a rounded slab; the frame radius is the one place the
           // desk's 16 px panel radius would be wrong.
-          radius: 30,
+          radius: 36,
           fill: glass.substrate,
           stroke: glass.strokeStrong,
           blurred: !overVideo,
@@ -75,7 +75,7 @@ class PhoneMirror extends StatelessWidget {
               // Deliberately off the DexRadius scale. This corner is not desk
               // chrome, it is the depicted phone's own screen, and the token
               // scale describes panels rather than hardware.
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(30),
               // The phone's screen is always dark, whatever the desk's theme
               // is. Two reasons, and they agree: we are mirroring a device
               // whose wallpaper is not ours to restyle, and the light desk

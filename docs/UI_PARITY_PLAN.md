@@ -64,7 +64,7 @@ Each item is something visible. Tick it when the golden shows it.
       11 px — not glyph + title + artist + three transport buttons.
 - [x] **Tray clock** reads `12:56 am` over `5 Sept` (lowercase meridiem, day +
       short month).
-- [ ] **Hover** on chips brightens; the launcher scales 1.02.
+- [x] **Hover** on chips brightens; the launcher scales 1.02.
 
 ## 4. Window chrome and body states
 
@@ -128,7 +128,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 7. Command palette
 
-- [ ] Card **576 wide**, `max-h 75vh`, radius 20, anchored **80 px** from top.
+- [x] Card **576 wide**, `max-h 75vh`, radius 20, anchored **80 px** from top.
 - [x] Header: signal search icon, input "Type a command or search actions
       (Ctrl+Shift+P)…", `ESC` chip.
 - [x] Rows carry a **32 px `rounded-[8px] bg-white/10` icon well** and the
@@ -143,7 +143,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 - [x] Header: keyboard icon in a signal well, "Keyboard Shortcuts", mono
       subtitle "Desktop Accelerator Map · Build vX", X.
-- [ ] Groups `LAUNCHER & DESK` / `WINDOW MANAGEMENT` / `HARDWARE & DIAGNOSTICS`,
+- [x] Groups `LAUNCHER & DESK` / `WINDOW MANAGEMENT` / `HARDWARE & DIAGNOSTICS`,
       **single column**, each row a `p-2 rounded-[10px] bg-white/3` card with the
       kbd chip on the right. Keep the registry as the source.
 - [x] An **Escape Ladder card**: "The Ordered Escape Ladder", "Pressing [Esc]
@@ -242,7 +242,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 16. Phone mirror
 
-- [ ] 240×480, `rounded-[36px] bg-#0F172A border-6 slate-700 shadow-2xl`; a
+- [x] 240×480, `rounded-[36px] bg-#0F172A border-6 slate-700 shadow-2xl`; a
       `h-7 bg-black/70` status bar with `12:00`, a punch-hole and wifi/battery;
       a slate gradient screen; an X; a 40 px circular phone badge; the device
       name; mono "Physical device surface linked via ADB. Screen mirroring

@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -502,55 +502,62 @@ class _AppsGridButton extends StatelessWidget {
           builder: (BuildContext context, bool hovered) => InkWell(
             onTap: onPressed,
             borderRadius: BorderRadius.circular(DexRadius.panel),
-            child: AnimatedContainer(
+            child: AnimatedScale(
+              // The reference lifts the launcher a touch on hover: 1.02, enough
+              // to answer the pointer, not enough to move its neighbours.
+              scale: hovered ? 1.02 : 1,
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
-              height: 44,
-              padding: EdgeInsets.symmetric(
-                horizontal: labelled ? DexSpace.lg : DexSpace.md,
-              ),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
-                borderRadius: BorderRadius.circular(DexRadius.panel),
-                // The reference gives this button a plain elevation shadow,
-                // not a coloured halo. A glow behind a filled accent button
-                // reads as a highlight effect rather than as a control, and
-                // this design spends its one glow on the live dot.
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 25,
-                    spreadRadius: -5,
-                    offset: Offset(0, 20),
-                  ),
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 10,
-                    spreadRadius: -6,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Icon(
-                    DexIcons.appsGrid,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                  if (labelled) ...<Widget>[
-                    const SizedBox(width: DexSpace.sm),
-                    Text(
-                      'Your apps',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+              child: AnimatedContainer(
+                duration: DexDuration.micro,
+                curve: DexMotion.arrive,
+                height: 44,
+                padding: EdgeInsets.symmetric(
+                  horizontal: labelled ? DexSpace.lg : DexSpace.md,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
+                  borderRadius: BorderRadius.circular(DexRadius.panel),
+                  // The reference gives this button a plain elevation shadow,
+                  // not a coloured halo. A glow behind a filled accent button
+                  // reads as a highlight effect rather than as a control, and
+                  // this design spends its one glow on the live dot.
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 25,
+                      spreadRadius: -5,
+                      offset: Offset(0, 20),
+                    ),
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 10,
+                      spreadRadius: -6,
+                      offset: Offset(0, 8),
                     ),
                   ],
-                ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Icon(
+                      DexIcons.appsGrid,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    if (labelled) ...<Widget>[
+                      const SizedBox(width: DexSpace.sm),
+                      Text(
+                        'Your apps',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -614,10 +621,8 @@ class _MediaMini extends StatelessWidget {
               media.title ?? 'Nothing playing',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: colors.text, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -715,9 +720,7 @@ class _TaskEntry extends StatelessWidget {
                       // reference's one use of it and the only place on the
                       // dock where anything is lit.
                       boxShadow: active
-                          ? <BoxShadow>[
-                              BoxShadow(color: _dot, blurRadius: 6),
-                            ]
+                          ? <BoxShadow>[BoxShadow(color: _dot, blurRadius: 6)]
                           : null,
                     ),
                   ),
@@ -857,7 +860,9 @@ class SystemTray extends StatelessWidget {
         ),
         const SizedBox(width: DexSpace.xs),
         _TrayButton(
-          icon: fullscreenActive ? DexIcons.fullscreenExit : DexIcons.fullscreen,
+          icon: fullscreenActive
+              ? DexIcons.fullscreenExit
+              : DexIcons.fullscreen,
           label: fullscreenActive ? 'Exit fullscreen' : 'Fullscreen',
           onPressed: onToggleFullscreen,
           colors: c,

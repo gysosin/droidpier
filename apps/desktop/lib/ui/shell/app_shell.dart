@@ -333,9 +333,7 @@ class _AppShellState extends State<AppShell> {
       final List<WorkspaceWindow> open = _wm.switchable;
       if (open.length < 2) return;
       setState(() {
-        _switchOrder = <String>[
-          for (final WorkspaceWindow w in open) w.id,
-        ];
+        _switchOrder = <String>[for (final WorkspaceWindow w in open) w.id];
         // First press lands on the window beneath the current one, not on the
         // one already focused — otherwise a quick Alt+Tab does nothing.
         _switcherIndex = backwards ? _switchOrder.length - 1 : 1;
@@ -530,8 +528,7 @@ class _AppShellState extends State<AppShell> {
     keyboardIsFree: () => !_deskOwnsKeyboard,
     toggleDiagnostics: () =>
         setState(() => _diagnosticsOpen = !_diagnosticsOpen),
-    toggleHealthHud: () =>
-        setState(() => _healthHudOpen = !_healthHudOpen),
+    toggleHealthHud: () => setState(() => _healthHudOpen = !_healthHudOpen),
     toggleDrawer: _toggleDrawer,
     toggleFullscreen: _toggleFullscreen,
     cycleFocus: _cycleFocus,
@@ -647,8 +644,9 @@ class _AppShellState extends State<AppShell> {
   /// follow intent rather than the transport's luck.
   void _recordLaunch(String packageName) {
     final AppLaunchStats? previous = widget.launchHistory[packageName];
-    final Map<String, AppLaunchStats> next =
-        Map<String, AppLaunchStats>.of(widget.launchHistory);
+    final Map<String, AppLaunchStats> next = Map<String, AppLaunchStats>.of(
+      widget.launchHistory,
+    );
     next[packageName] = AppLaunchStats(
       count: (previous?.count ?? 0) + 1,
       lastLaunchedMs: DateTime.now().toUtc().millisecondsSinceEpoch,
@@ -792,10 +790,7 @@ class _AppShellState extends State<AppShell> {
         enabled: widget.glassEnabled,
         child: ReduceMotionScope(
           reduce: widget.reduceMotion,
-          child: Material(
-            color: Colors.transparent,
-            child: _content(context),
-          ),
+          child: Material(color: Colors.transparent, child: _content(context)),
         ),
       ),
     );
@@ -828,12 +823,12 @@ class _AppShellState extends State<AppShell> {
             },
           ),
           // Only once the desk exists. Shown over the connection screen it would
-        // be describing surfaces the person cannot see yet.
-        if (!widget.tourCompleted && !_connectOpen && !_recovering)
-          Positioned.fill(
-            child: FirstRunTour(onFinished: widget.onTourCompleted),
-          ),
-        if (_connectOpen) _connectionScreen(),
+          // be describing surfaces the person cannot see yet.
+          if (!widget.tourCompleted && !_connectOpen && !_recovering)
+            Positioned.fill(
+              child: FirstRunTour(onFinished: widget.onTourCompleted),
+            ),
+          if (_connectOpen) _connectionScreen(),
         ],
       );
     }
@@ -1074,6 +1069,7 @@ class _AppShellState extends State<AppShell> {
     }
     if (_paletteOpen) {
       return _Overlay(
+        maxWidth: 576,
         onDismiss: () => setState(() => _paletteOpen = false),
         child: CommandPalette(
           commands: _commands,
@@ -1167,7 +1163,15 @@ const double _scrimSigma = 12;
 /// Escape and a click on the scrim both dismiss it, because a surface you
 /// cannot leave is a trap.
 class _Overlay extends StatelessWidget {
-  const _Overlay({required this.child, required this.onDismiss});
+  const _Overlay({
+    required this.child,
+    required this.onDismiss,
+    this.maxWidth = 880,
+  });
+
+  /// The card's width. 880 fits the sheet and diagnostics; the palette is
+  /// narrower in the reference, at 576.
+  final double maxWidth;
 
   final Widget child;
   final VoidCallback onDismiss;
@@ -1197,9 +1201,7 @@ class _Overlay extends StatelessWidget {
                 // scrims every modal: dark enough to retire the desk, light
                 // enough that its shapes still read through.
                 final Widget scrim = ColoredBox(
-                  color: Colors.black.withValues(
-                    alpha: isDark ? 0.70 : 0.35,
-                  ),
+                  color: Colors.black.withValues(alpha: isDark ? 0.70 : 0.35),
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
                 const double sigma = _scrimSigma;
@@ -1215,7 +1217,7 @@ class _Overlay extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(DexSpace.xxl),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 880, maxHeight: 620),
+              constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 620),
               // GlassPanel, like every other surface. This card used to
               // hand-roll its own fill, its own hairline and its own blur — at
               // 28 rather than the committed 24 — which made the one place

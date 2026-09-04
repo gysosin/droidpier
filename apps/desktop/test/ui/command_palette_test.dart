@@ -76,7 +76,20 @@ void main() {
     // The mock's ready scenario has applications; the palette should show them
     // before any query, so it doubles as a menu rather than only a search box.
     expect(find.byType(CommandPalette), findsOneWidget);
-    expect(find.text('APPS'), findsOneWidget);
+    // Apps come last, after shell actions and windows, and the list builds
+    // lazily — so reach them the way a person does, by scrolling, and read
+    // the group off the row's own chip rather than a section header.
+    // The palette's list, not its first Scrollable: the search field owns
+    // one too, and dragging that scrolls nothing.
+    final Finder list = find.descendant(
+      of: find.byType(CommandPalette),
+      matching: find.byType(ListView),
+    );
+    for (int i = 0; i < 12 && find.text('APPS').evaluate().isEmpty; i++) {
+      await tester.drag(list, const Offset(0, -300));
+      await tester.pump();
+    }
+    expect(find.text('APPS'), findsWidgets);
   });
 
   testWidgets('typing filters, and marks a row for Enter', (
