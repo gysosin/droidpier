@@ -4,6 +4,11 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The theme selector is a real segmented control rather than Material chips.
+  Material fills a selected chip from `secondaryContainer`, which resolved to
+  emerald here — so choosing a theme lit up in the colour this design reserves
+  for telemetry. A reserved role stops meaning anything the moment it is spent
+  on selection.
 - "Needs phone settings" is amber rather than red. A capability waiting on a
   screen you have not opened yet is a state, not a failure, and painting states
   red is how people learn to ignore red. Granted is emerald, which is the
