@@ -4,6 +4,16 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- Shadows match the reference exactly. Every panel had been carrying one layer
+  of black at 35% with no spread — three and a half times the ink, spreading
+  wider than the panel it belonged to, which over a lit wallpaper reads as a
+  smudge under every surface. Panels now use the reference's two layers at 10%,
+  both pulled in by a negative spread. Windows keep a real shadow, at the
+  reference's own values, because a window is the one thing on the desk that
+  should cast one. The launcher button loses its blue halo for a plain
+  elevation, and the rail's station glow stops blooming past the node.
+- The desk clock follows the theme. Its face was a hardcoded near-black disc,
+  so on the pale light desk it was the one thing that stayed dark.
 - A design-token sheet, reachable from the command palette. Every semantic
   role, glass alpha, accent, wallpaper, type slot, radius, spacing step and
   duration, rendered from the tokens themselves rather than from a copy of

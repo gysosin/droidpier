@@ -514,11 +514,22 @@ class _AppsGridButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
                 borderRadius: BorderRadius.circular(DexRadius.panel),
-                boxShadow: <BoxShadow>[
+                // The reference gives this button a plain elevation shadow,
+                // not a coloured halo. A glow behind a filled accent button
+                // reads as a highlight effect rather than as a control, and
+                // this design spends its one glow on the live dot.
+                boxShadow: const <BoxShadow>[
                   BoxShadow(
-                    color: colors.signal.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+                    color: Color(0x1A000000),
+                    blurRadius: 25,
+                    spreadRadius: -5,
+                    offset: Offset(0, 20),
+                  ),
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 10,
+                    spreadRadius: -6,
+                    offset: Offset(0, 8),
                   ),
                 ],
               ),

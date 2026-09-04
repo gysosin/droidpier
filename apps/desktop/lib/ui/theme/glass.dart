@@ -60,12 +60,27 @@ class GlassPanel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
+        // The reference's panel shadow, matched: two layers at 10% black,
+        // both pulled in by a negative spread so the shadow sits under the
+        // panel rather than around it.
+        //
+        // This was one layer of black at 35% with no spread — three and a half
+        // times the ink, spreading wider than the panel it belonged to. Over a
+        // lit wallpaper that reads as a smudge under every surface, and it is
+        // the first thing anyone notices about a screenshot.
         boxShadow: shadow
             ? const <BoxShadow>[
                 BoxShadow(
-                  color: Color(0x59000000),
-                  blurRadius: 32,
-                  offset: Offset(0, 12),
+                  color: Color(0x1A000000),
+                  blurRadius: 25,
+                  spreadRadius: -5,
+                  offset: Offset(0, 20),
+                ),
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 10,
+                  spreadRadius: -6,
+                  offset: Offset(0, 8),
                 ),
               ]
             : null,

@@ -92,13 +92,16 @@ class AppWindow extends StatelessWidget {
                   ? DexStroke.focusRing
                   : DexStroke.hairline,
             ),
+            // The reference's exact window shadows. A window is the one thing
+            // on this desk that should cast a real one — it is a window — so
+            // these stay heavy, unlike the panels around them.
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: Colors.black.withValues(
-                  alpha: window.isFocused ? 0.45 : 0.28,
+                  alpha: window.isFocused ? 0.55 : 0.35,
                 ),
-                blurRadius: window.isFocused ? 40 : 24,
-                offset: const Offset(0, 14),
+                blurRadius: window.isFocused ? 50 : 32,
+                offset: Offset(0, window.isFocused ? 20 : 12),
               ),
             ],
           ),
