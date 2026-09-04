@@ -1022,6 +1022,7 @@ class _AppShellState extends State<AppShell> {
       // The drawer is full-bleed: it paints its own blurred scrim and centres
       // its icons, so it is not wrapped in the settings card.
       return AppDrawer(
+        deviceName: _s.selectedDevice?.name,
         status: _s.applicationStatus,
         applications: _s.applications,
         launchHistory: widget.launchHistory,

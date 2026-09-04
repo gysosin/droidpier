@@ -87,13 +87,13 @@ void main() {
       }
       // The desk is a real desktop now: search bars, app icons, a bare clock
       // top-right, and the dock.
-      expect(find.text('Search Google'), findsOneWidget);
+      expect(find.text('Search the web or apps…'), findsOneWidget);
       // Presence is not visibility: assert the entrance actually finished, or a
       // fully transparent screen would pass this test.
       final Opacity fade = tester.widget<Opacity>(
         find
             .ancestor(
-              of: find.text('Search Google'),
+              of: find.text('Search the web or apps…'),
               matching: find.byType(Opacity),
             )
             .first,
@@ -117,10 +117,10 @@ void main() {
       // The drawer opened: its search field is present (the old 'Your apps'
       // header was removed in the floating-launcher redesign). The desk itself
       // now carries the two search bars, so three text fields are on screen —
-      // the drawer's is the one whose hint is 'Search apps…'. Two fields are on
+      // the drawer's is the one whose hint is "Search phone apps (e.g. 'wa' for WhatsApp, or app name)…". Two fields are on
       // screen: the desk's Google bar and the drawer's search.
       expect(find.byType(EditableText), findsNWidgets(2));
-      expect(find.text('Search apps…'), findsOneWidget);
+      expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
       await expectLater(
         find.byType(AppShell),
         matchesGoldenFile('goldens/shell_launcher_$mode.png'),

@@ -54,7 +54,7 @@ void main() {
     // The desk itself now carries two search bars, so target the drawer's own
     // field by its hint rather than "the only text field on screen".
     final Finder search = find.ancestor(
-      of: find.text('Search apps…'),
+      of: find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"),
       matching: find.byType(TextField),
     );
     expect(search, findsOneWidget, reason: 'the drawer should be open');
@@ -67,7 +67,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpShell(tester);
-    expect(find.text('Search apps…'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsNothing);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
@@ -76,13 +76,13 @@ void main() {
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
-    expect(find.text('Search apps…'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsNothing);
   });
 
   testWidgets('the desk clock ticks on its own', (WidgetTester tester) async {
@@ -160,7 +160,7 @@ void main() {
     // Launcher, from the dock.
     await tester.tap(find.byTooltip('Your apps'));
     await settle();
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
 
@@ -232,12 +232,12 @@ void main() {
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     expect(
-      find.text('Search apps…'),
+      find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"),
       findsNothing,
       reason: 'a surface you cannot leave is a trap',
     );
@@ -272,7 +272,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await settle();
-    expect(find.text('Search apps\u2026'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsOneWidget);
 
     // Diagnostics over the top of it.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -286,7 +286,7 @@ void main() {
       findsOneWidget,
       reason: 'both layers should now be up',
     );
-    expect(find.text('Search apps\u2026'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsOneWidget);
 
     // One Escape takes the higher rung only.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -297,7 +297,7 @@ void main() {
       reason: 'the first Escape belongs to diagnostics',
     );
     expect(
-      find.text('Search apps\u2026'),
+      find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"),
       findsOneWidget,
       reason: 'the launcher is a lower rung and must survive the first Escape',
     );
@@ -305,6 +305,6 @@ void main() {
     // The second Escape takes the next rung down.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
-    expect(find.text('Search apps\u2026'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsNothing);
   });
 }

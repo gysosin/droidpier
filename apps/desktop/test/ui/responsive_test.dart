@@ -180,7 +180,7 @@ void main() {
       _expectNoOverflow(tester, size);
       // The search bars anchor the desk's top-left; they must survive every
       // width (the bare clock is dropped when the desk is too narrow for it).
-      expect(find.text('Search Google'), findsOneWidget);
+      expect(find.text('Search the web or apps…'), findsOneWidget);
     });
 
     testWidgets('taskbar lays out at $at', (WidgetTester tester) async {

@@ -184,21 +184,65 @@ class DeskWallpaper extends StatelessWidget {
           colors: colors,
         ),
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0.85, -0.9),
-            radius: 1.4,
-            colors: <Color>[
-              glass.bloom,
-              glass.bloom.withValues(alpha: 0),
-              glass.vignette,
-            ],
-            stops: const <double>[0, 0.45, 1],
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          // The bloom is a disc, and you can see its edge. The reference pins a
+          // 650px circle to the top-right corner and lights it from that
+          // corner outward, fading by 70% of the way across — so what reads on
+          // screen is a quarter-lit disc, not a wash. This used to be one wide
+          // radial gradient that blended bloom and vignette into a haze with
+          // no shape to it.
+          Positioned(
+            top: 0,
+            right: 0,
+            width: _bloomSize,
+            height: _bloomSize,
+            child: IgnorePointer(
+              child: ClipOval(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(1, -1),
+                      radius: 0.7,
+                      colors: <Color>[
+                        glass.bloom,
+                        glass.bloom.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        child: child,
+          // Darkening toward the bottom, so the taskbar has something to sit on.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: _vignetteHeight,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: <Color>[
+                      glass.vignette,
+                      glass.vignette.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          child,
+        ],
       ),
     );
   }
+
+  /// The reference's `w-[650px] h-[650px]` disc and `h-40` vignette strip.
+  static const double _bloomSize = 650;
+  static const double _vignetteHeight = 160;
 }

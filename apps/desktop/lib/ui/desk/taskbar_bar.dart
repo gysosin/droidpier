@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -10,7 +8,6 @@ import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_glass.dart';
-import '../apps/app_glyph.dart';
 import '../theme/glass.dart';
 import '../theme/dex_tokens.dart';
 import '../workspace/window_model.dart';
@@ -118,7 +115,7 @@ class TaskbarBar extends StatelessWidget {
         // Row cannot overflow at any width.
         const double kNavPill = 168;
         const double kWorkspacePill = 160; // keys plus the gap before them
-        const double kMediaPill = 198; // pill plus the gap before it
+        const double kMediaPill = 176; // pill plus the gap before it
         const double kLauncher = 64;
         // Measured, not guessed: "Your apps" renders 118px wide in the bundled
         // face, plus the gap after the icon. Estimating it at 76 is what left
@@ -336,10 +333,12 @@ class _NavPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          // Android's own order: back, home, overview. A hamburger was the
+          // first key here and it sends Menu, which almost no app answers.
           _NavButton(
-            icon: DexIcons.menu,
-            label: 'Menu',
-            onPressed: enabled ? () => onNavKey(AndroidNavKey.menu) : null,
+            icon: DexIcons.back,
+            label: 'Back',
+            onPressed: enabled ? () => onNavKey(AndroidNavKey.back) : null,
             colors: colors,
           ),
           _NavButton(
@@ -349,9 +348,9 @@ class _NavPill extends StatelessWidget {
             colors: colors,
           ),
           _NavButton(
-            icon: DexIcons.back,
-            label: 'Back',
-            onPressed: enabled ? () => onNavKey(AndroidNavKey.back) : null,
+            icon: DexIcons.recents,
+            label: 'Recents',
+            onPressed: enabled ? () => onNavKey(AndroidNavKey.recents) : null,
             colors: colors,
           ),
           _NavButton(
@@ -577,210 +576,51 @@ class _MediaMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme t = Theme.of(context).textTheme;
-
+    final DexGlass glass = DexGlass.of(context);
+    // A round play/pause and the title. The dock is not the place for the
+    // artwork, the artist and three transport keys — the Now Playing widget
+    // and the control centre both carry those, and a dock entry that wide
+    // pushed the launcher off centre on a laptop.
     return SizedBox(
       height: 44,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _MiniArt(media: media, colors: colors),
+          Semantics(
+            button: true,
+            label: _playing ? 'Pause' : 'Play',
+            child: InkWell(
+              onTap: () => onAction(MediaAction.playPause),
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: DexHit.minimum,
+                height: DexHit.minimum,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: glass.fillStrong,
+                ),
+                child: Icon(
+                  _playing ? DexIcons.pause : DexIcons.play,
+                  size: 12,
+                  color: colors.text,
+                ),
+              ),
+            ),
+          ),
           const SizedBox(width: DexSpace.sm),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 150),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  media.title ?? 'Nothing playing',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: t.labelLarge?.copyWith(color: colors.text),
-                ),
-                if (media.artist != null)
-                  Text(
-                    media.artist!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: t.labelSmall?.copyWith(color: colors.muted),
-                  ),
-                if (media.durationMs != null &&
-                    media.durationMs! > 0) ...<Widget>[
-                  const SizedBox(height: 4),
-                  _MediaProgress(media: media, colors: colors),
-                ],
-              ],
+            constraints: const BoxConstraints(maxWidth: 110),
+            child: Text(
+              media.title ?? 'Nothing playing',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          const SizedBox(width: DexSpace.xs),
-          _MiniTransport(
-            icon: DexIcons.previous,
-            label: 'Previous track',
-            onPressed: () => onAction(MediaAction.previous),
-            colors: colors,
-          ),
-          _MiniTransport(
-            icon: _playing ? DexIcons.pause : DexIcons.play,
-            label: _playing ? 'Pause' : 'Play',
-            accent: true,
-            onPressed: () => onAction(MediaAction.playPause),
-            colors: colors,
-          ),
-          _MiniTransport(
-            icon: DexIcons.next,
-            label: 'Next track',
-            onPressed: () => onAction(MediaAction.next),
-            colors: colors,
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A live-ticking media progress bar. The phone reports a position sample; this
-/// extrapolates from it locally while playing, so the bar moves smoothly
-/// without the phone streaming a value every tick.
-class _MediaProgress extends StatefulWidget {
-  const _MediaProgress({required this.media, required this.colors});
-
-  final MediaState media;
-  final DexColors colors;
-
-  @override
-  State<_MediaProgress> createState() => _MediaProgressState();
-}
-
-class _MediaProgressState extends State<_MediaProgress> {
-  Timer? _timer;
-  int _baseMs = 0;
-  DateTime _baseAt = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(_MediaProgress old) {
-    super.didUpdateWidget(old);
-    if (old.media.positionMs != widget.media.positionMs ||
-        old.media.playback != widget.media.playback) {
-      _sync();
-    }
-  }
-
-  void _sync() {
-    _baseMs = widget.media.positionMs ?? 0;
-    _baseAt = DateTime.now();
-    _timer?.cancel();
-    if (widget.media.playback == PlaybackState.playing) {
-      _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-        if (mounted) setState(() {});
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final int? dur = widget.media.durationMs;
-    if (dur == null || dur <= 0) return const SizedBox.shrink();
-    final bool playing = widget.media.playback == PlaybackState.playing;
-    final int elapsed = playing
-        ? DateTime.now().difference(_baseAt).inMilliseconds
-        : 0;
-    final double value = ((_baseMs + elapsed) / dur).clamp(0.0, 1.0);
-    return RepaintBoundary(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(DexRadius.pill),
-        child: LinearProgressIndicator(
-          value: value,
-          minHeight: 3,
-          backgroundColor: widget.colors.line,
-          valueColor: AlwaysStoppedAnimation<Color>(widget.colors.signal),
-        ),
-      ),
-    );
-  }
-}
-
-class _MiniArt extends StatelessWidget {
-  const _MiniArt({required this.media, required this.colors});
-
-  final MediaState media;
-  final DexColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    const double size = 34;
-    final Widget fallback = Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: colors.raised,
-        borderRadius: BorderRadius.circular(DexRadius.control),
-      ),
-      child: Icon(DexIcons.music, size: 16, color: colors.muted),
-    );
-    final List<int>? art = media.artwork;
-    if (art == null || art.isEmpty) return fallback;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DexRadius.control),
-      child: Image.memory(
-        Uint8List.fromList(art),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => fallback,
-      ),
-    );
-  }
-}
-
-class _MiniTransport extends StatelessWidget {
-  const _MiniTransport({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    required this.colors,
-    this.accent = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final DexColors colors;
-  final bool accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Tooltip(
-        message: label,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(DexRadius.control),
-          child: SizedBox(
-            width: 34,
-            height: 40,
-            child: Icon(
-              icon,
-              size: 18,
-              color: accent ? colors.signal : colors.text,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -881,8 +721,6 @@ class _TaskEntry extends StatelessWidget {
                           : null,
                     ),
                   ),
-                  const SizedBox(width: DexSpace.sm),
-                  AppGlyph(app: window.session.application, size: 20),
                   const SizedBox(width: DexSpace.sm),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 92),

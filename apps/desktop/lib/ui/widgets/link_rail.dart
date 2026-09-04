@@ -4,6 +4,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/dex_glass.dart';
 import '../theme/glass.dart';
@@ -92,25 +93,45 @@ class _Station extends StatelessWidget {
             const SizedBox(width: DexSpace.md),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: DexSpace.xl),
+                // The reference spaces stations at pb-7; the node is 28 so the
+                // label sits on its centre line.
+                padding: const EdgeInsets.only(top: 4, bottom: DexSpace.xl + 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    // Station labels carry ports, so they are machine values.
-                    Text(
-                      stage.label,
-                      style: DexTheme.data(
-                        colors,
-                        color: stage.status == StageStatus.pending
-                            ? colors.muted
-                            : colors.text,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        // Station labels carry ports, so they are machine
+                        // values, but the reference sets them in the body face
+                        // at medium weight and keeps mono for the detail line.
+                        Expanded(
+                          child: Text(
+                            stage.label,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  color: switch (stage.status) {
+                                    StageStatus.pending => colors.muted,
+                                    StageStatus.active => colors.signal,
+                                    StageStatus.failed => colors.fault,
+                                    StageStatus.complete => colors.text,
+                                  },
+                                ),
+                          ),
+                        ),
+                        // The status word, spelled out. A ring and a disc
+                        // already say it; this is for anyone who cannot tell
+                        // the two apart at a glance.
+                        Text(
+                          stage.status.name.toUpperCase(),
+                          style: DexTheme.data(colors, size: 11),
+                        ),
+                      ],
                     ),
                     if (stage.detail != null) ...<Widget>[
                       const SizedBox(height: DexSpace.xs),
                       Text(
                         stage.detail!,
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: DexTheme.data(colors, size: 12),
                       ),
                     ],
                   ],
@@ -184,46 +205,80 @@ class _StationNodeState extends State<_StationNode>
   Widget build(BuildContext context) {
     final bool animate = _isActive && !MediaQuery.disableAnimationsOf(context);
 
+    final DexColors c = widget.colors;
+    // 28px discs, not 9px dots. The rail is the one place this design spends
+    // boldness, and a station you cannot see from across the room is not
+    // spending it. Complete is a filled disc with a check; active is a ring over
+    // a tint with a breathing core; failed is a filled disc with a fault mark;
+    // pending is a slate ring around a dot.
     final Widget core = switch (widget.status) {
       StageStatus.pending => Container(
-        width: 9,
-        height: 9,
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: widget.colors.muted, width: 1.5),
+          color: c.surface.withValues(alpha: 0.5),
+          border: Border.all(color: c.line, width: DexStroke.focusRing),
+        ),
+        child: Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: c.line),
         ),
       ),
       StageStatus.complete => Container(
-        width: 9,
-        height: 9,
-        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: widget.color,
+          boxShadow: <BoxShadow>[
+            BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+          ],
+        ),
+        child: Icon(DexIcons.check, size: 16, color: c.bg),
       ),
       StageStatus.failed => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: widget.color,
+          boxShadow: <BoxShadow>[
+            BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+          ],
+        ),
+        child: Icon(DexIcons.fault, size: 16, color: Colors.white),
       ),
       StageStatus.active => Container(
-        width: 11,
-        height: 11,
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: widget.color,
           shape: BoxShape.circle,
-          // The reference's station glow exactly: 12px at 40%, no spread. It
-          // was 55% with 2px of spread, which bloomed past the node.
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: widget.color.withValues(alpha: 0.40),
-              blurRadius: 12,
-            ),
-          ],
+          color: widget.color.withValues(alpha: 0.20),
+          border: Border.all(color: widget.color, width: DexStroke.focusRing),
+        ),
+        child: Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.color,
+            boxShadow: <BoxShadow>[
+              BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+            ],
+          ),
         ),
       ),
     };
 
     return SizedBox(
-      width: DexHit.minimum,
-      height: DexHit.minimum,
+      width: 28,
+      height: 28,
       child: Center(
         child: animate
             ? FadeTransition(
@@ -267,8 +322,8 @@ class _RailSegment extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: <Color>[
-                colors.signal.withValues(alpha: 0.55),
-                colors.signal.withValues(alpha: 0.55),
+                colors.signal,
+                colors.signal,
                 colors.line,
                 colors.line,
               ],

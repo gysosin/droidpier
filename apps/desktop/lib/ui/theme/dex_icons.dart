@@ -53,6 +53,7 @@ abstract final class DexIcons {
   static const IconData fullscreenExit = IconData(0xf3da, fontFamily: _family);
   static const IconData back = IconData(0xf1f9, fontFamily: _family);
   static const IconData forward = IconData(0xf1fb, fontFamily: _family);
+  static const IconData recents = IconData(0xf4f2, fontFamily: _family);
   static const IconData home = IconData(0xf20b, fontFamily: _family);
   static const IconData menu = IconData(0xf3ca, fontFamily: _family);
   static const IconData appsGrid = IconData(0xf38a, fontFamily: _family);
@@ -66,6 +67,8 @@ abstract final class DexIcons {
   static const IconData notifications = IconData(0xf19c, fontFamily: _family);
   static const IconData settings = IconData(0xf4b9, fontFamily: _family);
   static const IconData keyboard = IconData(0xf379, fontFamily: _family);
+  static const IconData pin = IconData(0xf450, fontFamily: _family);
+  static const IconData pinOff = IconData(0xf451, fontFamily: _family);
   static const IconData copy = IconData(0xf252, fontFamily: _family);
   static const IconData check = IconData(0xf1ee, fontFamily: _family);
   static const IconData unchecked = IconData(0xf20b, fontFamily: _family);
