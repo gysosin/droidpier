@@ -69,18 +69,18 @@ class RecoveryOverlay extends StatelessWidget {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    // A ring carrying the phase, as the reference opens this
-                    // card. Colour alone is not a signal, so the shape changes
-                    // too: a cable while reconnecting, a check once recovered,
-                    // a fault mark when it has given up.
-                    _PhaseRing(phase: recovery.phase, colors: c),
-                    const SizedBox(width: DexSpace.md),
-                    Expanded(child: Text(_headline, style: t.titleLarge)),
-                  ],
+                // A ring carrying the phase, above the headline, as the
+                // reference lays this card out. Colour alone is not a signal,
+                // so the shape changes too: a cable while reconnecting, a
+                // check once recovered, a fault mark when it has given up.
+                _PhaseRing(phase: recovery.phase, colors: c),
+                const SizedBox(height: DexSpace.lg),
+                Text(
+                  _headline,
+                  textAlign: TextAlign.center,
+                  style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: DexSpace.xs),
                 // What happened, then what to do — in that order.
@@ -147,15 +147,15 @@ class _PhaseRing extends StatelessWidget {
       _ => (DexIcons.wifiTethering, colors.signal),
     };
     return Container(
-      width: 40,
-      height: 40,
+      width: 56,
+      height: 56,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: colour.withValues(alpha: 0.20),
         border: Border.all(color: colour, width: DexStroke.focusRing),
       ),
-      child: Icon(icon, size: 18, color: colour),
+      child: Icon(icon, size: 24, color: colour),
     );
   }
 }

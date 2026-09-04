@@ -70,7 +70,7 @@ void main() {
     for (int i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
     expect(blurs(), findsNothing);
   });
 }

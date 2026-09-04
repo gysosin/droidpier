@@ -333,9 +333,7 @@ class _AppShellState extends State<AppShell> {
       final List<WorkspaceWindow> open = _wm.switchable;
       if (open.length < 2) return;
       setState(() {
-        _switchOrder = <String>[
-          for (final WorkspaceWindow w in open) w.id,
-        ];
+        _switchOrder = <String>[for (final WorkspaceWindow w in open) w.id];
         // First press lands on the window beneath the current one, not on the
         // one already focused — otherwise a quick Alt+Tab does nothing.
         _switcherIndex = backwards ? _switchOrder.length - 1 : 1;
@@ -530,8 +528,7 @@ class _AppShellState extends State<AppShell> {
     keyboardIsFree: () => !_deskOwnsKeyboard,
     toggleDiagnostics: () =>
         setState(() => _diagnosticsOpen = !_diagnosticsOpen),
-    toggleHealthHud: () =>
-        setState(() => _healthHudOpen = !_healthHudOpen),
+    toggleHealthHud: () => setState(() => _healthHudOpen = !_healthHudOpen),
     toggleDrawer: _toggleDrawer,
     toggleFullscreen: _toggleFullscreen,
     cycleFocus: _cycleFocus,
@@ -647,8 +644,9 @@ class _AppShellState extends State<AppShell> {
   /// follow intent rather than the transport's luck.
   void _recordLaunch(String packageName) {
     final AppLaunchStats? previous = widget.launchHistory[packageName];
-    final Map<String, AppLaunchStats> next =
-        Map<String, AppLaunchStats>.of(widget.launchHistory);
+    final Map<String, AppLaunchStats> next = Map<String, AppLaunchStats>.of(
+      widget.launchHistory,
+    );
     next[packageName] = AppLaunchStats(
       count: (previous?.count ?? 0) + 1,
       lastLaunchedMs: DateTime.now().toUtc().millisecondsSinceEpoch,
@@ -792,10 +790,7 @@ class _AppShellState extends State<AppShell> {
         enabled: widget.glassEnabled,
         child: ReduceMotionScope(
           reduce: widget.reduceMotion,
-          child: Material(
-            color: Colors.transparent,
-            child: _content(context),
-          ),
+          child: Material(color: Colors.transparent, child: _content(context)),
         ),
       ),
     );
@@ -828,12 +823,12 @@ class _AppShellState extends State<AppShell> {
             },
           ),
           // Only once the desk exists. Shown over the connection screen it would
-        // be describing surfaces the person cannot see yet.
-        if (!widget.tourCompleted && !_connectOpen && !_recovering)
-          Positioned.fill(
-            child: FirstRunTour(onFinished: widget.onTourCompleted),
-          ),
-        if (_connectOpen) _connectionScreen(),
+          // be describing surfaces the person cannot see yet.
+          if (!widget.tourCompleted && !_connectOpen && !_recovering)
+            Positioned.fill(
+              child: FirstRunTour(onFinished: widget.onTourCompleted),
+            ),
+          if (_connectOpen) _connectionScreen(),
         ],
       );
     }
@@ -898,10 +893,12 @@ class _AppShellState extends State<AppShell> {
                   widget.facade.launchApplication(a.packageName),
             ),
           ),
+        // Bottom-left, clear of the taskbar and the tray it is reporting
+        // alongside, as the reference places it.
         if (_healthHudOpen)
           Positioned(
-            right: DexSpace.lg,
-            bottom: 96,
+            left: DexSpace.lg,
+            bottom: 72 + DexSpace.md,
             child: Builder(
               builder: (BuildContext context) {
                 final WorkspaceWindow? focused = _wm.windows.values
@@ -1022,6 +1019,7 @@ class _AppShellState extends State<AppShell> {
       // The drawer is full-bleed: it paints its own blurred scrim and centres
       // its icons, so it is not wrapped in the settings card.
       return AppDrawer(
+        deviceName: _s.selectedDevice?.name,
         status: _s.applicationStatus,
         applications: _s.applications,
         launchHistory: widget.launchHistory,
@@ -1071,6 +1069,7 @@ class _AppShellState extends State<AppShell> {
     }
     if (_paletteOpen) {
       return _Overlay(
+        maxWidth: 576,
         onDismiss: () => setState(() => _paletteOpen = false),
         child: CommandPalette(
           commands: _commands,
@@ -1150,6 +1149,10 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
+/// The blur under a modal scrim. Half the panel blur: the scrim is there to
+/// retire the desk, not to frost it.
+const double _scrimSigma = 12;
+
 /// An overlay over the desk.
 ///
 /// [floating] presents the child as a window sitting on the desk rather than
@@ -1160,14 +1163,21 @@ class _AppShellState extends State<AppShell> {
 /// Escape and a click on the scrim both dismiss it, because a surface you
 /// cannot leave is a trap.
 class _Overlay extends StatelessWidget {
-  const _Overlay({required this.child, required this.onDismiss});
+  const _Overlay({
+    required this.child,
+    required this.onDismiss,
+    this.maxWidth = 880,
+  });
+
+  /// The card's width. 880 fits the sheet and diagnostics; the palette is
+  /// narrower in the reference, at 576.
+  final double maxWidth;
 
   final Widget child;
   final VoidCallback onDismiss;
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Widget body = Stack(
       children: <Widget>[
@@ -1186,13 +1196,14 @@ class _Overlay extends StatelessWidget {
             // panels off actually turns them all off.
             child: Builder(
               builder: (BuildContext context) {
+                // slate-950 at 70% under a 12 px blur, as the reference
+                // scrims every modal: dark enough to retire the desk, light
+                // enough that its shapes still read through.
                 final Widget scrim = ColoredBox(
-                  color: Colors.black.withValues(
-                    alpha: isDark ? 0.55 : 0.30,
-                  ),
+                  color: DexGlass.of(context).scrim,
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
-                final double sigma = DexGlass.of(context).blur;
+                const double sigma = _scrimSigma;
                 return BackdropFilter(
                   filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                   child: scrim,
@@ -1205,14 +1216,14 @@ class _Overlay extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(DexSpace.xxl),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 880, maxHeight: 620),
+              constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 620),
               // GlassPanel, like every other surface. This card used to
               // hand-roll its own fill, its own hairline and its own blur — at
               // 28 rather than the committed 24 — which made the one place
               // that most needs the shared primitive the one place not using
               // it. That is how a glass design drifts into eleven glasses.
               child: GlassPanel(
-                radius: DexRadius.dialog,
+                radius: DexRadius.modal,
                 fill: DexGlass.of(context).substrate,
                 child: child,
               ),

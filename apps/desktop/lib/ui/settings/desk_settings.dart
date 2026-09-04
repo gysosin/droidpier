@@ -93,16 +93,43 @@ class DeskSettings extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text('Settings', style: t.headlineMedium),
-                    const SizedBox(height: DexSpace.xs),
-                    Text(
-                      'How the desk behaves. Your phone’s own settings stay on '
-                      'the phone.',
-                      style: t.bodyLarge?.copyWith(color: c.muted),
+                    Row(
+                      children: <Widget>[
+                        Container(
+                          width: DexHit.comfortable,
+                          height: DexHit.comfortable,
+                          decoration: BoxDecoration(
+                            color: DexGlass.of(context).fill,
+                            borderRadius: BorderRadius.circular(
+                              DexRadius.control,
+                            ),
+                          ),
+                          child: Icon(
+                            DexIcons.monitor,
+                            size: 18,
+                            color: c.signal,
+                          ),
+                        ),
+                        const SizedBox(width: DexSpace.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('Desk Settings', style: t.titleLarge),
+                              Text(
+                                'How the desk behaves. Your phone’s own '
+                                'settings stay on the phone.',
+                                style: t.bodySmall?.copyWith(color: c.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: DexSpace.xl),
                     _Group(
                       title: 'Appearance',
+                      icon: DexIcons.palette,
                       colors: c,
                       onReset: () {
                         onThemeChanged(ThemeMode.system);
@@ -127,7 +154,7 @@ class DeskSettings extends StatelessWidget {
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _SwitchRow(
-                          title: 'Reduce motion',
+                          title: 'Reduce Motion',
                           detail:
                               'Skips the entrance animations. Already on if '
                               'your system asks for reduced motion.',
@@ -137,7 +164,7 @@ class DeskSettings extends StatelessWidget {
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _SwitchRow(
-                          title: 'Frosted panels',
+                          title: 'Frosted Panels',
                           detail:
                               'Blurs the desk behind panels. Turn off for a '
                               'flatter, cheaper desk on weaker hardware.',
@@ -147,7 +174,7 @@ class DeskSettings extends StatelessWidget {
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _WallpaperRow(
-                          title: 'Wallpaper',
+                          title: 'Lit Desktop Wallpaper',
                           detail: 'The desk background.',
                           colors: c,
                           selected: wallpaperIndex,
@@ -157,12 +184,12 @@ class DeskSettings extends StatelessWidget {
                     ),
                     const SizedBox(height: DexSpace.lg),
                     _Group(
-                      title: 'Desktop mode',
+                      title: 'Desktop Mode',
                       colors: c,
                       onReset: () => onSnapChanged(true),
                       children: <Widget>[
                         _SwitchRow(
-                          title: 'Window snapping',
+                          title: 'Window Snapping',
                           detail: 'Halves and quarters at screen edges.',
                           value: snapEnabled,
                           onChanged: onSnapChanged,
@@ -170,54 +197,57 @@ class DeskSettings extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (onManagePhones != null ||
-                        onOpenPermissions != null) ...<Widget>[
-                      const SizedBox(height: DexSpace.lg),
-                      _Group(
-                        title: 'Phone',
-                        colors: c,
-                        children: <Widget>[
-                          if (onManagePhones != null)
-                            _ActionRow(
-                              title: 'Manage phones',
-                              detail: 'Switch phone or pair a new one.',
-                              action: 'Open',
-                              onPressed: onManagePhones!,
-                              colors: c,
-                            ),
-                          if (onManagePhones != null &&
-                              onOpenPermissions != null)
-                            Divider(
-                              height: 1,
-                              thickness: DexStroke.hairline,
-                              color: c.line,
-                            ),
-                          if (onOpenPermissions != null)
-                            _ActionRow(
-                              title: 'Permissions',
-                              detail: 'What the phone has granted the desktop.',
-                              action: 'Open',
-                              onPressed: onOpenPermissions!,
-                              colors: c,
-                            ),
-                        ],
-                      ),
-                    ],
                     const SizedBox(height: DexSpace.lg),
                     _Group(
-                      title: 'Connection',
+                      title: 'Phone links',
+                      icon: DexIcons.smartphone,
                       colors: c,
                       children: <Widget>[
-                        _ActionRow(
-                          title: 'Disconnect',
-                          detail: deviceLabel == null
-                              ? 'End the session.'
-                              : 'End the session with $deviceLabel. The apps '
-                                    'keep running on the phone.',
-                          action: 'Disconnect',
-                          onPressed: onDisconnect,
-                          colors: c,
-                          danger: true,
+                        Padding(
+                          padding: const EdgeInsets.all(DexSpace.sm),
+                          // Bounded on purpose: stretch needs a height to
+                          // stretch to, and the settings column scrolls.
+                          child: IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                if (onManagePhones != null) ...<Widget>[
+                                  Expanded(
+                                    child: _LinkTile(
+                                      title: 'Manage Phones…',
+                                      detail: 'Switch phone or pair Wi-Fi',
+                                      onPressed: onManagePhones!,
+                                      colors: c,
+                                    ),
+                                  ),
+                                  const SizedBox(width: DexSpace.sm),
+                                ],
+                                if (onOpenPermissions != null) ...<Widget>[
+                                  Expanded(
+                                    child: _LinkTile(
+                                      title: 'Permissions…',
+                                      detail:
+                                          'What the phone has granted the desk',
+                                      onPressed: onOpenPermissions!,
+                                      colors: c,
+                                    ),
+                                  ),
+                                  const SizedBox(width: DexSpace.sm),
+                                ],
+                                Expanded(
+                                  child: _LinkTile(
+                                    title: 'Disconnect',
+                                    detail: deviceLabel == null
+                                        ? 'End active session'
+                                        : 'End the session with $deviceLabel',
+                                    onPressed: onDisconnect,
+                                    colors: c,
+                                    danger: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -253,7 +283,7 @@ class DeskSettings extends StatelessWidget {
                           thickness: DexStroke.hairline,
                           color: c.line,
                         ),
-                        _NoteRow(
+                        _CautionRow(
                           title: 'Scope',
                           detail:
                               'Desktop audio forwarding is not implemented; '
@@ -280,9 +310,13 @@ class _Group extends StatelessWidget {
     required this.children,
     required this.colors,
     this.onReset,
+    this.icon,
   });
 
   final String title;
+
+  /// The group's glyph, where the reference gives it one.
+  final IconData? icon;
   final List<Widget> children;
   final DexColors colors;
 
@@ -298,6 +332,10 @@ class _Group extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
+            if (icon case final IconData glyph) ...<Widget>[
+              Icon(glyph, size: 12, color: colors.signal),
+              const SizedBox(width: 6),
+            ],
             Expanded(
               child: Text(
                 title.toUpperCase(),
@@ -319,13 +357,20 @@ class _Group extends StatelessWidget {
                       horizontal: DexSpace.sm,
                       vertical: DexSpace.xs,
                     ),
-                    child: Text(
-                      'Reset',
-                      style: DexTheme.data(
-                        colors,
-                        size: 10,
-                        color: colors.muted,
-                      ).copyWith(letterSpacing: 1.4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(DexIcons.rotateCcw, size: 11, color: colors.muted),
+                        const SizedBox(width: DexSpace.xs),
+                        Text(
+                          'Reset group',
+                          style: DexTheme.data(
+                            colors,
+                            size: 10,
+                            color: colors.muted,
+                          ).copyWith(letterSpacing: 1.4),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -532,44 +577,6 @@ class _ChoiceRow extends StatelessWidget {
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.title,
-    required this.detail,
-    required this.action,
-    required this.onPressed,
-    required this.colors,
-    this.danger = false,
-  });
-
-  final String title;
-  final String detail;
-  final String action;
-  final VoidCallback onPressed;
-  final DexColors colors;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    return _RowShell(
-      title: title,
-      detail: detail,
-      colors: colors,
-      trailing: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: danger ? colors.fault : colors.text,
-          side: BorderSide(
-            color: danger ? colors.fault : colors.line,
-            width: DexStroke.hairline,
-          ),
-        ),
-        child: Text(action),
-      ),
-    );
-  }
-}
-
 /// A row of wallpaper swatches; the selected one carries a ring.
 class _WallpaperRow extends StatelessWidget {
   const _WallpaperRow({
@@ -604,7 +611,7 @@ class _WallpaperRow extends StatelessWidget {
             // current theme colours so it reads right in light and dark.
             _Swatch(
               choice: DexWallpaperChoice(
-                name: 'Default',
+                name: 'Default Lit',
                 colors: DexGlass.of(context).wallpaper,
               ),
               selected: selected <= 0,
@@ -645,41 +652,51 @@ class _Swatch extends StatelessWidget {
       button: true,
       selected: selected,
       label: '${choice.name} wallpaper',
+      excludeSemantics: true,
       child: Tooltip(
         message: choice.name,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(DexRadius.card),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                width: 76,
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(DexRadius.card),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: choice.colors,
-                  ),
-                  border: Border.all(
-                    color: selected ? colors.signal : colors.line,
-                    width: selected ? 2.5 : DexStroke.hairline,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.md,
+              vertical: DexSpace.sm,
+            ),
+            decoration: BoxDecoration(
+              color: selected
+                  ? colors.signal.withValues(alpha: 0.12)
+                  : colors.surface.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(DexRadius.card),
+              border: Border.all(
+                color: selected ? colors.signal : colors.line,
+                width: selected ? DexStroke.focusRing : DexStroke.hairline,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: choice.colors,
+                    ),
                   ),
                 ),
-                child: selected
-                    ? Icon(DexIcons.check, color: Colors.white, size: 20)
-                    : null,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                choice.name,
-                style: t.bodySmall?.copyWith(
-                  color: selected ? colors.text : colors.muted,
+                const SizedBox(width: DexSpace.sm),
+                Text(
+                  choice.name,
+                  style: t.bodySmall?.copyWith(
+                    color: selected ? colors.text : colors.muted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -757,23 +774,180 @@ class _AccentSwatch extends StatelessWidget {
       button: true,
       selected: selected,
       label: accent.name,
-      child: Tooltip(
-        message: accent.name,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(DexRadius.pill),
-          child: Container(
-            width: DexHit.comfortable,
-            height: DexHit.comfortable,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        child: SizedBox(
+          width: 84,
+          child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colour,
-              shape: BoxShape.circle,
-              // Selection out-contrasts hover, which out-contrasts rest.
+              color: selected
+                  ? colour.withValues(alpha: 0.12)
+                  : colors.surface.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(DexRadius.card),
               border: Border.all(
-                color: selected ? colors.text : colors.line,
-                width: selected ? DexStroke.focusRing : DexStroke.hairline,
+                color: selected ? colour : colors.line,
+                width: DexStroke.hairline,
               ),
             ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DexSpace.sm,
+                vertical: DexSpace.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // The swatch itself wears the ring: it is what the eye
+                  // compares across the row, and what the picker's tests read.
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: colour,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected ? colors.text : colors.line,
+                        width: selected
+                            ? DexStroke.focusRing
+                            : DexStroke.hairline,
+                      ),
+                    ),
+                    child: selected
+                        ? Icon(DexIcons.check, size: 14, color: colors.bg)
+                        : null,
+                  ),
+                  const SizedBox(height: 6),
+                  // The name under the swatch, as the reference sets it: a
+                  // colour is not a label.
+                  Text(
+                    accent.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: selected ? colors.text : colors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A note set as a caution: amber tint, a warning mark, the same shape as the
+/// rows around it. The reference uses this for the one limitation people hit
+/// most — sound stays on the phone.
+class _CautionRow extends StatelessWidget {
+  const _CautionRow({
+    required this.title,
+    required this.detail,
+    required this.colors,
+  });
+
+  final String title;
+  final String detail;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Container(
+      margin: const EdgeInsets.all(DexSpace.sm),
+      padding: const EdgeInsets.all(DexSpace.md),
+      decoration: BoxDecoration(
+        color: colors.warn.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(DexRadius.control),
+        border: Border.all(
+          color: colors.warn.withValues(alpha: 0.35),
+          width: DexStroke.hairline,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(DexIcons.triangleAlert, size: 16, color: colors.warn),
+          const SizedBox(width: DexSpace.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(title, style: t.labelLarge?.copyWith(color: colors.warn)),
+                const SizedBox(height: 2),
+                Text(detail, style: t.bodySmall?.copyWith(color: colors.text)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One of the three phone links: a title, what it does, and nothing else. The
+/// destructive one is set in the fault colour rather than given a second
+/// confirmation, because it ends a session, not data.
+class _LinkTile extends StatelessWidget {
+  const _LinkTile({
+    required this.title,
+    required this.detail,
+    required this.onPressed,
+    required this.colors,
+    this.danger = false,
+  });
+
+  final String title;
+  final String detail;
+  final VoidCallback onPressed;
+  final DexColors colors;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      label: title,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        child: Container(
+          padding: const EdgeInsets.all(DexSpace.md),
+          constraints: const BoxConstraints(minHeight: DexHit.primary),
+          decoration: BoxDecoration(
+            color: danger
+                ? colors.fault.withValues(alpha: 0.10)
+                : colors.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(DexRadius.card),
+            border: Border.all(
+              color: danger ? colors.fault.withValues(alpha: 0.4) : colors.line,
+              width: DexStroke.hairline,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: t.labelLarge?.copyWith(
+                  color: danger ? colors.fault : colors.text,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                detail,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: t.bodySmall?.copyWith(color: colors.muted),
+              ),
+            ],
           ),
         ),
       ),

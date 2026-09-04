@@ -141,9 +141,18 @@ class _NotificationCenterState extends State<NotificationCenter> {
                               Expanded(
                                 child: Row(
                                   children: <Widget>[
+                                    // Amber, as the reference colours it: this
+                                    // is the one panel whose contents ask for
+                                    // attention rather than report a state.
+                                    Icon(
+                                      DexIcons.notifications,
+                                      size: 18,
+                                      color: c.warn,
+                                    ),
+                                    const SizedBox(width: DexSpace.sm),
                                     Flexible(
                                       child: Text(
-                                        'Notifications',
+                                        'Notification Centre',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: t.titleLarge,
@@ -174,7 +183,14 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                   onPressed: _pending.isEmpty
                                       ? _dismissAll
                                       : null,
-                                  child: const Text('Clear all'),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Icon(DexIcons.trash, size: 14),
+                                      const SizedBox(width: DexSpace.xs),
+                                      const Text('Clear all'),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(width: DexSpace.xs),
                               ],
@@ -198,6 +214,18 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                 onActivate: widget.onActivate,
                               ),
                             },
+                          ),
+                          const SizedBox(height: DexSpace.sm),
+                          // The reference closes the panel on this line, and
+                          // it is true: dismissing here dismisses on the
+                          // phone, and the phone's list is the real one.
+                          Center(
+                            child: Text(
+                              'The physical phone remains the authoritative '
+                              'source of truth',
+                              textAlign: TextAlign.center,
+                              style: DexTheme.data(c, size: 10),
+                            ),
                           ),
                           // What this panel is and is not. Dismissing here
                           // asks the phone to dismiss; the phone decides, and
@@ -408,7 +436,7 @@ class _CountBadge extends StatelessWidget {
         border: Border.all(color: colors.line, width: DexStroke.hairline),
       ),
       // Tabular, so a group going from 9 to 10 does not shift the badge.
-      child: Text('$count', style: DexTheme.data(colors, size: 11)),
+      child: Text('$count items', style: DexTheme.data(colors, size: 11)),
     );
   }
 }

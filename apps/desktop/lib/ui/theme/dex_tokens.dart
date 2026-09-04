@@ -28,8 +28,13 @@ abstract final class DexRadius {
   /// Dialogs and menus. `rounded-2xl`.
   static const double dialog = 16;
 
-  /// Panels and windows — the taskbar, widgets, the app drawer, window frames.
+  /// Panels and windows — the taskbar, widgets, window frames.
   static const double panel = 16;
+
+  /// Modal shells — the launcher, the palette, the sheet, every overlay card.
+  /// The brief's scale stopped at 16; the reference ships 20 on each of these,
+  /// and the rendered reference is the spec.
+  static const double modal = 20;
 
   /// Fully round. Status dots, the gesture pill, toggle tracks.
   static const double pill = 999;

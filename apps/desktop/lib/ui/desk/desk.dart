@@ -11,6 +11,7 @@ import '../workspace/window_model.dart';
 import 'analog_clock.dart';
 import 'control_center.dart';
 import 'desk_icons.dart';
+import 'desk_card.dart';
 import 'desk_widgets.dart';
 import 'desk_search.dart';
 import 'notification_center.dart';
@@ -196,6 +197,9 @@ class _DeskState extends State<Desk> {
             top: 0,
             bottom: _taskbarHeight,
             child: _Furniture(
+              onOpenControls: () => setState(() => _controlsOpen = true),
+              onOpenNotifications: () =>
+                  setState(() => _notificationsOpen = true),
               now: now,
               recessive: _focused,
               applications: snapshot.applications,
@@ -324,7 +328,13 @@ class _Furniture extends StatelessWidget {
     required this.liveClock,
     required this.snapshot,
     required this.onMediaAction,
+    required this.onOpenControls,
+    required this.onOpenNotifications,
   });
+
+  /// The widget column's doors: a card that previews a surface opens it.
+  final VoidCallback onOpenControls;
+  final VoidCallback onOpenNotifications;
 
   /// Everything the right-hand column reads. All of it is already on the
   /// snapshot the desk is given, so the column costs no new plumbing.
@@ -350,7 +360,7 @@ class _Furniture extends StatelessWidget {
   /// The right-hand column's width, and the desk width below which it is
   /// dropped entirely. The icons and the search bar are what the desk is for;
   /// a status card squeezed against them is worse than no status card.
-  static const double _columnWidth = 320;
+  static const double _columnWidth = DeskCard.width;
   static const double _columnMinWidth = 1180;
 
   /// 660, measured rather than guessed. The column hangs below the clock, so
@@ -503,6 +513,7 @@ class _Furniture extends StatelessWidget {
                             telemetry: snapshot.telemetry,
                             device: snapshot.selectedDevice,
                             recessive: recessive,
+                            onOpenControls: onOpenControls,
                           ),
                         ),
                         const SizedBox(height: DexSpace.md),
@@ -513,6 +524,7 @@ class _Furniture extends StatelessWidget {
                             status: snapshot.notificationStatus,
                             now: now,
                             recessive: recessive,
+                            onOpen: onOpenNotifications,
                           ),
                         ),
                       ],

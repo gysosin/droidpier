@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import 'commands.dart';
@@ -111,14 +113,35 @@ class _CommandPaletteState extends State<CommandPalette> {
             style: t.bodyLarge,
             cursorColor: c.signal,
             decoration: InputDecoration(
-              hintText: 'Type a command…',
+              hintText: 'Type a command or search actions (Ctrl+Shift+P)…',
               hintStyle: t.bodyLarge?.copyWith(color: c.muted),
               prefixIcon: Icon(DexIcons.search, size: 18, color: c.signal),
+              // The way out, printed on the field as the reference prints it.
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: DexSpace.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(DexRadius.control),
+                    border: Border.all(
+                      color: c.line,
+                      width: DexStroke.hairline,
+                    ),
+                  ),
+                  child: Text('ESC', style: DexTheme.data(c, size: 9)),
+                ),
+              ),
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
               filled: true,
               fillColor: c.surface.withValues(alpha: 0.72),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: DexSpace.md,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: DexSpace.md),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DexRadius.control),
                 borderSide: BorderSide(color: c.line),
@@ -159,24 +182,52 @@ class _CommandPaletteState extends State<CommandPalette> {
               ),
             )
           else
-            Flexible(child: _Results(results: results, selected: selected, colors: c, groupLabel: _groupLabel, onRun: (int i) {
-              setState(() => _selected = i);
-              _runSelected();
-            }, onHover: (int i) => setState(() => _selected = i))),
+            Flexible(
+              child: _Results(
+                results: results,
+                selected: selected,
+                colors: c,
+                groupLabel: _groupLabel,
+                onRun: (int i) {
+                  setState(() => _selected = i);
+                  _runSelected();
+                },
+                onHover: (int i) => setState(() => _selected = i),
+              ),
+            ),
           // How to drive it. The palette is keyboard-first and the keys are
           // not guessable from looking at it.
           const SizedBox(height: DexSpace.md),
           Divider(color: c.line, height: DexStroke.hairline),
           const SizedBox(height: DexSpace.sm),
-          Text(
-            'Up and Down to choose  \u00b7  Enter to run  \u00b7  Esc to close',
-            style: DexTheme.data(c, size: 10),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Navigation: Up / Down to choose \u00b7 Enter to execute',
+                  style: DexTheme.data(c, size: 10),
+                ),
+              ),
+              Text(
+                'Unified Shell Dispatcher',
+                style: DexTheme.data(c, size: 10),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+
+/// A glyph per group. The reference draws a settings cog for shell actions, a
+/// phone for device ones, a window for windows, and a launcher grid for apps.
+IconData _iconFor(DexCommandGroup g) => switch (g) {
+  DexCommandGroup.shell => DexIcons.settings,
+  DexCommandGroup.device => DexIcons.portrait,
+  DexCommandGroup.window => DexIcons.maximise,
+  DexCommandGroup.app => DexIcons.appsGrid,
+};
 
 class _Results extends StatelessWidget {
   const _Results({
@@ -207,30 +258,13 @@ class _Results extends StatelessWidget {
       itemCount: results.length,
       itemBuilder: (BuildContext context, int i) {
         final DexCommand command = results[i];
-        final bool startsGroup = i == 0 || results[i - 1].group != command.group;
         final bool isSelected = i == selected;
+        final DexGlass glass = DexGlass.of(context);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (startsGroup)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DexSpace.xs,
-                  DexSpace.md,
-                  0,
-                  DexSpace.sm,
-                ),
-                child: Text(
-                  groupLabel(command.group),
-                  style: DexTheme.data(
-                    colors,
-                    size: 10,
-                    color: colors.muted,
-                  ).copyWith(letterSpacing: 1.6),
-                ),
-              ),
             Semantics(
               button: true,
               selected: isSelected,
@@ -254,29 +288,72 @@ class _Results extends StatelessWidget {
                       minHeight: DexHit.primary,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.signal.withValues(alpha: 0.16)
-                          : Colors.transparent,
+                      color: isSelected ? glass.fillStrong : Colors.transparent,
                       borderRadius: BorderRadius.circular(DexRadius.card),
                       border: Border.all(
-                        color: isSelected ? colors.signal : Colors.transparent,
+                        color: isSelected
+                            ? glass.strokeStrong
+                            : Colors.transparent,
                         width: DexStroke.hairline,
                       ),
                     ),
                     child: Row(
                       children: <Widget>[
+                        // The reference gives every command an icon well and
+                        // tags its group inline, so a row is legible on its
+                        // own rather than by the header it sits under.
+                        Container(
+                          width: DexHit.comfortable,
+                          height: DexHit.comfortable,
+                          decoration: BoxDecoration(
+                            color: glass.fill,
+                            borderRadius: BorderRadius.circular(
+                              DexRadius.control,
+                            ),
+                          ),
+                          child: Icon(
+                            _iconFor(command.group),
+                            size: 16,
+                            color: colors.muted,
+                          ),
+                        ),
+                        const SizedBox(width: DexSpace.md),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              Text(
-                                command.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: t.bodyMedium?.copyWith(
-                                  color: colors.text,
-                                ),
+                              Row(
+                                children: <Widget>[
+                                  Flexible(
+                                    child: Text(
+                                      command.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: t.bodyMedium?.copyWith(
+                                        color: colors.text,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: DexSpace.sm),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: glass.fill,
+                                      borderRadius: BorderRadius.circular(
+                                        DexRadius.control,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      groupLabel(command.group),
+                                      style: DexTheme.data(colors, size: 9),
+                                    ),
+                                  ),
+                                ],
                               ),
                               if (command.subtitle case final String s)
                                 Text(

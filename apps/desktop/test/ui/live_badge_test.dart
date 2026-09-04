@@ -108,14 +108,17 @@ void main() {
     final Tooltip tip = tester.widget<Tooltip>(
       find.ancestor(of: find.text('Live'), matching: find.byType(Tooltip)),
     );
-    expect(tip.message, contains('9'));
+    // The badge draws a card, not a system tooltip, so the words live in a
+    // rich message; the plain text is what a person reads either way.
+    final String tipText = tip.richMessage!.toPlainText();
+    expect(tipText, contains('9'));
     expect(
-      tip.message,
+      tipText,
       contains('count changes, not speed'),
       reason: 'the number needs its meaning attached wherever it appears',
     );
     expect(
-      tip.message,
+      tipText,
       contains('presented'),
       reason:
           'every rate is named. This tooltip once read "Screen updates" while '

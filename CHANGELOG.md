@@ -2,6 +2,83 @@
 
 ## Unreleased
 
+### Desktop UI brought to the reference design, surface by surface
+
+Compared against the running reference implementation, page by page and
+click by click, rather than against its source. What changed on screen:
+
+- **Boot**: a *Select Device* button in the masthead, a 36 px headline, a
+  line about what the product is once the link is up, the phone's name in
+  bold on the transport card, a filled *Open Workspace* action, and a bench
+  strip reading `PORT 3698: LISTEN · PORT 3699: SYNC · ADB: :5037`.
+- **Desk**: the wallpaper bloom is a 650 px disc; the Link Rail's stations
+  are 28 px discs with a status word; the search pill carries the Google
+  wordmark; the dock is back · home · recents · search with dot-and-name
+  chips and a round play/pause; the widget column is rebuilt to one card
+  idiom (icon, label, chip, rule) with a scrubber, a battery gauge and doors
+  to the control centre and the notification shade.
+- **Launcher**: 672 wide with a header row (icon, borderless field, clear,
+  ESC), a pinned section and a footer naming the phone.
+- **Command palette**: icon wells, inline group chips, the reference's hint
+  and ESC chip, shell → windows → apps order, and its footer.
+- **Shortcut sheet**: one column of cards, a keyboard-icon header with the
+  build, and an Escape Ladder card.
+- **Window switcher**: `WINDOW SWITCHER (ALT + TAB)` / `Z-Order Stack`, 176 px
+  cards with glyph, name, dot, a preview strip and the package, radius 24.
+- **Window chrome**: rotate · fullscreen · minimise · maximise · close, one
+  rotate glyph, and a *Live* badge that opens a STREAM PIPELINE card.
+- **Diagnostics**: activity-icon header with subtitle, one three-column
+  summary card, `ACTIVE VIDEO SURFACES (n)`, per-window rate strips, and a
+  `RECENTLY CLOSED SESSIONS (LAST 8)` card.
+- **Control centre**: `PHONE VOLUME LEVELS`, and *Manage Phones…* / *Desk
+  Settings…* on one row with their glyphs.
+- **Notification centre**: amber bell, *Notification Centre*, trash on
+  *Clear all*, `n items` per sender, and the closing line about the phone
+  being the source of truth.
+- **Settings**: monitor-icon *Desk Settings* header, group icons and *Reset
+  group*, accent cards with names, wallpaper chips (the default is now
+  *Default Lit*; *Slate Precision*, *Forest Canopy*), a PHONE LINKS row of
+  three tiles, and the audio caveat set as an amber caution.
+- **Connection**: an eyebrow, *Look again* with its icon, device rows with an
+  icon well and a USB / WI-FI badge, and segments *QR Code / Manual Entry /
+  Nearby Hints* in that order.
+- **Permissions**: shield header with subtitle, an *On* chip where nothing is
+  left to manage, and the port-3699 footer.
+- **Phone mirror**: the invented home screen is gone; the frame says what it
+  will show once the phone casts.
+- **Health HUD**: one solid line, bottom-left.
+- **Recovery**: centred, with a 56 px phase ring above the headline.
+- **First-run tour**: a progress rail, an icon well, a QUICK TOUR chip and
+  the counter in the footer.
+- **Token sheet**: Dark / Light and Glass / Matte toggles, underlined tabs,
+  and every semantic role as a card showing both hexes.
+- 91 more Lucide glyphs are bundled under `DexIcons`.
+- **Window bodies**: a starting window shows the app's tile, name and
+  package; a reconnecting one a 32 px ring above *Reconnecting to <app>*;
+  a stopped one a rose tint, a 40 px alert mark and a *Close* beside *Try
+  again*; a window with no video surface yet shows tile, name, package and a
+  chip saying so — in the reference's composition, with this app's honest
+  words.
+- **Modal shells** are radius 20 under a 70 % scrim blurred at 12, as the
+  reference draws every overlay; the window context menu is a 192 px slate
+  card at radius 12; the tray clock reads `12:56 am` over `5 Sept`.
+- **Diagnostics** closes with *Copy diagnostics report* and the close hint;
+  **Connection** is headed `HARDWARE MANAGER` / *Manage Android Phones* over
+  *Connected Devices*; the token sheet is the *DroidPier Token & Specimen
+  Explorer*; the shortcut sheet carries *The Ordered Escape Ladder* and the
+  reference's footer line.
+- **Companion preview**: the phone-side app, rendered inside a phone frame
+  as a review surface in the preview harness (`companion`), reading the
+  mock snapshot for its link state, readouts, permissions and pairing. Not
+  in the product, on purpose: a phone drawn on the desk is a picture of a
+  phone.
+
+Not shipped, and why: the reference's Wi-Fi SSID subline (the facade does
+not carry an SSID, and a placeholder would be a lie); its two-way Dark/Light
+theme control (System is a real setting here); its `Skip tour` / `Step n of
+4` wording (no capture of the tour exists to confirm it, and the tests pin
+the current words).
+
 Desktop shell improvements. Keyboard, launcher and window management.
 
 - The theme selector is a real segmented control rather than Material chips.

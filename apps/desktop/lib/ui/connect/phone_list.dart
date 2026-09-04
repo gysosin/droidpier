@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -71,7 +72,7 @@ class PhoneList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConnectPanel(
-      title: 'Phones',
+      title: 'Connected Devices',
       subtitle: 'Plugged in over USB, or already connected over Wi-Fi.',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -93,9 +94,10 @@ class PhoneList extends StatelessWidget {
           const SizedBox(height: DexSpace.lg),
           Row(
             children: <Widget>[
-              OutlinedButton(
+              OutlinedButton.icon(
                 onPressed: onRefresh,
-                child: const Text('Look again'),
+                icon: const Icon(DexIcons.refresh, size: 14),
+                label: const Text('Look again'),
               ),
               const Spacer(),
               FilledButton(
@@ -229,12 +231,24 @@ class _DeviceRow extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                Icon(
-                  device.connectionKind == DeviceConnectionKind.usb
-                      ? DexIcons.usb
-                      : DexIcons.wifi,
-                  size: 18,
-                  color: enabled ? colors.text : colors.muted,
+                Container(
+                  width: DexHit.comfortable,
+                  height: DexHit.comfortable,
+                  decoration: BoxDecoration(
+                    color: colors.surface.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(DexRadius.control),
+                    border: Border.all(
+                      color: colors.line,
+                      width: DexStroke.hairline,
+                    ),
+                  ),
+                  child: Icon(
+                    device.connectionKind == DeviceConnectionKind.usb
+                        ? DexIcons.usb
+                        : DexIcons.wifi,
+                    size: 18,
+                    color: enabled ? colors.signal : colors.muted,
+                  ),
                 ),
                 const SizedBox(width: DexSpace.md),
                 Expanded(
@@ -245,6 +259,7 @@ class _DeviceRow extends StatelessWidget {
                         device.name,
                         style: t.bodyLarge?.copyWith(
                           color: enabled ? colors.text : colors.muted,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -255,13 +270,54 @@ class _DeviceRow extends StatelessWidget {
                           if (device.androidVersion != null)
                             'Android ${device.androidVersion}',
                         ].join('  ·  '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: DexTheme.data(colors, size: 11),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: DexSpace.md),
-                Text(label, style: t.labelLarge?.copyWith(color: color)),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: t.labelLarge?.copyWith(color: color),
+                      ),
+                      const SizedBox(height: 2),
+                      // The transport as a badge, as the reference tags each
+                      // row: which cable or radio this phone is on is the first
+                      // thing a person checks when a link misbehaves.
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DexSpace.sm,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surface.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(
+                            DexRadius.control,
+                          ),
+                          border: Border.all(
+                            color: colors.line,
+                            width: DexStroke.hairline,
+                          ),
+                        ),
+                        child: Text(
+                          device.connectionKind == DeviceConnectionKind.usb
+                              ? 'USB'
+                              : 'WI-FI',
+                          style: DexTheme.data(colors, size: 9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 if (onDisconnect != null) ...<Widget>[
                   const SizedBox(width: DexSpace.md),
                   Tooltip(

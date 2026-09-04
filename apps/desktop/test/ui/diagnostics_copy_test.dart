@@ -66,7 +66,7 @@ void main() {
     await pumpShell(tester);
     await openDiagnostics(tester);
     expect(find.byType(StreamDiagnostics), findsOneWidget);
-    expect(find.text('Copy diagnostics'), findsNothing);
+    expect(find.text('Copy diagnostics report'), findsNothing);
   });
 
   testWidgets('it hands the host a paste-ready report', (
@@ -76,8 +76,8 @@ void main() {
     await pumpShell(tester, onCopyText: copied.add);
     await openDiagnostics(tester);
 
-    expect(find.text('Copy diagnostics'), findsOneWidget);
-    await tester.tap(find.text('Copy diagnostics'));
+    expect(find.text('Copy diagnostics report'), findsOneWidget);
+    await tester.tap(find.text('Copy diagnostics report'));
     await tester.pump();
 
     expect(copied, hasLength(1));

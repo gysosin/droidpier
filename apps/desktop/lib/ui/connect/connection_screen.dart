@@ -8,6 +8,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import 'connection_commands.dart';
 import 'connection_parts.dart';
@@ -488,7 +489,16 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Connect a phone', style: t.titleLarge),
+              Text(
+                'HARDWARE MANAGER',
+                style: DexTheme.data(
+                  c,
+                  size: 9,
+                  color: c.signal,
+                ).copyWith(letterSpacing: 1.6),
+              ),
+              const SizedBox(height: DexSpace.xs),
+              Text('Manage Android Phones', style: t.titleLarge),
               const SizedBox(height: DexSpace.xs),
               Text(
                 'Plug in over USB with USB debugging on, or add one over '

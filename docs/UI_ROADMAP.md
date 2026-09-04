@@ -1,5 +1,14 @@
 # UI roadmap
 
+> **Reference parity, 2026-09-05.** Every desktop surface was compared against the
+> reference implementation *running* — screenshots per page and per interaction at
+> 1440×900 — and brought to it: boot, desk, dock, launcher, palette, sheet, switcher,
+> window chrome and body states, diagnostics, control centre, notification centre,
+> settings, connection, permissions, mirror, HUD, recovery, tour and the token sheet.
+> `docs/UI_PARITY_PLAN.md` is the item-level record; the changelog lists what shipped
+> and what was left out and why. The companion view (item 2.x's desktop counterpart)
+> lives in the preview harness as a review surface, not in the product.
+>
 > **Status, 2026-09-04.** Tier 1 items 1.1–1.6 and structure item 4.4 are
 > implemented; see the changelog. Item 1.3 shipped without "always on top",
 > which has no API behind it. Item 1.5 shipped pinning via the context menu;

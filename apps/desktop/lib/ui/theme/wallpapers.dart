@@ -38,11 +38,11 @@ const List<DexWallpaperChoice> kWallpaperChoices = <DexWallpaperChoice>[
     colors: <Color>[Color(0xFF1E293B), Color(0xFF6B5B95), Color(0xFFA78BBA)],
   ),
   DexWallpaperChoice(
-    name: 'Slate',
+    name: 'Slate Precision',
     colors: <Color>[Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
   ),
   DexWallpaperChoice(
-    name: 'Forest',
+    name: 'Forest Canopy',
     colors: <Color>[Color(0xFF052E16), Color(0xFF14532D), Color(0xFF166534)],
   ),
 ];

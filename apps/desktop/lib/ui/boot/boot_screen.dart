@@ -67,7 +67,7 @@ class BootScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              const Entrance(child: _Masthead()),
+              Entrance(child: _Masthead(onSelectDevice: onConnect)),
               Expanded(
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
@@ -145,7 +145,9 @@ class BootScreen extends StatelessWidget {
 /// Masthead: the product identity, held at the top edge like an instrument's
 /// faceplate label rather than floating with the content.
 class _Masthead extends StatelessWidget {
-  const _Masthead();
+  const _Masthead({this.onSelectDevice});
+
+  final VoidCallback? onSelectDevice;
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +208,28 @@ class _Masthead extends StatelessWidget {
           ),
           const SizedBox(width: DexSpace.md),
           Text(versionLabel(), style: DexTheme.data(c, size: 10)),
+          const Spacer(),
+          // The reference keeps the phone chooser one press away from the
+          // masthead, whatever the phase.
+          if (onSelectDevice case final VoidCallback select)
+            TextButton.icon(
+              onPressed: select,
+              icon: Icon(DexIcons.portrait, size: 14, color: c.signal),
+              label: Text(
+                'Select Device',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: c.text,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: DexGlass.of(context).fill,
+                minimumSize: const Size(0, DexHit.comfortable),
+                padding: const EdgeInsets.symmetric(horizontal: DexSpace.md),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DexRadius.control),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -239,7 +263,13 @@ class _Intent extends StatelessWidget {
           ).copyWith(letterSpacing: 2, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: DexSpace.md),
-        SwapText(screen._headline, style: t.displaySmall!),
+        SwapText(
+          screen._headline,
+          style: t.displaySmall!.copyWith(
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: DexSpace.md),
         Text(
           boot.message,
@@ -247,6 +277,15 @@ class _Intent extends StatelessWidget {
             color: screen._isFailed ? c.fault : c.muted,
           ),
         ),
+        if (screen._isReady) ...<Widget>[
+          const SizedBox(height: DexSpace.sm),
+          Text(
+            'Bringing applications on your physical phone into a freeform '
+            'desktop workspace. The apps run on the phone; your computer '
+            'provides the desk.',
+            style: t.bodyMedium?.copyWith(color: c.muted),
+          ),
+        ],
         // Which phone, and how it is attached.
         //
         // The name alone is not enough when someone has two of the same model
@@ -284,6 +323,16 @@ class _Intent extends StatelessWidget {
                           c,
                           size: 9,
                         ).copyWith(letterSpacing: 1.6),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        d.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: t.titleSmall?.copyWith(
+                          color: c.text,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       _DeviceLine(device: d, colors: c),
@@ -334,9 +383,11 @@ class _Intent extends StatelessWidget {
                 child: const Text('Choose a phone'),
               ),
             ] else if (screen._isReady)
-              OutlinedButton(
+              FilledButton.icon(
                 onPressed: screen.onConnect,
-                child: const Text('Open workspace'),
+                icon: const Icon(DexIcons.forward, size: 16),
+                iconAlignment: IconAlignment.end,
+                label: const Text('Open Workspace'),
               )
             else
               const _WorkingLabel(),
@@ -361,9 +412,9 @@ class _DeviceLine extends StatelessWidget {
       DeviceConnectionKind.wifi => 'Wi-Fi',
     };
     final String label = <String>[
-      device.model ?? device.name,
-      how,
+      if (device.model case final String m when m != device.name) m,
       if (device.androidVersion case final String v) 'Android $v',
+      '$how Link',
     ].join('  ·  ');
 
     return Row(
@@ -463,7 +514,7 @@ class _RailPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Five-stage hardware handshake',
+                      'Five-Stage Hardware Handshake',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: c.text,
                         fontWeight: FontWeight.w600,
@@ -545,15 +596,14 @@ class _BenchReadout extends StatelessWidget {
         spacing: DexSpace.xl,
         runSpacing: DexSpace.sm,
         children: <Widget>[
-          _Readout(label: 'phase', value: boot.phase.name, colors: c),
+          _Readout(label: 'PORT 3698:', value: 'LISTEN', colors: c),
+          _Readout(label: 'PORT 3699:', value: 'SYNC', colors: c),
+          _Readout(label: 'ADB:', value: ':5037', colors: c),
           _Readout(
-            label: 'stages',
+            label: 'STAGES',
             value: '$done/${boot.stages.length}',
             colors: c,
           ),
-          _Readout(label: 'agent', value: 'tcp 3698', colors: c),
-          _Readout(label: 'companion', value: 'ws 3699', colors: c),
-          _Readout(label: 'adb', value: 'tcp 5037', colors: c),
           // The claim the product makes about itself, on the screen where a
           // person is deciding whether to plug their phone in.
           Row(
@@ -569,7 +619,7 @@ class _BenchReadout extends StatelessWidget {
               ),
               const SizedBox(width: DexSpace.sm),
               Text(
-                'local only \u00b7 no cloud relay',
+                'Local Privacy Verified \u00b7 Zero Cloud Relay',
                 style: DexTheme.data(c, size: 11),
               ),
             ],

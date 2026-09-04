@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
-import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -60,59 +59,62 @@ class HealthHud extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final HealthGrade grade = gradeFps(framesPerSecond);
+    final Color dot = switch (grade) {
+      HealthGrade.good => c.trace,
+      HealthGrade.fair => c.warn,
+      HealthGrade.poor => c.fault,
+      HealthGrade.unknown => c.muted,
+    };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DexSpace.md,
-        vertical: DexSpace.sm,
-      ),
-      decoration: BoxDecoration(
-        // Opaque, not frosted. A BackdropFilter here would re-blur the video
-        // behind it on every frame.
-        color: c.bg.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(DexRadius.card),
-        border: Border.all(color: c.line, width: DexStroke.hairline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (windowLabel case final String label) ...<Widget>[
+    // One line, solid, no blur, no pointer. This is the zero-overhead readout:
+    // it sits over live video and must cost nothing to keep there.
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: DexSpace.md,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: c.bg,
+          borderRadius: BorderRadius.circular(DexRadius.control),
+          border: Border.all(color: c.line, width: DexStroke.hairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: dot),
+            ),
+            const SizedBox(width: DexSpace.sm),
             Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DexTheme.data(c, size: 11, color: c.muted),
+              framesPerSecond == null
+                  ? '\u2014 fps'
+                  : '${framesPerSecond!.round()} fps',
+              style: DexTheme.data(
+                c,
+                size: 11,
+                color: c.text,
+              ).copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: DexSpace.md),
+            Text(
+              'RTT: ${latency == null ? '\u2014' : '${latency!.value.round()}ms'}',
+              style: DexTheme.data(c, size: 11),
+            ),
+            const SizedBox(width: DexSpace.md),
+            Text(
+              'TX: ${throughput == null ? '\u2014' : _bytes(throughput!.value)}',
+              style: DexTheme.data(c, size: 11),
+            ),
+            if (windowLabel case final String label) ...<Widget>[
+              const SizedBox(width: DexSpace.md),
+              Text('Target: $label', style: DexTheme.data(c, size: 11)),
+            ],
           ],
-          _Reading(
-            label: 'fps',
-            value: framesPerSecond == null
-                ? '—'
-                : framesPerSecond!.toStringAsFixed(1),
-            grade: gradeFps(framesPerSecond),
-            colors: c,
-          ),
-          const SizedBox(width: DexSpace.md),
-          _Reading(
-            label: 'lat',
-            value: latency == null
-                ? '—'
-                : '${latency!.value.round()} ms',
-            grade: gradeLatency(latency?.value),
-            colors: c,
-          ),
-          const SizedBox(width: DexSpace.md),
-          // No grade. Throughput is a bandwidth reading, not a health signal:
-          // a low number on a still screen is correct, and colouring it would
-          // invent a fault out of an idle desk.
-          _Reading(
-            label: 'rate',
-            value: throughput == null ? '—' : _bytes(throughput!.value),
-            grade: HealthGrade.unknown,
-            colors: c,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -128,39 +130,3 @@ class HealthHud extends StatelessWidget {
   }
 }
 
-class _Reading extends StatelessWidget {
-  const _Reading({
-    required this.label,
-    required this.value,
-    required this.grade,
-    required this.colors,
-  });
-
-  final String label;
-  final String value;
-  final HealthGrade grade;
-  final DexColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color tint = switch (grade) {
-      // trace, not signal. `trace` is the palette's telemetry green and this is
-      // telemetry; `signal` is the accent blue, which beside amber and red
-      // stops reading as the top of a traffic light and starts reading as a
-      // fourth, unrelated state.
-      HealthGrade.good => colors.trace,
-      HealthGrade.fair => colors.warn,
-      HealthGrade.poor => colors.fault,
-      HealthGrade.unknown => colors.text,
-    };
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(label, style: DexTheme.data(colors, size: 10, color: colors.muted)),
-        const SizedBox(width: DexSpace.xs),
-        // Tabular, so a rate crossing 9.9 to 10.0 does not shift the row.
-        SwapText(value, style: DexTheme.data(colors, size: 12, color: tint)),
-      ],
-    );
-  }
-}

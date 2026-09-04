@@ -21,7 +21,7 @@ class DeskSearchBars extends StatelessWidget {
       // reads as a browser chrome; a pill reads as a desk affordance.
       constraints: const BoxConstraints(maxWidth: 384),
       child: _SearchBar(
-        hint: 'Search Google',
+        hint: 'Search the web or apps…',
         onSubmit: (String q) => onSearch(
           'https://www.google.com/search?q=${Uri.encodeQueryComponent(q)}',
         ),
@@ -68,7 +68,7 @@ class _SearchBarState extends State<_SearchBar> {
       ),
       child: Row(
         children: <Widget>[
-          const _GoogleMark(),
+          const _GoogleWordmark(),
           const SizedBox(width: DexSpace.md),
           Expanded(
             child: TextField(
@@ -91,7 +91,7 @@ class _SearchBarState extends State<_SearchBar> {
           const SizedBox(width: DexSpace.sm),
           IconButton(
             onPressed: _submit,
-            icon: Icon(DexIcons.microphone, size: 18, color: c.muted),
+            icon: Icon(DexIcons.search, size: 16, color: c.muted),
             splashRadius: 18,
             tooltip: 'Search',
           ),
@@ -101,52 +101,39 @@ class _SearchBarState extends State<_SearchBar> {
   }
 }
 
-/// A small multicolour Google "G" mark, drawn rather than shipped.
-class _GoogleMark extends StatelessWidget {
-  const _GoogleMark();
+/// The Google wordmark, letter by letter, as the reference sets it.
+///
+/// Six letters in the brand's four colours — except the `l`, which the
+/// reference draws in this design's own trace emerald rather than Google's
+/// green. That is the one place the two palettes touch, and it is deliberate.
+class _GoogleWordmark extends StatelessWidget {
+  const _GoogleWordmark();
+
+  static const List<(String, Color)> _letters = <(String, Color)>[
+    ('G', Color(0xFF4285F4)),
+    ('o', Color(0xFFEA4335)),
+    ('o', Color(0xFFFBBC05)),
+    ('g', Color(0xFF4285F4)),
+    ('l', Color(0xFF34D399)),
+    ('e', Color(0xFFEA4335)),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 22,
-      height: 22,
-      child: CustomPaint(painter: _GooglePainter()),
+    final TextStyle? base = Theme.of(context).textTheme.labelLarge;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final (String letter, Color colour) in _letters)
+          Text(
+            letter,
+            style: base?.copyWith(
+              color: colour,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.6,
+            ),
+          ),
+      ],
     );
   }
-}
-
-class _GooglePainter extends CustomPainter {
-  const _GooglePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = size.center(Offset.zero);
-    final double r = size.shortestSide / 2;
-    final Rect ring = Rect.fromCircle(center: center, radius: r - 2);
-    final Paint p = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.butt;
-    const List<Color> colors = <Color>[
-      Color(0xFF4285F4),
-      Color(0xFF34A853),
-      Color(0xFFFBBC05),
-      Color(0xFFEA4335),
-    ];
-    const List<double> starts = <double>[-0.5, 1.7, 2.9, 3.9];
-    const List<double> sweeps = <double>[2.2, 1.2, 1.0, 1.2];
-    for (int i = 0; i < 4; i++) {
-      canvas.drawArc(ring, starts[i], sweeps[i], false, p..color = colors[i]);
-    }
-    canvas.drawLine(
-      center,
-      Offset(size.width - 3, center.dy),
-      Paint()
-        ..color = const Color(0xFF4285F4)
-        ..strokeWidth = 4,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_GooglePainter oldDelegate) => false;
 }

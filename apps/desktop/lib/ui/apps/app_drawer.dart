@@ -25,6 +25,7 @@ import 'app_ranking.dart';
 /// it, so the handful of system tools sit apart from everything installed.
 class AppDrawer extends StatefulWidget {
   const AppDrawer({
+    this.deviceName,
     required this.status,
     required this.applications,
     required this.onLaunch,
@@ -56,6 +57,9 @@ class AppDrawer extends StatefulWidget {
 
   static void _ignorePins(List<String> _) {}
 
+
+  /// Which phone these apps came from, named in the footer.
+  final String? deviceName;
   @override
   State<AppDrawer> createState() => _AppDrawerState();
 }
@@ -209,25 +213,24 @@ class _AppDrawerState extends State<AppDrawer> {
           // moved the void to the top rather than removing it. A card that
           // hugs its content has no void at any number of apps.
           child: Padding(
+            // 64 from the top and 672 wide, as the reference has it. At 880 the
+            // card read as a second desk rather than a launcher over one.
             padding: const EdgeInsets.fromLTRB(
               DexSpace.xxl,
-              DexSpace.xxxl,
+              DexSpace.xxxl + DexSpace.lg,
               DexSpace.xxl,
               DexSpace.xl,
             ),
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 880),
+                constraints: const BoxConstraints(maxWidth: 672),
                 child: GlassPanel(
-                  radius: DexRadius.panel,
+                  radius: DexRadius.modal,
                   blur: 32,
-                  padding: const EdgeInsets.fromLTRB(
-                    DexSpace.xl,
-                    DexSpace.xl,
-                    DexSpace.xl,
-                    DexSpace.lg,
-                  ),
+                  fill: DexGlass.of(context).substrate,
+                  // Each band pads itself; the header and footer carry rules.
+                  padding: EdgeInsets.zero,
                   // The tap-to-dismiss is the scrim behind; taps inside the
                   // panel must not fall through to it.
                   child: GestureDetector(
@@ -249,9 +252,19 @@ class _AppDrawerState extends State<AppDrawer> {
                           colors: c,
                           onChanged: (_) => setState(() => _selected = 0),
                           onSubmitted: (_) => _launchSelected(),
+                          onClear: () {
+                            _query.clear();
+                            setState(() => _selected = 0);
+                            _searchFocus.requestFocus();
+                          },
                         ),
-                        const SizedBox(height: DexSpace.lg),
-                        Flexible(child: _body(context, c, t)),
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.all(DexSpace.lg),
+                            child: _body(context, c, t),
+                          ),
+                        ),
+                        _Footer(colors: c, deviceName: widget.deviceName),
                       ],
                     ),
                   ),
@@ -326,14 +339,18 @@ class _AppDrawerState extends State<AppDrawer> {
           // without reading anything else. An empty pin list drops the
           // section and its header together, as the other sections do.
           if (pinned.isNotEmpty) ...<Widget>[
-            _SectionHeader(label: 'Pinned to top', colors: c),
+            _SectionHeader(
+              label: 'Pinned to top',
+              colors: c,
+              icon: DexIcons.pin,
+            ),
             _AppGrid(
               apps: pinned,
               colors: c,
               onLaunch: widget.onLaunch,
               onContextMenu: _showTileMenu,
             ),
-            const SizedBox(height: DexSpace.lg),
+            const SizedBox(height: 20),
           ],
           if (system.isNotEmpty) ...<Widget>[
             _SectionHeader(
@@ -348,7 +365,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
           ],
           if (system.isNotEmpty && user.isNotEmpty)
-            const SizedBox(height: DexSpace.lg),
+            const SizedBox(height: 20),
           if (user.isNotEmpty) ...<Widget>[
             _SectionHeader(
               label: 'User applications (${user.length})',
@@ -370,25 +387,35 @@ class _AppDrawerState extends State<AppDrawer> {
 /// An uppercase, letter-spaced section label, as the reference sets above each
 /// block of apps.
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label, required this.colors});
+  const _SectionHeader({
+    required this.label,
+    required this.colors,
+    this.icon,
+  });
 
   final String label;
   final DexColors colors;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: DexSpace.xs,
-        bottom: DexSpace.md,
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: DexTheme.data(
-          colors,
-          size: 11,
-          color: colors.muted,
-        ).copyWith(letterSpacing: 1.6),
+      padding: const EdgeInsets.only(bottom: DexSpace.sm),
+      child: Row(
+        children: <Widget>[
+          if (icon != null) ...<Widget>[
+            Icon(icon, size: 14, color: colors.signal),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label.toUpperCase(),
+            style: DexTheme.data(
+              colors,
+              size: 11,
+              color: colors.muted,
+            ).copyWith(letterSpacing: 1.6),
+          ),
+        ],
       ),
     );
   }
@@ -433,6 +460,12 @@ class _AppGrid extends StatelessWidget {
   }
 }
 
+/// The card's header: a search icon, a borderless field, a clear button once
+/// there is something to clear, and the way out.
+///
+/// It used to be a bordered input with a focus ring sitting inside the card.
+/// The reference makes the whole top band the field — no box inside a box —
+/// which is what lets the card read as one object.
 class _SearchField extends StatelessWidget {
   const _SearchField({
     required this.controller,
@@ -440,6 +473,7 @@ class _SearchField extends StatelessWidget {
     required this.colors,
     required this.onChanged,
     required this.onSubmitted,
+    required this.onClear,
   });
 
   final TextEditingController controller;
@@ -447,41 +481,120 @@ class _SearchField extends StatelessWidget {
   final DexColors colors;
   final ValueChanged<String> onChanged;
   final ValueChanged<String> onSubmitted;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onChanged: onChanged,
-      onSubmitted: onSubmitted,
-      style: Theme.of(context).textTheme.bodyLarge,
-      cursorColor: colors.signal,
-      decoration: InputDecoration(
-        // Placeholder ends with an ellipsis and shows the shape of the answer.
-        hintText: 'Search apps…',
-        hintStyle: Theme.of(context).textTheme.bodyLarge
-            ?.copyWith(color: colors.muted),
-        prefixIcon: Icon(DexIcons.search, size: 18, color: colors.muted),
-        filled: true,
-        fillColor: colors.surface.withValues(alpha: 0.72),
-        contentPadding: const EdgeInsets.symmetric(vertical: DexSpace.md),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DexRadius.control),
-          borderSide: BorderSide(color: colors.line),
+    final DexGlass glass = DexGlass.of(context);
+    return Container(
+      padding: const EdgeInsets.all(DexSpace.lg),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: glass.stroke, width: DexStroke.hairline),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DexRadius.control),
-          borderSide: BorderSide(color: colors.line),
-        ),
-        // Focus out-contrasts rest.
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DexRadius.control),
-          borderSide: BorderSide(
-            color: colors.signal,
-            width: DexStroke.focusRing,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(DexIcons.search, size: 20, color: colors.muted),
+          const SizedBox(width: DexSpace.md),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              style: Theme.of(context).textTheme.bodyLarge,
+              cursorColor: colors.signal,
+              decoration: InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                hintText:
+                    "Search phone apps (e.g. 'wa' for WhatsApp, or app name)…",
+                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: colors.muted,
+                ),
+              ),
+            ),
           ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (BuildContext context, TextEditingValue v, Widget? _) {
+              if (v.text.isEmpty) return const SizedBox.shrink();
+              return IconButton(
+                onPressed: onClear,
+                icon: Icon(DexIcons.close, size: 16, color: colors.muted),
+                tooltip: 'Clear search',
+                constraints: const BoxConstraints(
+                  minWidth: DexHit.minimum,
+                  minHeight: DexHit.minimum,
+                ),
+                padding: EdgeInsets.zero,
+              );
+            },
+          ),
+          const SizedBox(width: DexSpace.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.sm,
+              vertical: DexSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: glass.fill,
+              borderRadius: BorderRadius.circular(DexRadius.control),
+            ),
+            child: Text('ESC to close', style: DexTheme.data(colors, size: 10)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// How to drive the list, and where it came from.
+class _Footer extends StatelessWidget {
+  const _Footer({required this.colors, required this.deviceName});
+
+  final DexColors colors;
+  final String? deviceName;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexGlass glass = DexGlass.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DexSpace.lg,
+        vertical: DexSpace.md,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: glass.stroke, width: DexStroke.hairline),
         ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Up and Down to navigate \u00b7 Enter to launch',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.muted,
+              ),
+            ),
+          ),
+          const SizedBox(width: DexSpace.md),
+          // Flexible: beside an Expanded sibling a bare Text is given no
+          // bound to shorten against, and a long phone name ran past the card.
+          Flexible(
+            child: Text(
+              deviceName == null
+                  ? 'Live device apps'
+                  : 'Live device apps ($deviceName)',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: DexTheme.data(colors, size: 11),
+            ),
+          ),
+        ],
       ),
     );
   }

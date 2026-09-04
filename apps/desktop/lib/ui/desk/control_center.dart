@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -217,6 +218,11 @@ class ControlCenter extends StatelessWidget {
             ),
             if (volumes.isNotEmpty) ...<Widget>[
               const SizedBox(height: DexSpace.md),
+              Text(
+                'PHONE VOLUME LEVELS',
+                style: DexTheme.data(c, size: 10).copyWith(letterSpacing: 1.4),
+              ),
+              const SizedBox(height: DexSpace.sm),
               for (final MapEntry<String, VolumeLevel> v in volumes)
                 _Volume(
                   stream: v.key,
@@ -247,32 +253,51 @@ class ControlCenter extends StatelessWidget {
               const SizedBox(height: DexSpace.sm),
               // Without this the phone list is reachable only from the boot
               // screen, so adding a second phone means disconnecting the first.
-              if (onManagePhones != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: onManagePhones,
-                    style: TextButton.styleFrom(
-                      foregroundColor: c.text,
-                      alignment: Alignment.centerLeft,
-                      minimumSize: const Size(0, DexHit.comfortable),
+              Row(
+                children: <Widget>[
+                  if (onManagePhones != null)
+                    Flexible(
+                      child: TextButton.icon(
+                        onPressed: onManagePhones,
+                        style: TextButton.styleFrom(
+                          foregroundColor: c.text,
+                          minimumSize: const Size(0, DexHit.comfortable),
+                        ),
+                        icon: Icon(
+                          DexIcons.portrait,
+                          size: 14,
+                          color: c.signal,
+                        ),
+                        label: const Text(
+                          'Manage Phones…',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    child: const Text('Phones…'),
-                  ),
-                ),
-              if (onOpenSettings != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: onOpenSettings,
-                    style: TextButton.styleFrom(
-                      foregroundColor: c.text,
-                      alignment: Alignment.centerLeft,
-                      minimumSize: const Size(0, DexHit.comfortable),
+                  const Spacer(),
+                  if (onOpenSettings != null)
+                    Flexible(
+                      child: TextButton.icon(
+                        onPressed: onOpenSettings,
+                        style: TextButton.styleFrom(
+                          foregroundColor: c.text,
+                          minimumSize: const Size(0, DexHit.comfortable),
+                        ),
+                        icon: Icon(
+                          DexIcons.slidersHorizontal,
+                          size: 14,
+                          color: c.muted,
+                        ),
+                        label: const Text(
+                          'Desk Settings…',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    child: const Text('Settings…'),
-                  ),
-                ),
+                ],
+              ),
               if (onOpenPermissions != null)
                 SizedBox(
                   width: double.infinity,

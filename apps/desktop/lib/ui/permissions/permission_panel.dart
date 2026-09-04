@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
@@ -84,11 +85,29 @@ class PermissionPanel extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('What the desk can use', style: t.headlineMedium),
-                    const SizedBox(height: DexSpace.sm),
-                    Text(
-                      'Everything here is optional. Turn on only what you want.',
-                      style: t.bodyLarge?.copyWith(color: c.muted),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(DexIcons.shieldCheck, size: 22, color: c.trace),
+                        const SizedBox(width: DexSpace.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'What the desk can use',
+                                style: t.titleLarge,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Everything here is optional. Turn on only '
+                                'what you want.',
+                                style: t.bodySmall?.copyWith(color: c.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: DexSpace.xl),
                     if (permissions.status == LoadStatus.loading)
@@ -108,6 +127,14 @@ class PermissionPanel extends StatelessWidget {
                             onOpenSettings: onOpenSettings,
                           ),
                         ),
+                    const SizedBox(height: DexSpace.md),
+                    Center(
+                      child: Text(
+                        'Permissions are verified live with the companion '
+                        'service on port 3699',
+                        style: DexTheme.data(c, size: 10),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -172,6 +199,29 @@ class _PermissionRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // A well with the capability's glyph, as the reference tags each
+            // row: the icon is what the eye finds first when scanning for
+            // "which one is notifications".
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: DexSpace.md),
+              decoration: BoxDecoration(
+                color: colors.surface.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(DexRadius.control),
+                border: Border.all(
+                  color: colors.line,
+                  width: DexStroke.hairline,
+                ),
+              ),
+              child: Icon(
+                _iconFor(id),
+                size: 18,
+                color: grant == PermissionGrant.granted
+                    ? colors.trace
+                    : colors.muted,
+              ),
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +266,31 @@ class _PermissionRow extends StatelessWidget {
       case PermissionGrant.granted:
         final VoidCallback? manage = onOpenSettings?.call(id);
         if (manage == null) {
-          return const SizedBox.shrink();
+          return Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.sm,
+              vertical: DexSpace.xs,
+            ),
+            decoration: BoxDecoration(
+              color: colors.trace.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(DexRadius.pill),
+              border: Border.all(
+                color: colors.trace.withValues(alpha: 0.35),
+                width: DexStroke.hairline,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(DexIcons.check, size: 12, color: colors.trace),
+                const SizedBox(width: DexSpace.xs),
+                Text(
+                  'On',
+                  style: DexTheme.data(colors, size: 11, color: colors.trace),
+                ),
+              ],
+            ),
+          );
         }
         return OutlinedButton(onPressed: manage, child: const Text('Manage'));
       case PermissionGrant.denied:
@@ -297,3 +371,14 @@ class _Empty extends StatelessWidget {
     );
   }
 }
+
+/// The glyph for a capability, by its id. Anything unknown gets the shield:
+/// a permission is a permission before it is anything else.
+IconData _iconFor(String id) => switch (id) {
+  'notifications' => DexIcons.notifications,
+  'media' => DexIcons.music,
+  'audio' => DexIcons.volume,
+  'clipboard' => DexIcons.copy,
+  'calls' => DexIcons.phone,
+  _ => DexIcons.shield,
+};

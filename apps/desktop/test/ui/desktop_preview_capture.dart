@@ -93,11 +93,11 @@ void main() {
 
     // Presence is not visibility. A fully transparent desk would otherwise be
     // captured and shipped as the product's preview image.
-    expect(find.text('Search Google'), findsOneWidget);
+    expect(find.text('Search the web or apps…'), findsOneWidget);
     final Opacity fade = tester.widget<Opacity>(
       find
           .ancestor(
-            of: find.text('Search Google'),
+            of: find.text('Search the web or apps…'),
             matching: find.byType(Opacity),
           )
           .first,

@@ -54,7 +54,7 @@ void main() {
     // The desk itself now carries two search bars, so target the drawer's own
     // field by its hint rather than "the only text field on screen".
     final Finder search = find.ancestor(
-      of: find.text('Search apps…'),
+      of: find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"),
       matching: find.byType(TextField),
     );
     expect(search, findsOneWidget, reason: 'the drawer should be open');
@@ -67,7 +67,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpShell(tester);
-    expect(find.text('Search apps…'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsNothing);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
@@ -76,13 +76,13 @@ void main() {
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
-    expect(find.text('Search apps…'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsNothing);
   });
 
   testWidgets('the desk clock ticks on its own', (WidgetTester tester) async {
@@ -107,7 +107,7 @@ void main() {
     // snapshot happened to arrive. Nothing else in this test moves it.
     String render(DateTime n) {
       final int h = n.hour % 12 == 0 ? 12 : n.hour % 12;
-      final String ap = n.hour < 12 ? 'AM' : 'PM';
+      final String ap = n.hour < 12 ? 'am' : 'pm';
       return '$h:${n.minute.toString().padLeft(2, '0')} $ap';
     }
 
@@ -160,7 +160,7 @@ void main() {
     // Launcher, from the dock.
     await tester.tap(find.byTooltip('Your apps'));
     await settle();
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
 
@@ -169,16 +169,17 @@ void main() {
     // holds the doors to permissions and the phone list.
     await tester.tap(find.byTooltip('Settings'));
     await settle();
-    expect(find.text('Window snapping'), findsOneWidget);
-    // Two 'Open' buttons in order: Manage phones, then Permissions.
-    expect(find.widgetWithText(OutlinedButton, 'Open'), findsNWidgets(2));
+    expect(find.text('Window Snapping'), findsOneWidget);
+    // The two phone-link tiles: Manage Phones, then Permissions.
+    expect(find.text('Manage Phones…'), findsOneWidget);
+    expect(find.text('Permissions…'), findsOneWidget);
 
     // Permissions, from Settings (scroll it into view first — the panel scrolls).
     await tester.ensureVisible(
-      find.widgetWithText(OutlinedButton, 'Open').last,
+      find.text('Permissions…'),
     );
     await settle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Open').last);
+    await tester.tap(find.text('Permissions…'));
     await settle();
     expect(find.text('What the desk can use'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -188,14 +189,14 @@ void main() {
     await tester.tap(find.byTooltip('Settings'));
     await settle();
     await tester.ensureVisible(
-      find.widgetWithText(OutlinedButton, 'Open').first,
+      find.text('Manage Phones…'),
     );
     await settle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Open').first);
+    await tester.tap(find.text('Manage Phones…'));
     await settle();
     // One surface now: the phone list and the three ways to add one over
     // Wi-Fi, rather than a dialog that opens a second dialog.
-    expect(find.text('Connect a phone'), findsOneWidget);
+    expect(find.text('Manage Android Phones'), findsOneWidget);
     expect(find.text('Add over Wi-Fi'), findsOneWidget);
 
     // And back out of it without connecting — Escape must reach it, and one
@@ -203,7 +204,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
     expect(
-      find.text('Connect a phone'),
+      find.text('Manage Android Phones'),
       findsNothing,
       reason: 'no screen is a dead end',
     );
@@ -232,12 +233,12 @@ void main() {
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
-    expect(find.text('Search apps…'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     expect(
-      find.text('Search apps…'),
+      find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)…"),
       findsNothing,
       reason: 'a surface you cannot leave is a trap',
     );
@@ -272,7 +273,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await settle();
-    expect(find.text('Search apps\u2026'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsOneWidget);
 
     // Diagnostics over the top of it.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -286,7 +287,7 @@ void main() {
       findsOneWidget,
       reason: 'both layers should now be up',
     );
-    expect(find.text('Search apps\u2026'), findsOneWidget);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsOneWidget);
 
     // One Escape takes the higher rung only.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -297,7 +298,7 @@ void main() {
       reason: 'the first Escape belongs to diagnostics',
     );
     expect(
-      find.text('Search apps\u2026'),
+      find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"),
       findsOneWidget,
       reason: 'the launcher is a lower rung and must survive the first Escape',
     );
@@ -305,6 +306,6 @@ void main() {
     // The second Escape takes the next rung down.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
-    expect(find.text('Search apps\u2026'), findsNothing);
+    expect(find.text("Search phone apps (e.g. 'wa' for WhatsApp, or app name)\u2026"), findsNothing);
   });
 }

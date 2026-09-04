@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -82,23 +83,38 @@ class StreamDiagnostics extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
+                            Icon(DexIcons.activity, size: 22, color: c.trace),
+                            const SizedBox(width: DexSpace.md),
                             Expanded(
-                              child: Text('Streams', style: t.titleLarge),
-                            ),
-                            if (onCopyDiagnostics case final VoidCallback copy)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  right: DexSpace.md,
-                                ),
-                                child: OutlinedButton(
-                                  onPressed: copy,
-                                  child: const Text('Copy diagnostics'),
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text(
+                                    'Stream Diagnostics',
+                                    style: t.titleLarge,
+                                  ),
+                                  Text(
+                                    'Deliberately not a debug dump. Every row '
+                                    'is something you can act on.',
+                                    style: t.bodySmall?.copyWith(
+                                      color: c.muted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            Text(
-                              'Ctrl+Shift+D to close',
-                              style: DexTheme.data(c, size: 10),
+                            ),
+                            IconButton(
+                              onPressed: onClose,
+                              icon: const Icon(DexIcons.close, size: 18),
+                              color: c.muted,
+                              tooltip: 'Close',
+                              constraints: const BoxConstraints(
+                                minWidth: DexHit.comfortable,
+                                minHeight: DexHit.comfortable,
+                              ),
                             ),
                           ],
                         ),
@@ -107,38 +123,57 @@ class StreamDiagnostics extends StatelessWidget {
                         // per-window frame rates without knowing the latency
                         // and throughput under them is how a healthy link gets
                         // blamed for a slow app, and the reverse.
-                        Row(
-                          children: <Widget>[
-                            _LinkSummary(
-                              label: 'LINK LATENCY',
-                              measurement: snapshot.telemetry.linkLatency,
-                              grade: _latencyGrade(
-                                snapshot.telemetry.linkLatency,
-                                c,
+                        Container(
+                          padding: const EdgeInsets.all(DexSpace.xs),
+                          decoration: BoxDecoration(
+                            color: glass.fillSubtle,
+                            borderRadius: BorderRadius.circular(DexRadius.card),
+                            border: Border.all(
+                              color: glass.stroke,
+                              width: DexStroke.hairline,
+                            ),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              _LinkSummary(
+                                label: 'LINK LATENCY',
+                                measurement: snapshot.telemetry.linkLatency,
+                                grade: _latencyGrade(
+                                  snapshot.telemetry.linkLatency,
+                                  c,
+                                ),
+                                colors: c,
+                                glass: glass,
                               ),
-                              colors: c,
-                              glass: glass,
-                            ),
-                            const SizedBox(width: DexSpace.sm),
-                            _LinkSummary(
-                              label: 'THROUGHPUT',
-                              measurement: snapshot.telemetry.throughput,
-                              grade: null,
-                              colors: c,
-                              glass: glass,
-                              value: c.trace,
-                            ),
-                            const SizedBox(width: DexSpace.sm),
-                            _LinkSummary(
-                              label: 'COMPOSITOR RATE',
-                              measurement: snapshot.telemetry.framesPerSecond,
-                              grade: null,
-                              colors: c,
-                              glass: glass,
-                            ),
-                          ],
+                              const SizedBox(width: DexSpace.sm),
+                              _LinkSummary(
+                                label: 'THROUGHPUT',
+                                measurement: snapshot.telemetry.throughput,
+                                grade: null,
+                                colors: c,
+                                glass: glass,
+                                value: c.trace,
+                              ),
+                              const SizedBox(width: DexSpace.sm),
+                              _LinkSummary(
+                                label: 'COMPOSITOR RATE',
+                                measurement: snapshot.telemetry.framesPerSecond,
+                                grade: null,
+                                colors: c,
+                                glass: glass,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: DexSpace.lg),
+                        Text(
+                          'ACTIVE VIDEO SURFACES (${windows.length})',
+                          style: DexTheme.data(
+                            c,
+                            size: 10,
+                          ).copyWith(letterSpacing: 1.4),
+                        ),
+                        const SizedBox(height: DexSpace.sm),
                         if (windows.isEmpty)
                           Text(
                             'No app windows are open.',
@@ -149,9 +184,18 @@ class StreamDiagnostics extends StatelessWidget {
                             _Row(window: w, colors: c, glass: glass),
                         if (recentExits.isNotEmpty) ...<Widget>[
                           const SizedBox(height: DexSpace.lg),
-                          Text(
-                            'Recently closed',
-                            style: t.labelLarge?.copyWith(color: c.muted),
+                          Row(
+                            children: <Widget>[
+                              Icon(DexIcons.clock, size: 12, color: c.muted),
+                              const SizedBox(width: 6),
+                              Text(
+                                'RECENTLY CLOSED SESSIONS (LAST 8)',
+                                style: DexTheme.data(
+                                  c,
+                                  size: 10,
+                                ).copyWith(letterSpacing: 1.4),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: DexSpace.sm),
                           for (final String line in recentExits.take(5))
@@ -163,6 +207,40 @@ class StreamDiagnostics extends StatelessWidget {
                               ),
                             ),
                         ],
+                        const SizedBox(height: DexSpace.lg),
+                        Divider(
+                          color: glass.stroke,
+                          height: DexStroke.hairline,
+                        ),
+                        const SizedBox(height: DexSpace.md),
+                        // The footer the reference closes with: the report on
+                        // the left, the way out on the right.
+                        Row(
+                          children: <Widget>[
+                            if (onCopyDiagnostics case final VoidCallback copy)
+                              Flexible(
+                                child: OutlinedButton.icon(
+                                  onPressed: copy,
+                                  icon: const Icon(DexIcons.copy, size: 14),
+                                  label: const Text(
+                                    'Copy diagnostics report',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: DexSpace.md),
+                            Expanded(
+                              child: Text(
+                                'Press Ctrl+Shift+D to close',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: DexTheme.data(c, size: 10),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -217,13 +295,8 @@ class _LinkSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: glass.fillSubtle,
-          borderRadius: BorderRadius.circular(DexRadius.card),
-          border: Border.all(color: glass.stroke, width: DexStroke.hairline),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -325,11 +398,19 @@ class _Row extends StatelessWidget {
             ),
             if (presented != null || produced != null) ...<Widget>[
               const SizedBox(height: 4),
-              _Rates(
-                presented: presented,
-                produced: produced,
-                dropped: dropped,
-                colors: colors,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(DexSpace.sm),
+                decoration: BoxDecoration(
+                  color: glass.readout,
+                  borderRadius: BorderRadius.circular(DexRadius.control),
+                ),
+                child: _Rates(
+                  presented: presented,
+                  produced: produced,
+                  dropped: dropped,
+                  colors: colors,
+                ),
               ),
             ],
             if (window.error != null) ...<Widget>[
