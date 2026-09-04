@@ -898,10 +898,12 @@ class _AppShellState extends State<AppShell> {
                   widget.facade.launchApplication(a.packageName),
             ),
           ),
+        // Bottom-left, clear of the taskbar and the tray it is reporting
+        // alongside, as the reference places it.
         if (_healthHudOpen)
           Positioned(
-            right: DexSpace.lg,
-            bottom: 96,
+            left: DexSpace.lg,
+            bottom: 72 + DexSpace.md,
             child: Builder(
               builder: (BuildContext context) {
                 final WorkspaceWindow? focused = _wm.windows.values

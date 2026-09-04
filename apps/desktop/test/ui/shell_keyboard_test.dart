@@ -169,16 +169,17 @@ void main() {
     // holds the doors to permissions and the phone list.
     await tester.tap(find.byTooltip('Settings'));
     await settle();
-    expect(find.text('Window snapping'), findsOneWidget);
-    // Two 'Open' buttons in order: Manage phones, then Permissions.
-    expect(find.widgetWithText(OutlinedButton, 'Open'), findsNWidgets(2));
+    expect(find.text('Window Snapping'), findsOneWidget);
+    // The two phone-link tiles: Manage Phones, then Permissions.
+    expect(find.text('Manage Phones…'), findsOneWidget);
+    expect(find.text('Permissions…'), findsOneWidget);
 
     // Permissions, from Settings (scroll it into view first — the panel scrolls).
     await tester.ensureVisible(
-      find.widgetWithText(OutlinedButton, 'Open').last,
+      find.text('Permissions…'),
     );
     await settle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Open').last);
+    await tester.tap(find.text('Permissions…'));
     await settle();
     expect(find.text('What the desk can use'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -188,10 +189,10 @@ void main() {
     await tester.tap(find.byTooltip('Settings'));
     await settle();
     await tester.ensureVisible(
-      find.widgetWithText(OutlinedButton, 'Open').first,
+      find.text('Manage Phones…'),
     );
     await settle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Open').first);
+    await tester.tap(find.text('Manage Phones…'));
     await settle();
     // One surface now: the phone list and the three ways to add one over
     // Wi-Fi, rather than a dialog that opens a second dialog.

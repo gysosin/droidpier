@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../theme/dex_icons.dart';
-
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import '../util/app_version.dart';
@@ -36,6 +36,7 @@ class ShortcutSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final DexGlass glass = DexGlass.of(context);
     final TextTheme t = Theme.of(context).textTheme;
 
     // Grouped, in the order the groups first appear in the registry rather
@@ -47,25 +48,25 @@ class ShortcutSheet extends StatelessWidget {
       grouped.putIfAbsent(s.group, () => <DexShortcut>[]).add(s);
     }
 
-    // Two columns. A single column overflowed the panel and quietly hid the
-    // last three rows below a scroll nobody could see — on a cheat sheet, a
-    // shortcut you cannot see is the only kind that matters.
-    final List<Widget> left = <Widget>[];
-    final List<Widget> right = <Widget>[];
+    // One column of cards, as the reference lays it out, scrolling when the
+    // window is short. An earlier two-column layout existed to dodge a scroll
+    // nobody could see; the scroll is visible now because the cards give it
+    // an edge to clip against.
     int i = 0;
-    for (final MapEntry<DexShortcutGroup, List<DexShortcut>> e
-        in grouped.entries) {
-      final Widget section = Entrance(
-        order: i,
-        child: _Section(
-          label: _groupLabel(e.key),
-          entries: e.value,
-          colors: c,
+    final List<Widget> cards = <Widget>[
+      for (final MapEntry<DexShortcutGroup, List<DexShortcut>> e
+          in grouped.entries)
+        Entrance(
+          order: i++,
+          child: _Section(
+            label: _groupLabel(e.key),
+            entries: e.value,
+            colors: c,
+            glass: glass,
+          ),
         ),
-      );
-      (i.isEven ? left : right).add(section);
-      i++;
-    }
+      Entrance(order: i, child: _EscapeLadder(colors: c, glass: glass)),
+    ];
 
     return Padding(
       padding: const EdgeInsets.all(DexSpace.xl),
@@ -75,8 +76,31 @@ class ShortcutSheet extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
+              Container(
+                width: DexHit.comfortable,
+                height: DexHit.comfortable,
+                decoration: BoxDecoration(
+                  color: glass.fill,
+                  borderRadius: BorderRadius.circular(DexRadius.control),
+                ),
+                child: Icon(DexIcons.keyboard, size: 18, color: c.signal),
+              ),
+              const SizedBox(width: DexSpace.md),
               Expanded(
-                child: Text('Keyboard shortcuts', style: t.titleMedium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text('Keyboard Shortcuts', style: t.titleLarge),
+                    // Which build this is, one key press away. Settings is the
+                    // conventional home for it, but "am I running what I just
+                    // installed?" is a question you ask in a hurry.
+                    Text(
+                      'Desktop Accelerator Map · ${versionLabel()}',
+                      style: t.bodySmall?.copyWith(color: c.muted),
+                    ),
+                  ],
+                ),
               ),
               // A panel with no visible way out is a dead end for anyone who
               // did not arrive by keyboard.
@@ -92,48 +116,29 @@ class ShortcutSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: DexSpace.xs),
+          const SizedBox(height: DexSpace.lg),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: cards,
+              ),
+            ),
+          ),
+          const SizedBox(height: DexSpace.sm),
+          Divider(color: c.line, height: DexStroke.hairline),
+          const SizedBox(height: DexSpace.sm),
           Row(
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Esc closes whatever is open, one layer at a time. '
                   'Anything not claimed here goes straight to the focused '
                   'Android window.',
-                  style: t.bodySmall?.copyWith(color: c.muted),
+                  style: DexTheme.data(c, size: 10),
                 ),
               ),
-              // Which build this is, one key press away. Settings is the
-              // conventional home for it, but "am I running what I just
-              // installed?" is a question you ask in a hurry.
-              Text(
-                versionLabel(),
-                style: DexTheme.data(c, size: 10, color: c.muted),
-              ),
+              Text('Press Esc to close', style: DexTheme.data(c, size: 10)),
             ],
-          ),
-          const SizedBox(height: DexSpace.lg),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: left,
-                    ),
-                  ),
-                  const SizedBox(width: DexSpace.xxl),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: right,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -146,32 +151,54 @@ class _Section extends StatelessWidget {
     required this.label,
     required this.entries,
     required this.colors,
+    required this.glass,
   });
 
   final String label;
   final List<DexShortcut> entries;
   final DexColors colors;
+  final DexGlass glass;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: DexSpace.lg),
+    final Map<String, List<DexShortcut>> rows = _byLabel(entries);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: DexSpace.md),
+      padding: const EdgeInsets.fromLTRB(
+        DexSpace.lg,
+        DexSpace.md,
+        DexSpace.lg,
+        DexSpace.xs,
+      ),
+      decoration: BoxDecoration(
+        color: glass.fillSubtle,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(color: glass.stroke, width: DexStroke.hairline),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(bottom: DexSpace.sm),
-            child: Text(
-              label.toUpperCase(),
-              style: DexTheme.data(
-                colors,
-                size: 11,
-                color: colors.muted,
-              ).copyWith(letterSpacing: 1.6),
-            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: DexTheme.data(
+                    colors,
+                    size: 10,
+                    color: colors.muted,
+                  ).copyWith(letterSpacing: 1.4),
+                ),
+              ),
+              Text(
+                '${rows.length}',
+                style: DexTheme.data(colors, size: 10, color: colors.muted),
+              ),
+            ],
           ),
-          for (final MapEntry<String, List<DexShortcut>> row
-              in _byLabel(entries).entries)
+          const SizedBox(height: DexSpace.xs),
+          for (final MapEntry<String, List<DexShortcut>> row in rows.entries)
             _Row(
               label: row.key,
               strokes: row.value
@@ -179,6 +206,61 @@ class _Section extends StatelessWidget {
                   .toList(),
               colors: colors,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// How Esc behaves, set apart because it is the one key that does something
+/// different depending on what is open.
+class _EscapeLadder extends StatelessWidget {
+  const _EscapeLadder({required this.colors, required this.glass});
+
+  final DexColors colors;
+  final DexGlass glass;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(DexSpace.lg),
+      decoration: BoxDecoration(
+        color: colors.signal.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(
+          color: colors.signal.withValues(alpha: 0.25),
+          width: DexStroke.hairline,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _Keycap(text: 'Esc', colors: colors),
+          const SizedBox(width: DexSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'ESCAPE LADDER',
+                  style: DexTheme.data(
+                    colors,
+                    size: 10,
+                    color: colors.signal,
+                  ).copyWith(letterSpacing: 1.4),
+                ),
+                const SizedBox(height: DexSpace.xs),
+                Text(
+                  'Esc closes whatever is open, one layer at a time: the '
+                  'topmost panel first, then the one beneath it, and only '
+                  'then does it reach the window.',
+                  style: t.bodySmall?.copyWith(color: colors.text),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -211,8 +293,16 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: DexSpace.xs),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: DexSpace.sm),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: colors.line.withValues(alpha: 0.6),
+            width: DexStroke.hairline,
+          ),
+        ),
+      ),
       child: Row(
         children: <Widget>[
           Expanded(

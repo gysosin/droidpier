@@ -370,6 +370,12 @@ class ConnectFieldRow extends StatelessWidget {
 /// Which of the three ways in the person is looking at.
 enum WirelessMode { nearby, qr, manual }
 
+const List<WirelessMode> _order = <WirelessMode>[
+  WirelessMode.qr,
+  WirelessMode.manual,
+  WirelessMode.nearby,
+];
+
 /// The mode switch: one row of segments, the selected one out-contrasting both
 /// hover and rest.
 class WirelessModeBar extends StatelessWidget {
@@ -383,9 +389,9 @@ class WirelessModeBar extends StatelessWidget {
   final ValueChanged<WirelessMode> onChanged;
 
   static (String, IconData) describe(WirelessMode m) => switch (m) {
-    WirelessMode.nearby => ('Nearby', DexIcons.wifiTethering),
-    WirelessMode.qr => ('QR code', DexIcons.qrCode),
-    WirelessMode.manual => ('Manual', DexIcons.keyboard),
+    WirelessMode.nearby => ('Nearby Hints', DexIcons.wifiTethering),
+    WirelessMode.qr => ('QR Code', DexIcons.qrCode),
+    WirelessMode.manual => ('Manual Entry', DexIcons.keyboard),
   };
 
   @override
@@ -403,7 +409,7 @@ class WirelessModeBar extends StatelessWidget {
       // selected one look like it moved.
       child: Row(
         children: <Widget>[
-          for (final WirelessMode m in WirelessMode.values)
+          for (final WirelessMode m in _order)
             Expanded(
               child: _Segment(
                 mode: m,

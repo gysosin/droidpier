@@ -68,9 +68,9 @@ void main() {
     final List<String> changes = <String>[];
     await pumpSettings(tester, record: changes.add);
 
-    await tester.ensureVisible(find.byTooltip('Reset Desktop mode'));
+    await tester.ensureVisible(find.byTooltip('Reset Desktop Mode'));
     await tester.pump();
-    await tester.tap(find.byTooltip('Reset Desktop mode'));
+    await tester.tap(find.byTooltip('Reset Desktop Mode'));
     await tester.pump();
 
     expect(changes, <String>['snap:true']);

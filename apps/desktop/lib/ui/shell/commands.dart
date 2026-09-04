@@ -63,24 +63,6 @@ List<DexCommand> buildCommands({
   required ValueChanged<String> onFocusWindow,
 }) {
   return <DexCommand>[
-    for (final AndroidApplication a in applications)
-      DexCommand(
-        id: 'app:${a.packageName}',
-        title: a.label,
-        subtitle: a.packageName,
-        group: DexCommandGroup.app,
-        keywords: const <String>['launch', 'open'],
-        run: () => onLaunchApplication(a.packageName),
-      ),
-    for (final WindowSessionState w in windows)
-      DexCommand(
-        id: 'window:${w.id}',
-        title: 'Switch to ${w.application.label}',
-        subtitle: 'Open window',
-        group: DexCommandGroup.window,
-        keywords: const <String>['focus', 'window'],
-        run: () => onFocusWindow(w.id),
-      ),
     for (int i = 0; i < shellEntries.length; i++)
       DexCommand(
         // Indexed rather than derived from the title, so renaming an action
@@ -91,6 +73,24 @@ List<DexCommand> buildCommands({
         group: DexCommandGroup.shell,
         keywords: shellEntries[i].keywords,
         run: shellEntries[i].run,
+      ),
+    for (final WindowSessionState w in windows)
+      DexCommand(
+        id: 'window:${w.id}',
+        title: 'Switch to ${w.application.label}',
+        subtitle: 'Open window',
+        group: DexCommandGroup.window,
+        keywords: const <String>['focus', 'window'],
+        run: () => onFocusWindow(w.id),
+      ),
+    for (final AndroidApplication a in applications)
+      DexCommand(
+        id: 'app:${a.packageName}',
+        title: a.label,
+        subtitle: a.packageName,
+        group: DexCommandGroup.app,
+        keywords: const <String>['launch', 'open'],
+        run: () => onLaunchApplication(a.packageName),
       ),
   ];
 }

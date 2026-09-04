@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
-import '../apps/app_glyph.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
-import '../util/app_display_name.dart';
 
 /// The phone, mirrored on the desk.
 ///
@@ -92,14 +91,11 @@ class PhoneMirror extends StatelessWidget {
                         now: now,
                         onClose: onClose,
                       ),
-                      Expanded(
-                        child: _Screen(
-                          snapshot: snapshot,
-                          now: now,
-                          onLaunch: onLaunch,
-                          overVideo: overVideo,
-                        ),
-                      ),
+                      // No home screen is drawn here. Until the companion
+                      // casts, the honest thing to show inside the frame is
+                      // that nothing is being shown — not an invented grid
+                      // of apps the phone may not have.
+                      Expanded(child: _Placeholder(snapshot: snapshot)),
                       const _GesturePill(),
                     ],
                   ),
@@ -153,9 +149,7 @@ class _StatusBar extends StatelessWidget {
           ],
           const SizedBox(width: 3),
           Icon(
-            telemetry.charging
-                ? DexIcons.batteryCharging
-                : DexIcons.battery,
+            telemetry.charging ? DexIcons.batteryCharging : DexIcons.battery,
             size: 12,
             // Battery is the one readout that changes meaning with its value,
             // so it is the one that gets a colour.
@@ -232,227 +226,13 @@ class _CloseDot extends StatelessWidget {
                       : Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(DexIcons.close, size: 10, color: Colors.white),
+                child: const Icon(
+                  DexIcons.close,
+                  size: 10,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Screen extends StatelessWidget {
-  const _Screen({
-    required this.snapshot,
-    required this.now,
-    required this.onLaunch,
-    required this.overVideo,
-  });
-
-  final OpenDexSnapshot snapshot;
-  final DateTime now;
-  final ValueChanged<AndroidApplication> onLaunch;
-  final bool overVideo;
-
-  @override
-  Widget build(BuildContext context) {
-    final DexColors c = Theme.of(context).extension<DexColors>()!;
-    final List<AndroidApplication> apps = snapshot.applications
-        .where((AndroidApplication a) => !a.isSystemApp)
-        .take(8)
-        .toList();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: DexSpace.md),
-      child: Column(
-        children: <Widget>[
-          const SizedBox(height: DexSpace.md),
-          Text(
-            _clock(now),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontSize: 26,
-              color: Colors.white,
-              fontWeight: FontWeight.w300,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            _longDate(now),
-            style: DexTheme.data(
-              c,
-              size: 9,
-              color: Colors.white.withValues(alpha: 0.75),
-            ),
-          ),
-          const SizedBox(height: DexSpace.md),
-          Expanded(
-            child: apps.isEmpty
-                ? const _NoApps()
-                : Center(
-                    child: GridView.count(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 4,
-                      mainAxisSpacing: DexSpace.sm,
-                      crossAxisSpacing: DexSpace.sm,
-                      childAspectRatio: 0.78,
-                      children: <Widget>[
-                        for (final AndroidApplication app in apps)
-                          _MiniApp(app: app, onLaunch: () => onLaunch(app)),
-                      ],
-                    ),
-                  ),
-          ),
-          if (apps.isNotEmpty) ...<Widget>[
-            _Dock(apps: apps, onLaunch: onLaunch, overVideo: overVideo),
-            const SizedBox(height: DexSpace.sm),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// The phone's dock. The reference keeps four apps pinned across the bottom,
-/// which is also what stops the lower half of the screen reading as empty.
-class _Dock extends StatelessWidget {
-  const _Dock({
-    required this.apps,
-    required this.onLaunch,
-    required this.overVideo,
-  });
-
-  final List<AndroidApplication> apps;
-  final ValueChanged<AndroidApplication> onLaunch;
-  final bool overVideo;
-
-  @override
-  Widget build(BuildContext context) {
-    final DexGlass glass = DexGlass.of(context);
-    final List<AndroidApplication> docked = apps.take(4).toList();
-
-    return GlassPanel(
-      radius: DexRadius.dialog,
-      fill: glass.fillStrong,
-      shadow: false,
-      // Inside the mirror, so it inherits the same reasoning.
-      blurred: !overVideo,
-      padding: const EdgeInsets.symmetric(
-        horizontal: DexSpace.sm,
-        vertical: DexSpace.sm,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          for (final AndroidApplication app in docked)
-            _DockIcon(app: app, onLaunch: () => onLaunch(app)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DockIcon extends StatelessWidget {
-  const _DockIcon({required this.app, required this.onLaunch});
-
-  final AndroidApplication app;
-  final VoidCallback onLaunch;
-
-  @override
-  Widget build(BuildContext context) {
-    final String shown = isPlaceholderLabel(app.label, app.packageName)
-        ? displayNameFor(app.packageName)
-        : app.label;
-    return Semantics(
-      button: true,
-      label: 'Open $shown',
-      child: Tooltip(
-        message: shown,
-        child: HoverLift(
-          builder: (BuildContext context, bool hovered) => InkWell(
-            onTap: onLaunch,
-            borderRadius: BorderRadius.circular(DexRadius.control),
-            child: AnimatedScale(
-              duration: DexDuration.micro,
-              curve: DexMotion.arrive,
-              scale: hovered ? 1.12 : 1,
-              child: AppGlyph(app: app, size: 26),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MiniApp extends StatelessWidget {
-  const _MiniApp({required this.app, required this.onLaunch});
-
-  final AndroidApplication app;
-  final VoidCallback onLaunch;
-
-  @override
-  Widget build(BuildContext context) {
-    final String shown = isPlaceholderLabel(app.label, app.packageName)
-        ? displayNameFor(app.packageName)
-        : app.label;
-    return Semantics(
-      button: true,
-      label: 'Open $shown',
-      child: Tooltip(
-        message: shown,
-        child: HoverLift(
-          builder: (BuildContext context, bool hovered) => InkWell(
-            onTap: onLaunch,
-            borderRadius: BorderRadius.circular(DexRadius.control),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                AnimatedScale(
-                  duration: DexDuration.micro,
-                  curve: DexMotion.arrive,
-                  scale: hovered ? 1.08 : 1,
-                  child: AppGlyph(app: app, size: 30),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  shown,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 7.5,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Empty state. An empty screen is an invitation to act, not a blank.
-class _NoApps extends StatelessWidget {
-  const _NoApps();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(DexSpace.md),
-        child: Text(
-          'Apps appear here once the phone finishes connecting.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 9,
-            height: 1.5,
-            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
       ),
@@ -484,30 +264,49 @@ String _clock(DateTime now) {
   return '$h:${now.minute.toString().padLeft(2, '0')}';
 }
 
-const List<String> _months = <String>[
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+/// What the frame holds before there is a stream to hold.
+class _Placeholder extends StatelessWidget {
+  const _Placeholder({required this.snapshot});
 
-const List<String> _days = <String>[
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
+  final OpenDexSnapshot snapshot;
 
-String _longDate(DateTime now) =>
-    '${_days[now.weekday - 1]}, ${_months[now.month - 1]} ${now.day}';
+  @override
+  Widget build(BuildContext context) {
+    final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final TextTheme t = Theme.of(context).textTheme;
+    final String? name = snapshot.selectedDevice?.name;
+
+    return Padding(
+      padding: const EdgeInsets.all(DexSpace.lg),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: c.surface.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+              border: Border.all(color: c.line, width: DexStroke.hairline),
+            ),
+            child: Icon(DexIcons.portrait, size: 20, color: c.muted),
+          ),
+          const SizedBox(height: DexSpace.md),
+          Text(
+            'Screen mirror',
+            textAlign: TextAlign.center,
+            style: t.labelLarge?.copyWith(color: c.text),
+          ),
+          const SizedBox(height: DexSpace.xs),
+          Text(
+            name == null
+                ? 'The phone\u2019s display appears here once it is casting.'
+                : '$name\u2019s display appears here once it is casting.',
+            textAlign: TextAlign.center,
+            style: t.bodySmall?.copyWith(color: c.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}

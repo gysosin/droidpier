@@ -367,9 +367,9 @@ void main() {
     });
   });
 
-  group('QR code', () {
+  group('QR Code', () {
     Future<void> openQr(WidgetTester tester) async {
-      await tester.tap(segment('QR code'));
+      await tester.tap(segment('QR Code'));
       await settle(tester);
     }
 
@@ -461,7 +461,7 @@ void main() {
       expect(find.byType(QrImageView), findsNothing);
       expect(find.text('Pairing…'), findsOneWidget);
       // And no second way in is offered while the exchange is running.
-      expect(segment('QR code'), findsNothing);
+      expect(segment('QR Code'), findsNothing);
     });
 
     testWidgets('an expired code says so rather than counting below zero', (
@@ -498,7 +498,7 @@ void main() {
       await openQr(tester);
       calls.clear();
 
-      await tester.tap(segment('Manual'));
+      await tester.tap(segment('Manual Entry'));
       await settle(tester);
       expect(calls, contains('cancelPairing'));
     });
@@ -506,7 +506,7 @@ void main() {
 
   group('manual pairing', () {
     Future<void> openManual(WidgetTester tester) async {
-      await tester.tap(segment('Manual'));
+      await tester.tap(segment('Manual Entry'));
       await settle(tester);
     }
 
@@ -708,7 +708,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('deadline exceeded'), findsNothing);
-      expect(segment('Manual'), findsOneWidget);
+      expect(segment('Manual Entry'), findsOneWidget);
     });
   });
 
@@ -820,10 +820,10 @@ void main() {
       await tester.tap(find.byTooltip('Settings'));
       await settle(tester);
       await tester.ensureVisible(
-        find.widgetWithText(OutlinedButton, 'Open').first,
+        find.text('Manage Phones…'),
       );
       await settle(tester);
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Open').first);
+      await tester.tap(find.text('Manage Phones…'));
       await settle(tester);
 
       // One surface, carrying both halves. There is nothing left to stack.

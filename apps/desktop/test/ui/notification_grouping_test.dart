@@ -137,7 +137,7 @@ void main() {
       of: find.text('Messages'),
       matching: find.byType(Row),
     );
-    expect(find.descendant(of: header.first, matching: find.text('4')),
+    expect(find.descendant(of: header.first, matching: find.text('4 items')),
         findsOneWidget);
 
     // A lone notification needs no badge saying "1" — that is noise.

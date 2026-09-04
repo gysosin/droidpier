@@ -333,6 +333,17 @@ class _TitleBar extends StatelessWidget {
           // Expand to edge-to-edge fullscreen — the reference's ↗ button. Only
           // a streaming window can fill the monitor, and only when the host
           // provides a fullscreen surface (absent in test harnesses).
+          // Named for what it will do — Portrait or Landscape — rather than
+          // being another ambiguous expand glyph.
+          // One rotate glyph whichever way the window faces: the control
+          // means "turn", and the label carries which way.
+          _WindowButton(
+            icon: DexIcons.rotate,
+            label:
+                '${rotateActionLabel(window.geometry)} '
+                '${window.session.application.label}',
+            onPressed: _rotate,
+          ),
           if (intents.fullscreen != null &&
               window.session.status == WindowSessionStatus.streaming)
             _WindowButton(
@@ -340,17 +351,6 @@ class _TitleBar extends StatelessWidget {
               label: 'Fullscreen ${window.session.application.label}',
               onPressed: () => intents.fullscreen!(window.id),
             ),
-          // Named for what it will do — Portrait or Landscape — rather than
-          // being another ambiguous expand glyph.
-          _WindowButton(
-            icon: rotateActionLabel(window.geometry) == 'Portrait'
-                ? DexIcons.portrait
-                : DexIcons.landscape,
-            label:
-                '${rotateActionLabel(window.geometry)} '
-                '${window.session.application.label}',
-            onPressed: _rotate,
-          ),
           _WindowButton(
             icon: DexIcons.minimise,
             label: 'Minimise ${window.session.application.label}',
@@ -840,10 +840,48 @@ class _LiveBadge extends StatelessWidget {
         'dropped ${_rate(window.session.droppedFramesPerSecond)}\n'
         'A still screen sends few frames, so these count changes, not speed.';
 
+    // The reference draws this as a card headed STREAM PIPELINE, not a
+    // system tooltip: the three rates are a readout, and a readout has a
+    // frame.
     return Semantics(
       label: 'Live',
       child: Tooltip(
-        message: detail,
+        richMessage: TextSpan(
+          children: <InlineSpan>[
+            TextSpan(
+              text: 'STREAM PIPELINE\n',
+              style: DexTheme.data(
+                c,
+                size: 9,
+              ).copyWith(letterSpacing: 1.4, height: 2),
+            ),
+            TextSpan(
+              text: 'Produced   ${_rate(window.session.producedFramesPerSecond)}\n',
+              style: DexTheme.data(c, size: 11, color: c.text),
+            ),
+            TextSpan(
+              text: 'Presented  ${_rate(window.presentedFramesPerSecond ?? window.session.presentedFramesPerSecond)}\n',
+              style: DexTheme.data(c, size: 11, color: c.trace),
+            ),
+            TextSpan(
+              text: 'Dropped    ${_rate(window.session.droppedFramesPerSecond)}',
+              style: DexTheme.data(c, size: 11, color: c.text),
+            ),
+            TextSpan(
+              text: '\n\n$detail',
+              style: DexTheme.data(c, size: 10),
+            ),
+          ],
+        ),
+        decoration: BoxDecoration(
+          color: c.surface.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(DexRadius.card),
+          border: Border.all(
+            color: DexGlass.of(context).stroke,
+            width: DexStroke.hairline,
+          ),
+        ),
+        padding: const EdgeInsets.all(DexSpace.md),
         child: Padding(
           padding: const EdgeInsets.only(right: DexSpace.sm),
           child: Container(

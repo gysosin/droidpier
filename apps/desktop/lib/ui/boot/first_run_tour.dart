@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
@@ -121,14 +122,62 @@ class _FirstRunTourState extends State<FirstRunTour> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
+                      // A rail of segments, one per step, filled up to this
+                      // one — progress you can see without reading.
                       Row(
                         children: <Widget>[
-                          Expanded(
-                            child: Text(step.title, style: t.titleMedium),
+                          for (int i = 0; i < kTourSteps.length; i++) ...<Widget>[
+                            if (i > 0) const SizedBox(width: DexSpace.xs),
+                            Expanded(
+                              child: Container(
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: i <= _step ? c.signal : c.line,
+                                  borderRadius: BorderRadius.circular(
+                                    DexRadius.pill,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: DexSpace.lg),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Container(
+                            width: DexHit.comfortable,
+                            height: DexHit.comfortable,
+                            decoration: BoxDecoration(
+                              color: c.signal.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(
+                                DexRadius.control,
+                              ),
+                            ),
+                            child: Icon(
+                              DexIcons.sparkles,
+                              size: 18,
+                              color: c.signal,
+                            ),
                           ),
-                          Text(
-                            '${_step + 1} of ${kTourSteps.length}',
-                            style: DexTheme.data(c, size: 10),
+                          const SizedBox(width: DexSpace.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  'QUICK TOUR',
+                                  style: DexTheme.data(
+                                    c,
+                                    size: 9,
+                                    color: c.signal,
+                                  ).copyWith(letterSpacing: 1.6),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(step.title, style: t.titleLarge),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -161,13 +210,22 @@ class _FirstRunTourState extends State<FirstRunTour> {
                       ],
                       Row(
                         children: <Widget>[
+                          Flexible(
+                            child: Text(
+                              '${_step + 1} of ${kTourSteps.length}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DexTheme.data(c, size: 10),
+                            ),
+                          ),
+                          const Spacer(),
                           // Always available. Someone who already knows the
                           // product must be able to leave from anywhere.
                           TextButton(
                             onPressed: widget.onFinished,
                             child: const Text('Skip'),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: DexSpace.xs),
                           FilledButton(
                             onPressed: _next,
                             child: Text(_isLast ? 'Done' : 'Next'),

@@ -11,7 +11,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 1. Cross-cutting
 
-- [ ] **Wallpaper bloom is a circle.** The reference paints a 650×650 disc pinned
+- [x] **Wallpaper bloom is a circle.** The reference paints a 650×650 disc pinned
       top-right, `radial-gradient(circle at 100% 0%, white 15% → transparent 70%)`,
       with a soft but *visible* edge. Ours is a diffuse gradient with no edge.
 - [ ] **Hover motion.** Desk icon tiles scale to 1.05 on hover; the launcher
@@ -23,7 +23,7 @@ Each item is something visible. Tick it when the golden shows it.
       diagnostics, companion). The switcher, recovery and tour cards are 24.
 - [ ] **Scrims.** Modals: `slate-950/70` + blur 12. Drawer: `slate-950/60` +
       blur 24. Tour: blur 8. Recovery: `#0B1120/92` + blur 24.
-- [ ] **Rotate icon** is `rotateCw`, not a phone glyph; window control order is
+- [x] **Rotate icon** is `rotateCw`, not a phone glyph; window control order is
       rotate · fullscreen · minimise · maximise · close.
 - [ ] **Accent propagation.** With Phosphor selected the clock's second hand,
       the selected workspace key, the launcher button, toggles and the
@@ -31,7 +31,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 2. Desk
 
-- [ ] **Search pill**: the multicolour *Google* wordmark drawn as letters
+- [x] **Search pill**: the multicolour *Google* wordmark drawn as letters
       (`G` `#4285F4`, `o` `#EA4335`, `o` `#FBBC05`, `g` `#4285F4`, `l` `#34D399`,
       `e` `#EA4335`, bold, tight tracking), placeholder "Search the web or
       apps…", a **search** icon on the right (ours has a mic), `rounded-full`,
@@ -39,28 +39,28 @@ Each item is something visible. Tick it when the golden shows it.
 - [ ] **Desk icons**: four, not six. 48 px `rounded-[14px]` tile, label 11 px
       white with a drop shadow, wrapper `p-2 rounded-[14px] hover:bg-white/10`,
       tile `scale-105` on hover.
-- [ ] **Widget column** is 310 wide at `right: 40`, cards `p-4 rounded-[16px]`
+- [x] **Widget column** is 310 wide at `right: 40`, cards `p-4 rounded-[16px]`
       with `gap-3.5`, each header a mono uppercase label + icon on the left and a
       chip on the right, over a `border-b white/10` rule.
-- [ ] **Now Playing**: right chip `PHONE AUDIO`; 48 px `rounded-[8px]` artwork;
+- [x] **Now Playing**: right chip `PHONE AUDIO`; 48 px `rounded-[8px]` artwork;
       4 px scrubber `white/10` filled in the accent; mono times `1:24 / 5:16`;
       centred transport with a **round** play/pause (`bg-white/20`).
-- [ ] **Desk Mode**: right label `PIXEL 8 PRO · ANDROID 15` (model · version,
+- [x] **Desk Mode**: right label `PIXEL 8 PRO · ANDROID 15` (model · version,
       mono 10); battery row with a charging icon, `84% (Fast charging)` in mono
       and a 6 px gauge; a **2-column grid of radio tiles** (`p-2.5 rounded-[10px]
       bg-white/4`): Wi-Fi icon + "Wi-Fi 5GHz" + SSID, link icon + "Link
       Transport" + "USB High-Speed"; then a right-aligned "Open quick settings"
       affordance in mono that turns signal on hover.
-- [ ] **Notifications**: right chip `4 new` in amber; three compact rows
+- [x] **Notifications**: right chip `4 new` in amber; three compact rows
       (sender · mono time · body); affordance "View notification shade" that
       turns amber on hover.
 
 ## 3. Taskbar
 
-- [ ] **Nav pill order and glyphs**: `‹` back · `○` home · `□` recents · search.
+- [x] **Nav pill order and glyphs**: `‹` back · `○` home · `□` recents · search.
       Ours opens with a hamburger and has no recents key.
-- [ ] **Running-app chips** are dot + name only, no icon.
-- [ ] **Media pill** is a round play/pause (`bg-white/15`) plus the title at
+- [x] **Running-app chips** are dot + name only, no icon.
+- [x] **Media pill** is a round play/pause (`bg-white/15`) plus the title at
       11 px — not glyph + title + artist + three transport buttons.
 - [ ] **Tray clock** reads `12:56 am` over `5 Sept` (lowercase meridiem, day +
       short month).
@@ -68,7 +68,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 4. Window chrome and body states
 
-- [ ] **Live tooltip** is a card, not a system tooltip: `w-48 rounded-[10px]
+- [x] **Live tooltip** is a card, not a system tooltip: `w-48 rounded-[10px]
       bg-slate-900/95 border-white/20`, heading `STREAM PIPELINE` in mono, then
       Produced / Presented (emerald) / Dropped rows.
 - [ ] **Context menu**: `w-48 rounded-[12px] bg-slate-900/95`, rows "Snap left
@@ -86,62 +86,62 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 5. Boot
 
-- [ ] **Masthead**: a **Select Device** button on the right (phone icon,
+- [x] **Masthead**: a **Select Device** button on the right (phone icon,
       `bg-white/10 rounded-[10px]`); the build string carries a `v`.
-- [ ] **Headline** is 36 px / 700 display, not 32 / 600.
-- [ ] A static body paragraph under the headline when ready: "Bringing
+- [x] **Headline** is 36 px / 700 display, not 32 / 600.
+- [x] A static body paragraph under the headline when ready: "Bringing
       applications on your physical phone into a freeform desktop workspace.
       The apps run on the phone; your computer provides the desk."
-- [ ] **Target Transport Node** card: the device name **bold on its own line**
+- [x] **Target Transport Node** card: the device name **bold on its own line**
       beside the emerald phone icon, then a mono line `Android 15
       (VanillaIceCream) · USB Link`.
-- [ ] **Primary action** is a filled signal button "Open Workspace" with an
+- [x] **Primary action** is a filled signal button "Open Workspace" with an
       arrow icon, `px-6 py-3 rounded-[12px] font-bold`, ambient
       `shadow-lg shadow-signal/20`.
-- [ ] **Rail stations are 28 px discs**, not 8 px dots: complete = filled signal
+- [x] **Rail stations are 28 px discs**, not 8 px dots: complete = filled signal
       with a white check and a `0 0 12px signal/40` glow; active = signal ring
       over `signal/20` with a spinner; failed = filled rose with an alert mark;
       pending = slate ring with an 8 px dot. Connector is **2 px** in
       signal / rose / slate-700. Each station carries its **status word**
       (`COMPLETE`) in uppercase mono on the right and its detail line in mono
       below the label.
-- [ ] Rail card title is **"Five-Stage Hardware Handshake"** (title case).
-- [ ] **Bench strip** reads `PORT 3698: LISTEN   PORT 3699: SYNC   ADB: :5037`
+- [x] Rail card title is **"Five-Stage Hardware Handshake"** (title case).
+- [x] **Bench strip** reads `PORT 3698: LISTEN   PORT 3699: SYNC   ADB: :5037`
       on the left and `● Local Privacy Verified · Zero Cloud Relay` on the right.
 
 ## 6. Launcher
 
 - [ ] Card is **672 wide**, `max-h 80vh`, radius 20, anchored **64 px** from the
       top. Ours is 880 wide at 48.
-- [ ] **Header row**, not a boxed field: 20 px search icon, a **borderless**
+- [x] **Header row**, not a boxed field: 20 px search icon, a **borderless**
       input with placeholder "Search phone apps (e.g. 'wa' for WhatsApp, or app
       name)…", an X to clear once typing, and an `ESC to close` mono chip; the
       row has `p-4` and a `border-b white/10`.
-- [ ] **Pinned to Top** section carries a pin icon in signal and is hidden while
+- [x] **Pinned to Top** section carries a pin icon in signal and is hidden while
       searching. Pinned rows show the *category* as their subline.
 - [ ] Rows: `p-2.5 rounded-[12px] bg-white/4 border-white/5`, hover
       `bg-white/14 border-white/20`; a pin/unpin button appears on hover; the
       keyboard-selected row is `bg-white/25 border-white/40 ring-1`.
 - [ ] Body has `p-4` and `space-y-5` between sections.
-- [ ] **Footer** `p-3 border-t`: "↑/↓ to navigate · Enter to launch" left,
+- [x] **Footer** `p-3 border-t`: "↑/↓ to navigate · Enter to launch" left,
       "Live device apps (Pixel 8 Pro)" right in mono — the *device name*.
 
 ## 7. Command palette
 
 - [ ] Card **576 wide**, `max-h 75vh`, radius 20, anchored **80 px** from top.
-- [ ] Header: signal search icon, input "Type a command or search actions
+- [x] Header: signal search icon, input "Type a command or search actions
       (Ctrl+Shift+P)…", `ESC` chip.
-- [ ] Rows carry a **32 px `rounded-[8px] bg-white/10` icon well** and the
+- [x] Rows carry a **32 px `rounded-[8px] bg-white/10` icon well** and the
       **group as an inline chip** after the title (`SHELL` / `DEVICE` /
       `WINDOWS` / `APPS`, 9 px mono), with a description line under it — not
       section headers.
-- [ ] Order: shell, device, windows, apps.
-- [ ] Footer: "Navigation: ↑ / ↓ to choose · Enter to execute" | "Unified Shell
+- [x] Order: shell, device, windows, apps.
+- [x] Footer: "Navigation: ↑ / ↓ to choose · Enter to execute" | "Unified Shell
       Dispatcher".
 
 ## 8. Shortcut sheet
 
-- [ ] Header: keyboard icon in a signal well, "Keyboard Shortcuts", mono
+- [x] Header: keyboard icon in a signal well, "Keyboard Shortcuts", mono
       subtitle "Desktop Accelerator Map · Build vX", X.
 - [ ] Groups `LAUNCHER & DESK` / `WINDOW MANAGEMENT` / `HARDWARE & DIAGNOSTICS`,
       **single column**, each row a `p-2 rounded-[10px] bg-white/3` card with the
@@ -154,10 +154,10 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 9. Window switcher
 
-- [ ] Card `max-w-2xl p-6 rounded-[24px] border-white/25`; header
+- [x] Card `max-w-2xl p-6 rounded-[24px] border-white/25`; header
       `WINDOW SWITCHER (ALT + TAB)` left and `Z-Order Stack (n active)` right in
       mono over a rule.
-- [ ] Cards are `h-36 p-3.5 rounded-[16px]` in three columns: **20 px accent chip
+- [x] Cards are `h-36 p-3.5 rounded-[16px]` in three columns: **20 px accent chip
       + label top-left, status dot top-right**, a centred `rounded-[8px]
       bg-black/40` mono preview slot ("44 fps live stream" / "Minimised to
       Dock"), package in mono at the bottom.
@@ -165,16 +165,16 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 10. Diagnostics
 
-- [ ] Header: activity icon in an emerald well, "Stream Diagnostics", subtitle
+- [x] Header: activity icon in an emerald well, "Stream Diagnostics", subtitle
       "Deliberately not a debug dump. Every row is something you can act on.", X.
-- [ ] **One** summary card with three columns (`p-3.5 rounded-[14px]
+- [x] **One** summary card with three columns (`p-3.5 rounded-[14px]
       bg-white/4`): labels 10 px uppercase, values `text-base font-bold` mono,
       sublines `Optimal (< 20ms)` in emerald / `USB 3.1 High-speed` /
       `Tested 39–47 range`.
-- [ ] `ACTIVE VIDEO SURFACES (n)`; per-window card with label + package (mono,
+- [x] `ACTIVE VIDEO SURFACES (n)`; per-window card with label + package (mono,
       right) and an inner **black/40 three-column strip** PRODUCED / PRESENTED
       (emerald) / DROPPED.
-- [ ] `RECENTLY CLOSED SESSIONS (LAST 8)` card with a clock icon and bullet
+- [x] `RECENTLY CLOSED SESSIONS (LAST 8)` card with a clock icon and bullet
       lines.
 - [ ] Footer: "Copy diagnostics report" (copy icon, `bg-white/10`) left; "Press
       Ctrl+Shift+D to close" right.
@@ -183,31 +183,31 @@ Each item is something visible. Tick it when the golden shows it.
 
 - [ ] Wi-Fi pill subline is the **SSID**; both wide pills have a **round icon
       well** (emerald when on, signal for Bluetooth).
-- [ ] Volume header reads `PHONE VOLUME LEVELS`.
-- [ ] Footer links **"Manage Phones…"** (phone icon) and **"Desk Settings…"**
+- [x] Volume header reads `PHONE VOLUME LEVELS`.
+- [x] Footer links **"Manage Phones…"** (phone icon) and **"Desk Settings…"**
       (sliders icon) — wire the two callbacks that exist and are never passed.
 
 ## 12. Notification centre
 
-- [ ] Header: **amber bell icon**, "Notification Centre", count chip, "Clear all"
+- [x] Header: **amber bell icon**, "Notification Centre", count chip, "Clear all"
       with a **trash icon**.
-- [ ] Group header strip: sender bold + `n items` in mono.
-- [ ] Footer text exactly: "The physical phone remains the authoritative source
+- [x] Group header strip: sender bold + `n items` in mono.
+- [x] Footer text exactly: "The physical phone remains the authoritative source
       of truth".
 
 ## 13. Settings
 
-- [ ] Header: monitor icon + **"Desk Settings"** + X; each group label carries
+- [x] Header: monitor icon + **"Desk Settings"** + X; each group label carries
       its icon (palette / monitor / phone) and a "Reset group" with a rotate-ccw
       icon.
-- [ ] **Accent** as six bordered swatch **cards** (20 px circle + name; selected
+- [x] **Accent** as six bordered swatch **cards** (20 px circle + name; selected
       has a check and `bg-white/10`).
-- [ ] **Wallpaper** as a 4-column grid of `colour chip + name` cards, selected
+- [x] **Wallpaper** as a 4-column grid of `colour chip + name` cards, selected
       ringed — not gradient thumbnails with names beneath.
-- [ ] **PHONE LINKS**: a row of three tiles — "Manage Phones… / Switch phone or
+- [x] **PHONE LINKS**: a row of three tiles — "Manage Phones… / Switch phone or
       pair Wi-Fi", "Permissions… / What phone has granted desk", "Disconnect /
       End active session" in rose.
-- [ ] About: an **amber caution box** for the audio-forwarding limitation.
+- [x] About: an **amber caution box** for the audio-forwarding limitation.
 - [ ] Theme is a **two**-way Dark / Light segmented; ours keeps System, which the
       reference lacks — keep ours, style to match.
 
@@ -223,7 +223,7 @@ Each item is something visible. Tick it when the golden shows it.
       emerald "Ready" / alert-circle amber "Tap "Allow" on the phone") and the
       button (**Connect** filled signal / **Active Link** grey).
 - [ ] Selected card `ring-1 ring-signal bg-white/20`.
-- [ ] Right: segmented **QR Code / Manual Entry / Nearby Hints** in that order;
+- [x] Right: segmented **QR Code / Manual Entry / Nearby Hints** in that order;
       the QR card is white `rounded-[16px]` with the code framed in
       `border-4 slate-900`, "Scan from Developer options", instructions, "Code
       expires in 118s" in amber with an underlined "New code".
@@ -234,10 +234,10 @@ Each item is something visible. Tick it when the golden shows it.
       X.
 - [ ] Rows carry a **40 px icon well** (bell / music / copy / phone-call /
       volume).
-- [ ] Controls: **"On"** as an emerald/20 chip with a check-circle; "Turn on"
+- [x] Controls: **"On"** as an emerald/20 chip with a check-circle; "Turn on"
       `bg-white/10`; "Open on phone" amber with an external-link mark; "Not on
       this phone" italic mono.
-- [ ] Footer: "Permissions are verified live with companion service on port
+- [x] Footer: "Permissions are verified live with companion service on port
       3699".
 
 ## 16. Phone mirror
@@ -247,35 +247,35 @@ Each item is something visible. Tick it when the golden shows it.
       a slate gradient screen; an X; a 40 px circular phone badge; the device
       name; mono "Physical device surface linked via ADB. Screen mirroring
       handled in freeform windows."; an 80×4 gesture pill.
-- [ ] **Ours draws an app grid inside the phone.** That is a fake phone screen,
+- [x] **Ours draws an app grid inside the phone.** That is a fake phone screen,
       which §14 forbids and the reference does not do. Replace with the honest
       placeholder above.
 
 ## 17. Health HUD
 
-- [ ] **Bottom-left** (`left: 16, bottom: 64`), not bottom-right.
-- [ ] One line: `● 42 fps  RTT: 14ms  TX: 4.8MB/s  Target: WhatsApp` in mono 11,
+- [x] **Bottom-left** (`left: 16, bottom: 64`), not bottom-right.
+- [x] One line: `● 42 fps  RTT: 14ms  TX: 4.8MB/s  Target: WhatsApp` in mono 11,
       solid `#0B1120` with a slate-700 border, radius 8, no blur, no pointer.
 
 ## 18. Token sheet
 
 - [ ] Header: palette icon well, "DroidPier Token & Specimen Explorer", mono
       subtitle, **Dark / Light** and **Glass / Matte** segmented controls, X.
-- [ ] Tabs are **underlined** in signal, not a segmented pill.
-- [ ] Semantic roles as **cards** showing **both** hexes (`#0B1120 / #EEF2FB`)
+- [x] Tabs are **underlined** in signal, not a segmented pill.
+- [x] Semantic roles as **cards** showing **both** hexes (`#0B1120 / #EEF2FB`)
       and the purpose; accent cards with circle + name + hex; wallpaper cards
       with the gradient + name.
 
 ## 19. Recovery overlay (from source — never triggered in the demo)
 
-- [ ] Card centred, `max-w-md p-8 rounded-[24px]`, text centred; a **56 px ring
+- [x] Card centred, `max-w-md p-8 rounded-[24px]`, text centred; a **56 px ring
       above the headline** (not 40 px beside it); headline `text-xl` bold
       display; mono sub-line; Reconnect Now / Disconnect only for
       reconnecting / failed.
 
 ## 20. First-run tour (from source — never opened in the demo)
 
-- [ ] Card `max-w-md p-6 rounded-[24px]`; a **progress rail** of four bars
+- [x] Card `max-w-md p-6 rounded-[24px]`; a **progress rail** of four bars
       (active `w-6` signal, rest `w-2 white/20`) with "Skip tour"; a 48 px
       `rounded-[14px] signal/20` icon well; title with a **mono badge chip**
       (`Ctrl + Space`, `Edge Snapping`, `Alt + Tab`, `Tray Control Centre`);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_accent.dart';
 import '../theme/dex_colors.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -40,9 +41,19 @@ class _TokenSheetState extends State<TokenSheet> {
   /// see them beside each other, which is the only way to judge whether the
   /// matte fallback still reads as the same product.
   bool _glass = true;
+  // The sheet renders both palettes on demand, whatever the desk is set to:
+  // the point of the explorer is to see the token in the mode you are not in.
+  bool _dark = true;
 
   @override
   Widget build(BuildContext context) {
+    return Theme(
+      data: _dark ? DexTheme.dark() : DexTheme.light(),
+      child: Builder(builder: _body),
+    );
+  }
+
+  Widget _body(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
     final TextTheme t = Theme.of(context).textTheme;
 
@@ -53,7 +64,36 @@ class _TokenSheetState extends State<TokenSheet> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(child: Text('Design tokens', style: t.titleLarge)),
+              Container(
+                width: DexHit.comfortable,
+                height: DexHit.comfortable,
+                decoration: BoxDecoration(
+                  color: DexGlass.of(context).fill,
+                  borderRadius: BorderRadius.circular(DexRadius.control),
+                ),
+                child: Icon(DexIcons.palette, size: 18, color: c.signal),
+              ),
+              const SizedBox(width: DexSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text('Design System Explorer', style: t.titleLarge),
+                    Text(
+                      'Every token, in both modes and both finishes',
+                      style: t.bodySmall?.copyWith(color: c.muted),
+                    ),
+                  ],
+                ),
+              ),
+              DexSegmented(
+                options: const <String>['Dark', 'Light'],
+                selected: _dark ? 0 : 1,
+                colors: c,
+                onSelect: (int i) => setState(() => _dark = i == 0),
+              ),
+              const SizedBox(width: DexSpace.sm),
               DexSegmented(
                 options: const <String>['Glass', 'Matte'],
                 selected: _glass ? 0 : 1,
@@ -65,8 +105,8 @@ class _TokenSheetState extends State<TokenSheet> {
             ],
           ),
           const SizedBox(height: DexSpace.lg),
-          DexSegmented(
-            options: const <String>['Colour', 'Type', 'Components', 'Geometry'],
+          _TabStrip(
+            labels: const <String>['Colour', 'Type', 'Components', 'Geometry'],
             selected: _Tab.values.indexOf(_tab),
             colors: c,
             onSelect: (int i) => setState(() => _tab = _Tab.values[i]),
@@ -110,16 +150,13 @@ class _Colour extends StatelessWidget {
           spacing: DexSpace.sm,
           runSpacing: DexSpace.sm,
           children: <Widget>[
-            _Swatch('bg', colors.bg, colors),
-            _Swatch('surface', colors.surface, colors),
-            _Swatch('raised', colors.raised, colors),
-            _Swatch('line', colors.line, colors),
-            _Swatch('text', colors.text, colors),
-            _Swatch('muted', colors.muted, colors),
-            _Swatch('signal', colors.signal, colors),
-            _Swatch('trace', colors.trace, colors),
-            _Swatch('warn', colors.warn, colors),
-            _Swatch('fault', colors.fault, colors),
+            for (final (String name, Color Function(DexColors) pick) in _roles)
+              _RoleCard(
+                name: name,
+                dark: pick(DexColors.dark),
+                light: pick(DexColors.light),
+                colors: colors,
+              ),
           ],
         ),
         _Heading('Glass', colors: colors),
@@ -626,6 +663,169 @@ class _Note extends StatelessWidget {
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: colors.muted,
         ),
+      ),
+    );
+  }
+}
+
+/// Every semantic role, by name, so the card can show both palettes' values.
+const List<(String, Color Function(DexColors))> _roles =
+    <(String, Color Function(DexColors))>[
+      ('bg', _bg),
+      ('surface', _surface),
+      ('raised', _raised),
+      ('line', _line),
+      ('text', _text),
+      ('muted', _muted),
+      ('signal', _signal),
+      ('trace', _trace),
+      ('warn', _warn),
+      ('fault', _fault),
+    ];
+
+Color _bg(DexColors c) => c.bg;
+Color _surface(DexColors c) => c.surface;
+Color _raised(DexColors c) => c.raised;
+Color _line(DexColors c) => c.line;
+Color _text(DexColors c) => c.text;
+Color _muted(DexColors c) => c.muted;
+Color _signal(DexColors c) => c.signal;
+Color _trace(DexColors c) => c.trace;
+Color _warn(DexColors c) => c.warn;
+Color _fault(DexColors c) => c.fault;
+
+String _hex(Color c) =>
+    '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+/// One role, both values: the dark hex over the light hex, each on its own
+/// swatch, as the reference lays the palette out.
+class _RoleCard extends StatelessWidget {
+  const _RoleCard({
+    required this.name,
+    required this.dark,
+    required this.light,
+    required this.colors,
+  });
+
+  final String name;
+  final Color dark;
+  final Color light;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget half(String mode, Color value) => Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            height: 36,
+            decoration: BoxDecoration(
+              color: value,
+              borderRadius: BorderRadius.circular(DexRadius.control),
+              border: Border.all(
+                color: colors.line,
+                width: DexStroke.hairline,
+              ),
+            ),
+          ),
+          const SizedBox(height: DexSpace.xs),
+          Text(mode, style: DexTheme.data(colors, size: 9)),
+          Text(
+            _hex(value),
+            style: DexTheme.data(colors, size: 10, color: colors.text),
+          ),
+        ],
+      ),
+    );
+
+    return Container(
+      width: 168,
+      padding: const EdgeInsets.all(DexSpace.sm),
+      decoration: BoxDecoration(
+        color: colors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(color: colors.line, width: DexStroke.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            name,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.text,
+            ),
+          ),
+          const SizedBox(height: DexSpace.sm),
+          Row(
+            children: <Widget>[
+              half('DARK', dark),
+              const SizedBox(width: DexSpace.sm),
+              half('LIGHT', light),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tabs as underlined labels, as the reference sets them: the selected one
+/// carries a signal-coloured rule, the rest sit on the hairline.
+class _TabStrip extends StatelessWidget {
+  const _TabStrip({
+    required this.labels,
+    required this.selected,
+    required this.colors,
+    required this.onSelect,
+  });
+
+  final List<String> labels;
+  final int selected;
+  final DexColors colors;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colors.line, width: DexStroke.hairline),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          for (int i = 0; i < labels.length; i++)
+            Semantics(
+              button: true,
+              selected: i == selected,
+              child: InkWell(
+                onTap: () => onSelect(i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DexSpace.md,
+                    vertical: DexSpace.sm,
+                  ),
+                  constraints: const BoxConstraints(minHeight: DexHit.comfortable),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: i == selected ? colors.signal : Colors.transparent,
+                        width: DexStroke.focusRing,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    labels[i],
+                    style: t.labelLarge?.copyWith(
+                      color: i == selected ? colors.text : colors.muted,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

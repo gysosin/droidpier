@@ -57,19 +57,41 @@ class WindowSwitcher extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 720),
                   child: GlassPanel(
-                    radius: DexRadius.dialog,
+                    radius: 24,
                     fill: glass.substrate,
                     padding: const EdgeInsets.all(DexSpace.lg),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(
-                          windows.length == 1
-                              ? '1 app open'
-                              : '${windows.length} apps open',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(color: c.muted),
+                        // The reference heads this with what it is and the
+                        // key that summoned it, and counts the stack on the
+                        // right — the number is the readout, not the title.
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                'WINDOW SWITCHER (ALT + TAB)',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: DexTheme.data(
+                                  c,
+                                  size: 10,
+                                  color: c.text,
+                                ).copyWith(letterSpacing: 1.4),
+                              ),
+                            ),
+                            const SizedBox(width: DexSpace.md),
+                            Text(
+                              'Z-Order Stack (${windows.length} active)',
+                              style: DexTheme.data(c, size: 10),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: DexSpace.sm),
+                        Divider(
+                          color: glass.stroke,
+                          height: DexStroke.hairline,
                         ),
                         const SizedBox(height: DexSpace.md),
                         Wrap(
@@ -86,11 +108,30 @@ class WindowSwitcher extends StatelessWidget {
                         ),
                         if (windows.isNotEmpty) ...<Widget>[
                           const SizedBox(height: DexSpace.md),
-                          Text(
-                            'Release Alt to focus '
-                            '${windows[selected.clamp(0, windows.length - 1)]
-                                .session.application.label}',
-                            style: DexTheme.data(c, size: 10),
+                          Center(
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Release Alt to focus ',
+                                style: DexTheme.data(c, size: 10),
+                                children: <InlineSpan>[
+                                  TextSpan(
+                                    text:
+                                        windows[selected.clamp(
+                                              0,
+                                              windows.length - 1,
+                                            )]
+                                            .session
+                                            .application
+                                            .label,
+                                    style: DexTheme.data(
+                                      c,
+                                      size: 10,
+                                      color: c.text,
+                                    ).copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ],
@@ -155,7 +196,7 @@ class _Card extends StatelessWidget {
           child: AnimatedContainer(
             duration: DexDuration.micro,
             curve: DexMotion.arrive,
-            width: 148,
+            width: 176,
             padding: const EdgeInsets.all(DexSpace.md),
             decoration: BoxDecoration(
               color: current
@@ -175,11 +216,24 @@ class _Card extends StatelessWidget {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                // Glyph and name top-left, the state dot top-right, a preview
+                // slot between, the package under it — the reference's card,
+                // which reads as a window and not as a launcher tile.
                 Row(
                   children: <Widget>[
-                    // The same dot the dock draws, so one glance reads the
-                    // same in both places.
+                    AppGlyph(app: app, size: 20),
+                    const SizedBox(width: DexSpace.sm),
+                    Expanded(
+                      child: Text(
+                        shown,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: c.text),
+                      ),
+                    ),
                     Container(
                       width: 6,
                       height: 6,
@@ -196,34 +250,31 @@ class _Card extends StatelessWidget {
                             : null,
                       ),
                     ),
-                    const Spacer(),
                   ],
                 ),
-                const SizedBox(height: DexSpace.xs),
-                AppGlyph(app: app, size: 44),
                 const SizedBox(height: DexSpace.sm),
-                Text(
-                  shown,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(color: c.text),
-                ),
-                Text(
-                  state,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: window.session.status == WindowSessionStatus.failed
-                        ? c.fault
-                        : c.muted,
+                Container(
+                  height: 72,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.40),
+                    borderRadius: BorderRadius.circular(DexRadius.control),
+                  ),
+                  child: Text(
+                    state,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: window.session.status == WindowSessionStatus.failed
+                          ? c.fault
+                          : c.muted,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: DexSpace.sm),
                 Text(
                   app.packageName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                   style: DexTheme.data(c, size: 9),
                 ),
               ],
