@@ -139,6 +139,12 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
               reduceMotion: _prefs.reduceMotion,
               onReduceMotionChanged: (bool v) =>
                   _updatePreferences(_prefs.copyWith(reduceMotion: v)),
+              // Without these two the tour could never run: the shell defaults
+              // tourCompleted to true, so omitting them silently disabled a
+              // fully tested feature rather than failing to compile.
+              tourCompleted: _prefs.tourCompleted,
+              onTourCompleted: () =>
+                  _updatePreferences(_prefs.copyWith(tourCompleted: true)),
               onCopyText: (String text) => unawaited(_copyText(text)),
               launchHistory: <String, AppLaunchStats>{
                 for (final MapEntry<String, LaunchRecord> entry

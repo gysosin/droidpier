@@ -4,6 +4,18 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The first-run tour can happen. It was 214 lines with a test file covering
+  every step, and it could never appear: the shell defaulted "already seen" to
+  true, nothing passed it, and there was nowhere to remember it. Finishing it
+  now sticks; an unreadable saved value shows it again rather than silently
+  never showing it.
+- The phone mirror has a door. Docked bottom-right above the taskbar, where its
+  own documentation always said it belonged and where nothing ever put it, and
+  reachable from the command palette. It goes flat whenever a window is
+  streaming.
+- Removed a carded clock widget that nothing built, and two card sizes nothing
+  asked for. The test that guarded against a second clock now counts the clocks
+  on the desk instead of asserting that one particular unused widget is absent.
 - One icon set, drawn at one weight. The interface had been picking between
   Material's filled, outlined and rounded variants per call site, so a filled
   battery sat beside an outlined settings gear in the same tray. Icons now come
