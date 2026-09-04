@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+import '../widgets/segmented.dart';
 
 import '../util/app_version.dart';
 import '../theme/dex_colors.dart';
@@ -518,16 +519,14 @@ class _ChoiceRow extends StatelessWidget {
       title: title,
       detail: detail,
       colors: colors,
-      trailing: Wrap(
-        spacing: DexSpace.xs,
-        children: <Widget>[
-          for (final MapEntry<ThemeMode, String> e in _labels.entries)
-            ChoiceChip(
-              label: Text(e.value),
-              selected: e.key == value,
-              onSelected: (_) => onChanged(e.key),
-            ),
-        ],
+      // DexSegmented, not ChoiceChip. Material resolves a selected chip's fill
+      // from `secondaryContainer`, which lands on emerald here — so choosing a
+      // theme lit up in the colour this design reserves for telemetry.
+      trailing: DexSegmented(
+        options: _labels.values.toList(),
+        selected: _labels.keys.toList().indexOf(value),
+        colors: colors,
+        onSelect: (int i) => onChanged(_labels.keys.elementAt(i)),
       ),
     );
   }
