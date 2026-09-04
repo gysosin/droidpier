@@ -97,7 +97,9 @@ class ShortcutSheet extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Esc closes whatever is open, one layer at a time.',
+                  'Esc closes whatever is open, one layer at a time. '
+                  'Anything not claimed here goes straight to the focused '
+                  'Android window.',
                   style: t.bodySmall?.copyWith(color: c.muted),
                 ),
               ),
