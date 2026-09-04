@@ -23,7 +23,7 @@ import 'shortcut_sheet.dart';
 import 'window_controller.dart';
 import 'shortcuts.dart';
 import '../motion/dex_motion.dart';
-import '../theme/dex_colors.dart';
+import '../theme/dex_glass.dart';
 import '../connect/connection_screen.dart';
 import '../permissions/permission_panel.dart';
 import '../motion/sustained.dart';
@@ -1167,7 +1167,6 @@ class _Overlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DexColors c = Theme.of(context).extension<DexColors>()!;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Widget body = Stack(
@@ -1193,8 +1192,9 @@ class _Overlay extends StatelessWidget {
                   ),
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
+                final double sigma = DexGlass.of(context).blur;
                 return BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                  filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                   child: scrim,
                 );
               },
@@ -1206,21 +1206,15 @@ class _Overlay extends StatelessWidget {
             padding: const EdgeInsets.all(DexSpace.xxl),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 880, maxHeight: 620),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(DexRadius.dialog),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: c.bg.withValues(alpha: isDark ? 0.92 : 0.96),
-                    borderRadius: BorderRadius.circular(DexRadius.dialog),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.06),
-                      width: DexStroke.hairline,
-                    ),
-                  ),
-                  child: child,
-                ),
+              // GlassPanel, like every other surface. This card used to
+              // hand-roll its own fill, its own hairline and its own blur — at
+              // 28 rather than the committed 24 — which made the one place
+              // that most needs the shared primitive the one place not using
+              // it. That is how a glass design drifts into eleven glasses.
+              child: GlassPanel(
+                radius: DexRadius.dialog,
+                fill: DexGlass.of(context).substrate,
+                child: child,
               ),
             ),
           ),
