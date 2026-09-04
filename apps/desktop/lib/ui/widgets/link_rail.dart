@@ -5,6 +5,8 @@ import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
+import '../theme/dex_glass.dart';
+import '../theme/glass.dart';
 
 /// The Link Rail — the signature element of DroidPier.
 ///
@@ -382,6 +384,114 @@ class LinkRailTrace extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The Link Rail, collapsed into a chip — the desk's form of the third state.
+///
+/// [LinkRailTrace] is the full-width bench strip the boot screen ends on. The
+/// desk has no full width to give it: the top edge is where the search bar and
+/// the clock live. So the same third state is drawn as a compact instrument
+/// chip in the corner, carrying the same three machine values from the same
+/// [LinkRailTrace.format].
+///
+/// It is the first thing on the desk, deliberately. The rail is the one object
+/// this product asks a user to learn, and until now the state they see most —
+/// a healthy link, quietly reporting — was the state the desk never showed.
+///
+/// Nothing here animates. [SwapText] cross-fades a value only when the value
+/// itself changes, which is what `idle_cost_test` requires of anything living
+/// permanently on a connected desk.
+class LinkRailChip extends StatelessWidget {
+  const LinkRailChip({
+    required this.telemetry,
+    this.live = true,
+    this.readings = 3,
+    super.key,
+  });
+
+  final DeviceTelemetry telemetry;
+
+  /// False while recovering: the chip goes to fault and says so.
+  final bool live;
+
+  /// How many readouts there is room for. Latency is the one that says whether
+  /// the link is healthy, so it is the last to be dropped.
+  final int readings;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final DexGlass glass = DexGlass.of(context);
+    final Color tint = live ? c.signal : c.fault;
+
+    // Labels are the reference's — short, uppercase, the same width class as
+    // the numbers beside them, so the row reads as instrumentation rather than
+    // as a sentence. The units come from LinkRailTrace.format, which renders
+    // the frame rate as "/s" rather than "fps" on purpose: Android emits a
+    // frame when the screen changes, so a still screen reports single digits
+    // legitimately, and calling that "fps" made a working stream look broken.
+    final List<(String, TelemetryMeasurement?, Color)> all =
+        <(String, TelemetryMeasurement?, Color)>[
+          ('RTT', telemetry.linkLatency, c.text),
+          ('TX', telemetry.throughput, c.trace),
+          ('RATE', telemetry.framesPerSecond, c.text),
+        ];
+    final List<(String, TelemetryMeasurement, Color)> shown =
+        <(String, TelemetryMeasurement, Color)>[
+          for (final (String label, TelemetryMeasurement? m, Color colour)
+              in all)
+            if (m != null) (label, m, colour),
+        ].take(readings.clamp(1, all.length)).toList();
+
+    return GlassPanel(
+      radius: DexRadius.card,
+      fill: glass.substrate,
+      padding: const EdgeInsets.symmetric(
+        horizontal: DexSpace.md,
+        vertical: DexSpace.sm,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          // A short run of the same trace the boot screen ends on, at the same
+          // committed stroke, so the two readings of the rail are one object.
+          Container(
+            width: DexSpace.xxl,
+            height: DexStroke.railTrace,
+            decoration: BoxDecoration(
+              color: tint,
+              borderRadius: BorderRadius.circular(DexRadius.pill),
+            ),
+          ),
+          const SizedBox(width: DexSpace.sm),
+          Text(
+            live ? 'LINK' : 'LINK LOST',
+            style: DexTheme.data(c, size: 11, color: live ? c.text : c.fault),
+          ),
+          const SizedBox(width: DexSpace.md),
+          Container(width: 1, height: 12, color: glass.stroke),
+          for (final (String label, TelemetryMeasurement m, Color colour)
+              in shown)
+            Padding(
+              padding: const EdgeInsets.only(left: DexSpace.md),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(label, style: DexTheme.data(c, size: 11)),
+                  const SizedBox(width: DexSpace.xs),
+                  // Tabular figures: these change constantly and the row must
+                  // not jitter as they do.
+                  SwapText(
+                    LinkRailTrace.format(m),
+                    style: DexTheme.data(c, size: 11, color: colour),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
