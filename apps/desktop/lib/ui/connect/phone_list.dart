@@ -180,9 +180,17 @@ class _DeviceRow extends StatelessWidget {
   final bool busy;
 
   /// What the person should do about this device, in their words.
+  ///
+  /// Ready is trace, the colour reserved for facts the phone has reported,
+  /// rather than signal, which belongs to link state and primary actions —
+  /// and Connect, right beside it, is the primary action.
+  ///
+  /// A phone waiting for you to tap Allow is amber, not rose. Nothing has
+  /// failed; a prompt is open on a screen you are not looking at, and calling
+  /// that an error is how people stop reading red.
   (String, Color) _state(DexColors colors) => switch (device.status) {
-    DeviceStatus.authorized => ('Ready', colors.signal),
-    DeviceStatus.unauthorized => ('Tap “Allow” on the phone', colors.fault),
+    DeviceStatus.authorized => ('Ready', colors.trace),
+    DeviceStatus.unauthorized => ('Tap “Allow” on the phone', colors.warn),
     DeviceStatus.offline => ('Offline', colors.muted),
   };
 

@@ -9,6 +9,12 @@ Desktop shell improvements. Keyboard, launcher and window management.
   emerald here — so choosing a theme lit up in the colour this design reserves
   for telemetry. A reserved role stops meaning anything the moment it is spent
   on selection.
+- A phone that is ready reads emerald, and one waiting for you to tap "Allow"
+  reads amber. Ready was blue, which is the colour of the Connect button beside
+  it; waiting was red, though nothing had failed — a prompt is simply open on a
+  screen you are not looking at.
+- The recovery card opens on a ringed mark carrying the phase, and the shape
+  changes with it rather than only the colour.
 - "Needs phone settings" is amber rather than red. A capability waiting on a
   screen you have not opened yet is a state, not a failure, and painting states
   red is how people learn to ignore red. Granted is emerald, which is the
