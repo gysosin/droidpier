@@ -17,7 +17,9 @@ class DeskSearchBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 620),
+      // The reference sets this at max-w-sm. A 620px bar across the top-left
+      // reads as a browser chrome; a pill reads as a desk affordance.
+      constraints: const BoxConstraints(maxWidth: 384),
       child: _SearchBar(
         hint: 'Search Google',
         onSubmit: (String q) => onSearch(

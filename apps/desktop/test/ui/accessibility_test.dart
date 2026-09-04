@@ -148,8 +148,8 @@ void main() {
       await tester.pumpWidget(_wrap(_drawer(), DexTheme.dark()));
       await tester.pump();
 
-      expect(find.text('SYSTEM APPS'), findsOneWidget);
-      expect(find.text('USER APPS'), findsOneWidget);
+      expect(find.textContaining('SYSTEM APPLICATIONS'), findsOneWidget);
+      expect(find.textContaining('USER APPLICATIONS'), findsOneWidget);
       expect(find.text('System UI'), findsOneWidget);
       expect(find.text('Show system apps'), findsNothing);
     });

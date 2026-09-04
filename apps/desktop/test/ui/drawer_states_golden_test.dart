@@ -166,7 +166,7 @@ void main() {
       apps: _apps,
       pinned: const <String>['com.whatsapp'],
     );
-    expect(find.text('PINNED'), findsOneWidget);
+    expect(find.text('PINNED TO TOP'), findsOneWidget);
     await expectLater(
       find.byType(AppDrawer),
       matchesGoldenFile('goldens/drawer_pinned.png'),
