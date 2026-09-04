@@ -50,6 +50,8 @@ class Desk extends StatefulWidget {
     required this.onLaunchApplication,
     required this.workspace,
     required this.windows,
+    required this.currentWorkspace,
+    required this.onSelectWorkspace,
     required this.minimisedWindows,
     this.liveClock = false,
     super.key,
@@ -112,6 +114,10 @@ class Desk extends StatefulWidget {
 
   /// Passed through to the dock so a minimised window can be restored from it.
   final List<WorkspaceWindow> windows;
+
+  /// Which virtual desktop is on screen, and how to change it. 1-based.
+  final int currentWorkspace;
+  final ValueChanged<int> onSelectWorkspace;
   final Set<String> minimisedWindows;
 
   /// Whether the analog clock runs its own live one-second ticker (product) or
@@ -220,6 +226,8 @@ class _DeskState extends State<Desk> {
             rise: 18,
             child: TaskbarBar(
               windows: widget.windows,
+              currentWorkspace: widget.currentWorkspace,
+              onSelectWorkspace: widget.onSelectWorkspace,
               minimised: widget.minimisedWindows,
               onOpenLauncher: widget.onOpenLauncher,
               onFocus: widget.onFocusWindow,

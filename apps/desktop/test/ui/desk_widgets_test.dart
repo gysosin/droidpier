@@ -50,6 +50,8 @@ void main() {
             workspace: const SizedBox.expand(),
             windows: const <WorkspaceWindow>[],
             minimisedWindows: const <String>{},
+          currentWorkspace: 1,
+          onSelectWorkspace: (_) {},
           ),
         ),
       ),

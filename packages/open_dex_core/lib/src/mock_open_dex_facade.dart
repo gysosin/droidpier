@@ -183,6 +183,9 @@ class MockOpenDexFacade implements OpenDexFacade {
       status: WindowSessionStatus.streaming,
       displayId: 10 + _sessionSequence,
       isFocused: true,
+      // Opening an app on desk 3 and having it appear on desk 1 reads as the
+      // window failing to open at all.
+      workspace: _snapshot.currentWorkspace,
       geometry: WindowGeometry(
         x: 64 + ((_sessionSequence - 1) % 6) * 28,
         y: 64 + ((_sessionSequence - 1) % 6) * 28,
