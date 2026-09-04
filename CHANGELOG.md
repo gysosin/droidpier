@@ -4,6 +4,15 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The Link Rail's connected state is on the desk. The rail is the one object
+  this product asks you to learn, and it has three states: the full rail during
+  boot, the recovery rail, and the collapsed live trace. The third — the state a
+  connected user looks at all day — was built and then wired only into the
+  preview harness, so the desk never showed it. It now sits in the top-left
+  corner carrying `RTT`, `TX` and `RATE` from live telemetry, sheds readouts as
+  the window narrows rather than overflowing, and is the one piece of desk
+  furniture that does *not* fade behind a streaming window: whether the link is
+  healthy is exactly what you want to read while something is streaming.
 - The desk search opens links through the facade instead of starting `xdg-open`
   from a widget. A widget that reaches the host directly cannot be rendered in
   the preview harness or covered by a test without launching a real browser,

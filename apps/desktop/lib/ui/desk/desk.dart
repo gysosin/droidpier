@@ -6,6 +6,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
+import '../widgets/link_rail.dart';
 import '../workspace/window_model.dart';
 import 'analog_clock.dart';
 import 'control_center.dart';
@@ -329,6 +330,10 @@ class _Furniture extends StatelessWidget {
   final ValueChanged<String> onWebSearch;
   final bool liveClock;
 
+  /// Where the search bar starts, leaving the corner above it to the collapsed
+  /// Link Rail.
+  static const double _searchTop = 56;
+
   /// The bare clock's diameter, and the width below which it is dropped so it
   /// cannot collide with the search bars.
   static const double _clockSize = 300;
@@ -384,9 +389,30 @@ class _Furniture extends StatelessWidget {
                 ),
               ),
             ),
-            // Search bars, top-left.
+            // The Link Rail, collapsed. First thing on the desk, and the only
+            // furniture that does not recede behind a stream: whether the link
+            // is healthy is exactly what a user wants to read while something
+            // is streaming.
             Positioned(
               top: DexSpace.lg,
+              left: DexSpace.lg,
+              child: Entrance(
+                order: 0,
+                child: LinkRailChip(
+                  telemetry: snapshot.telemetry,
+                  live: snapshot.recovery.phase == RecoveryPhase.idle ||
+                      snapshot.recovery.phase == RecoveryPhase.recovered,
+                  readings: w >= 900
+                      ? 3
+                      : w >= 700
+                      ? 2
+                      : 1,
+                ),
+              ),
+            ),
+            // Search bars, below the rail.
+            Positioned(
+              top: _searchTop,
               left: DexSpace.lg,
               child: Entrance(
                 order: 1,
