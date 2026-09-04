@@ -16,6 +16,7 @@ class OpenDexController implements OpenDexFacade {
     WirelessDeviceGateway? wirelessDeviceGateway,
     ClipboardGateway? clipboardGateway,
     WirelessDiscoveryGateway? wirelessDiscoveryGateway,
+    UrlLauncherGateway? urlLauncherGateway,
     int reconnectAttempts = 3,
     Duration reconnectDelay = const Duration(seconds: 1),
     Duration surfaceRetireDelay = const Duration(milliseconds: 34),
@@ -33,6 +34,7 @@ class OpenDexController implements OpenDexFacade {
                ? deviceGateway as WirelessDeviceGateway
                : null),
        _clipboardGateway = clipboardGateway,
+       _urlLauncherGateway = urlLauncherGateway,
        _reconnectAttempts = reconnectAttempts,
        _reconnectDelay = reconnectDelay,
        _surfaceRetireDelay = surfaceRetireDelay,
@@ -74,6 +76,7 @@ class OpenDexController implements OpenDexFacade {
   final NotificationGateway? _notificationGateway;
   final WirelessDeviceGateway? _wirelessDeviceGateway;
   final ClipboardGateway? _clipboardGateway;
+  final UrlLauncherGateway? _urlLauncherGateway;
   final int _reconnectAttempts;
   final Duration _reconnectDelay;
   final Duration _surfaceRetireDelay;
@@ -665,6 +668,95 @@ class OpenDexController implements OpenDexFacade {
     );
     return const CommandSuccess(null);
   }
+
+  @override
+  Future<VoidResult> selectWorkspace(int workspace) async {
+    if (!isValidWorkspace(workspace)) return _invalidWorkspace();
+    _emit(_snapshot.copyWith(currentWorkspace: workspace));
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> moveWindowToWorkspace(
+    String sessionId,
+    int workspace,
+  ) async {
+    if (!isValidWorkspace(workspace)) return _invalidWorkspace();
+    if (_window(sessionId) == null) return _missingWindow();
+    _replaceWindow(
+      sessionId,
+      (window) => window.copyWith(workspace: workspace),
+    );
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> setWindowScale(String sessionId, double scale) async {
+    if (!isValidWindowScale(scale)) return _invalidWindowScale();
+    if (_window(sessionId) == null) return _missingWindow();
+    _replaceWindow(sessionId, (window) => window.copyWith(scale: scale));
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> setWindowOrientation(
+    String sessionId, {
+    required bool landscape,
+  }) async {
+    final window = _window(sessionId);
+    if (window == null) return _missingWindow();
+    if (window.isLandscape == landscape) return const CommandSuccess(null);
+    // Swap the aspect rather than resize to a remembered box, so rotating back
+    // lands exactly where it started without storing anything.
+    final rotated = WindowGeometry(
+      x: window.geometry.x,
+      y: window.geometry.y,
+      width: window.geometry.height,
+      height: window.geometry.width,
+    );
+    _replaceWindow(
+      sessionId,
+      (w) => w.copyWith(isLandscape: landscape, geometry: rotated),
+    );
+    return moveWindow(sessionId, rotated);
+  }
+
+  @override
+  Future<VoidResult> openUrl(String url) async {
+    if (!isWebUrl(url)) return _invalidUrl();
+    final gateway = _urlLauncherGateway;
+    if (gateway == null) return _unsupported('url-launcher');
+    try {
+      await gateway.open(Uri.parse(url));
+    } on BackendFailure catch (failure) {
+      return CommandFailure(failure.error);
+    }
+    return const CommandSuccess(null);
+  }
+
+  static CommandFailure<void> _invalidWorkspace() => const CommandFailure(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That workspace does not exist.',
+      capability: 'window-management',
+    ),
+  );
+
+  static CommandFailure<void> _invalidWindowScale() => const CommandFailure(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That zoom level is outside the range a window can be drawn at.',
+      capability: 'window-management',
+    ),
+  );
+
+  static CommandFailure<void> _invalidUrl() => const CommandFailure(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That is not a web address the desk can open.',
+      capability: 'url-launcher',
+    ),
+  );
 
   @override
   Future<VoidResult> sendPointer(
@@ -1464,23 +1556,18 @@ class OpenDexController implements OpenDexFacade {
     double? presentedFramesPerSecond,
     double? droppedFramesPerSecond,
     OpenDexError? error,
-  }) => WindowSessionState(
-    id: source.id,
-    application: source.application,
-    status: status ?? source.status,
-    displayId: displayId ?? source.displayId,
-    isFocused: isFocused ?? source.isFocused,
-    geometry: geometry ?? source.geometry,
-    displayState: displayState ?? source.displayState,
-    zOrder: zOrder ?? source.zOrder,
-    surface: surface ?? source.surface,
-    producedFramesPerSecond:
-        producedFramesPerSecond ?? source.producedFramesPerSecond,
-    presentedFramesPerSecond:
-        presentedFramesPerSecond ?? source.presentedFramesPerSecond,
-    droppedFramesPerSecond:
-        droppedFramesPerSecond ?? source.droppedFramesPerSecond,
-    error: error ?? source.error,
+  }) => source.copyWith(
+    status: status,
+    displayId: displayId,
+    isFocused: isFocused,
+    geometry: geometry,
+    displayState: displayState,
+    zOrder: zOrder,
+    surface: surface,
+    producedFramesPerSecond: producedFramesPerSecond,
+    presentedFramesPerSecond: presentedFramesPerSecond,
+    droppedFramesPerSecond: droppedFramesPerSecond,
+    error: error,
   );
 
   WindowSessionState? _window(String sessionId) {

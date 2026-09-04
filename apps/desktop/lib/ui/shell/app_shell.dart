@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show Platform;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -624,18 +624,12 @@ class _AppShellState extends State<AppShell> {
 
   /// Opens a URL in the desktop's default browser, for the desk search bars.
   ///
-  /// `xdg-open` is the portable Linux "open this with whatever handles it" —
-  /// no `url_launcher` dependency for a single call. Failures are swallowed:
-  /// a missing browser must not crash the desk.
-  Future<void> _openUrl(String url) async {
-    try {
-      await Process.start('xdg-open', <String>[
-        url,
-      ], mode: ProcessStartMode.detached);
-    } on ProcessException {
-      // No handler for the scheme; nothing sensible to do from the desk.
-    }
-  }
+  /// Goes through the facade rather than starting a process here. `lib/ui`
+  /// reaching the host directly is what made this untestable without launching
+  /// a real browser, and it put scheme validation in a widget. The facade
+  /// refuses anything that is not `http`/`https`; a failure surfaces through
+  /// the usual reporting path rather than crashing the desk.
+  Future<void> _openUrl(String url) => widget.facade.openUrl(url);
 
   /// Enters or leaves edge-to-edge fullscreen for the focused streaming window.
   ///

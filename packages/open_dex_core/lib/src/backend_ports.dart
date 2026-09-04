@@ -54,6 +54,14 @@ abstract interface class BootComponent {
   Future<void> stop(DeviceSummary device);
 }
 
+/// Opens a web address using whatever the host desktop uses for the job.
+///
+/// Injected rather than called directly because this package is compiled for
+/// the web as well, where `dart:io` does not exist.
+abstract interface class UrlLauncherGateway {
+  Future<void> open(Uri url);
+}
+
 abstract interface class ApplicationCatalogProvider {
   List<AndroidApplication> get applications;
 }
