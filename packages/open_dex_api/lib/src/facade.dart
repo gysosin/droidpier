@@ -31,6 +31,21 @@ abstract interface class OpenDexFacade {
 
   Future<VoidResult> raiseWindow(String sessionId);
 
+  /// Moves the desk to another virtual workspace. 1-based, see [kWorkspaceCount].
+  Future<VoidResult> selectWorkspace(int workspace);
+
+  /// Sends one window to another virtual workspace.
+  Future<VoidResult> moveWindowToWorkspace(String sessionId, int workspace);
+
+  /// Sets one window's zoom factor, 1.0 being the device's own pixel scale.
+  Future<VoidResult> setWindowScale(String sessionId, double scale);
+
+  /// Rotates one window between its portrait and landscape aspects.
+  Future<VoidResult> setWindowOrientation(
+    String sessionId, {
+    required bool landscape,
+  });
+
   Future<VoidResult> sendPointer(String sessionId, WindowPointerSample sample);
 
   Future<VoidResult> sendKey(String sessionId, WindowKeySample sample);
@@ -81,6 +96,12 @@ abstract interface class OpenDexFacade {
   });
 
   Future<VoidResult> forgetWirelessDevice(String deviceId);
+
+  /// Opens a web address in the desktop's default browser.
+  ///
+  /// Lives on the facade rather than in a widget so that `lib/ui` never
+  /// reaches a process directly, and so the scheme is validated in one place.
+  Future<VoidResult> openUrl(String url);
 
   Future<void> dispose();
 }

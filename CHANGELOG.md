@@ -4,6 +4,24 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The desk search opens links through the facade instead of starting `xdg-open`
+  from a widget. A widget that reaches the host directly cannot be rendered in
+  the preview harness or covered by a test without launching a real browser,
+  and it put scheme validation in the wrong place. The facade now refuses
+  anything that is not `http`/`https` with a real host, so a `file:` or
+  `javascript:` URL arriving from an application label or a notification body
+  is turned away in one place rather than at each call site. Windows and macOS
+  launchers are wired at the same time, ahead of those platforms shipping.
+- Windows now carry a workspace, a zoom factor and an orientation, and the
+  facade can set each. Nothing renders these yet; the capability lands first so
+  the controls that use them are never buttons that cannot act.
+- Fixed a latent bug rather than waiting for it: window state transitions went
+  through two hand-rolled copy helpers that each listed every field by name, so
+  any field added later was silently dropped on every move, raise and resize
+  until someone remembered to edit both. They now share one `copyWith` on the
+  model, with a test that a transition preserves what it was not asked to
+  change.
+
 - Keyboard shortcuts are defined once and documented by construction. Ctrl+/,
   F1, or `?` opens a cheat sheet listing every accelerator, rendered from the
   same list the dispatcher walks, so it cannot drift out of date.

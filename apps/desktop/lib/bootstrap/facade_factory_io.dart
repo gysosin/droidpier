@@ -5,6 +5,7 @@ import 'package:open_dex_core/open_dex_core.dart';
 import 'package:open_dex_platform/open_dex_platform.dart';
 import 'package:open_dex_protocol/open_dex_protocol.dart';
 
+import 'desktop_url_launcher.dart';
 import 'linux_texture_host.dart';
 import 'runtime_resources.dart';
 import 'window_backend_selection.dart';
@@ -112,6 +113,7 @@ OpenDexFacade _createFacade({
     permissionGateway: commands,
     notificationGateway: companion,
     clipboardGateway: clipboard,
+    urlLauncherGateway: const DesktopUrlLauncher(),
   );
 }
 

@@ -56,4 +56,56 @@ void main() {
     expect(session.presentedFramesPerSecond, 59.8);
     expect(session.droppedFramesPerSecond, 0.2);
   });
+
+  test('a window belongs to a workspace, a scale and an orientation', () {
+    const session = WindowSessionState(
+      id: 'window-1',
+      application: AndroidApplication(
+        packageName: 'com.example.demo',
+        label: 'Demo',
+      ),
+      status: WindowSessionStatus.streaming,
+    );
+
+    // Defaults keep every existing caller on the first workspace, unscaled and
+    // portrait, so adding these fields cannot move a window that never asked.
+    expect(session.workspace, 1);
+    expect(session.scale, 1.0);
+    expect(session.isLandscape, isFalse);
+  });
+
+  test('copyWith carries every field a window transition must not drop', () {
+    const source = WindowSessionState(
+      id: 'window-1',
+      application: AndroidApplication(
+        packageName: 'com.example.demo',
+        label: 'Demo',
+      ),
+      status: WindowSessionStatus.streaming,
+      workspace: 3,
+      scale: 1.25,
+      isLandscape: true,
+      zOrder: 7,
+      producedFramesPerSecond: 60,
+    );
+
+    // A transition that only raises the window must preserve the rest. This is
+    // the bug the two hand-rolled copy helpers were one field away from.
+    final raised = source.copyWith(zOrder: 9);
+
+    expect(raised.zOrder, 9);
+    expect(raised.workspace, 3);
+    expect(raised.scale, 1.25);
+    expect(raised.isLandscape, isTrue);
+    expect(raised.producedFramesPerSecond, 60);
+    expect(raised.application.packageName, 'com.example.demo');
+  });
+
+  test('the snapshot opens on the first workspace', () {
+    const snapshot = OpenDexSnapshot();
+
+    expect(snapshot.currentWorkspace, 1);
+    expect(kWorkspaceCount, 4);
+    expect(snapshot.copyWith(currentWorkspace: 3).currentWorkspace, 3);
+  });
 }

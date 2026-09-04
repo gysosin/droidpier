@@ -195,6 +195,41 @@ class WindowKeySample {
   final bool meta;
 }
 
+/// How many virtual desktops the workspace switcher offers.
+///
+/// Fixed rather than user-configurable: the taskbar renders one numbered key
+/// per workspace, and a variable count turns that into a layout problem for no
+/// gain nobody has asked for.
+const int kWorkspaceCount = 4;
+
+/// Whether [workspace] names one of the desks that actually exist.
+bool isValidWorkspace(int workspace) =>
+    workspace >= 1 && workspace <= kWorkspaceCount;
+
+/// The zoom factors a window may be rendered at.
+const double kMinimumWindowScale = 0.5;
+const double kMaximumWindowScale = 3.0;
+
+/// Whether [scale] is a zoom factor a window can actually be drawn at.
+bool isValidWindowScale(double scale) =>
+    scale.isFinite &&
+    scale >= kMinimumWindowScale &&
+    scale <= kMaximumWindowScale;
+
+/// Whether [url] is a web address the desk may hand to the system browser.
+///
+/// The desk search feeds this, and an application label or notification body
+/// can reach it too, so it is not enough for the caller to be careful. Anything
+/// that is not `http` or `https` with a real host — `file:`, `javascript:`,
+/// `data:`, or a bare string that a shell would read as a flag — is refused
+/// here rather than at the call site.
+bool isWebUrl(String url) {
+  final Uri? parsed = Uri.tryParse(url);
+  if (parsed == null) return false;
+  if (parsed.scheme != 'http' && parsed.scheme != 'https') return false;
+  return parsed.host.isNotEmpty;
+}
+
 class WindowSessionState {
   const WindowSessionState({
     required this.id,
@@ -210,6 +245,9 @@ class WindowSessionState {
     this.presentedFramesPerSecond,
     this.droppedFramesPerSecond,
     this.error,
+    this.workspace = 1,
+    this.scale = 1.0,
+    this.isLandscape = false,
   });
 
   final String id;
@@ -226,7 +264,59 @@ class WindowSessionState {
   final double? droppedFramesPerSecond;
   final OpenDexError? error;
 
+  /// Which virtual desktop this window sits on. 1-based, see [kWorkspaceCount].
+  final int workspace;
+
+  /// Per-window zoom, 1.0 being the device's own pixel scale.
+  final double scale;
+
+  /// Whether the window is currently rendered in its landscape aspect.
+  final bool isLandscape;
+
   WindowPixelSize? get surfaceSize => surface?.pixelSize;
+
+  /// Copies the session, changing only what is named.
+  ///
+  /// Every window transition goes through here. It used to go through two
+  /// hand-rolled helpers that each enumerated every field, which meant a new
+  /// field was silently dropped on every move, raise and resize until someone
+  /// remembered to add it in both places.
+  WindowSessionState copyWith({
+    WindowSessionStatus? status,
+    int? displayId,
+    bool? isFocused,
+    WindowGeometry? geometry,
+    WindowDisplayState? displayState,
+    int? zOrder,
+    WindowSurface? surface,
+    double? producedFramesPerSecond,
+    double? presentedFramesPerSecond,
+    double? droppedFramesPerSecond,
+    OpenDexError? error,
+    int? workspace,
+    double? scale,
+    bool? isLandscape,
+  }) => WindowSessionState(
+    id: id,
+    application: application,
+    status: status ?? this.status,
+    displayId: displayId ?? this.displayId,
+    isFocused: isFocused ?? this.isFocused,
+    geometry: geometry ?? this.geometry,
+    displayState: displayState ?? this.displayState,
+    zOrder: zOrder ?? this.zOrder,
+    surface: surface ?? this.surface,
+    producedFramesPerSecond:
+        producedFramesPerSecond ?? this.producedFramesPerSecond,
+    presentedFramesPerSecond:
+        presentedFramesPerSecond ?? this.presentedFramesPerSecond,
+    droppedFramesPerSecond:
+        droppedFramesPerSecond ?? this.droppedFramesPerSecond,
+    error: error ?? this.error,
+    workspace: workspace ?? this.workspace,
+    scale: scale ?? this.scale,
+    isLandscape: isLandscape ?? this.isLandscape,
+  );
 }
 
 class DeviceTelemetry {
@@ -400,6 +490,7 @@ class OpenDexSnapshot {
     this.agentStatus = AgentConnectionStatus.unavailable,
     this.wirelessDiscovery = const WirelessDiscoveryState(),
     this.wirelessPairing = const WirelessPairingState(),
+    this.currentWorkspace = 1,
   });
 
   final BootState boot;
@@ -420,6 +511,9 @@ class OpenDexSnapshot {
   final WirelessDiscoveryState wirelessDiscovery;
   final WirelessPairingState wirelessPairing;
 
+  /// The virtual desktop currently on screen. 1-based, see [kWorkspaceCount].
+  final int currentWorkspace;
+
   OpenDexSnapshot copyWith({
     BootState? boot,
     LoadStatus? deviceStatus,
@@ -438,6 +532,7 @@ class OpenDexSnapshot {
     AgentConnectionStatus? agentStatus,
     WirelessDiscoveryState? wirelessDiscovery,
     WirelessPairingState? wirelessPairing,
+    int? currentWorkspace,
   }) => OpenDexSnapshot(
     boot: boot ?? this.boot,
     deviceStatus: deviceStatus ?? this.deviceStatus,
@@ -458,6 +553,7 @@ class OpenDexSnapshot {
     agentStatus: agentStatus ?? this.agentStatus,
     wirelessDiscovery: wirelessDiscovery ?? this.wirelessDiscovery,
     wirelessPairing: wirelessPairing ?? this.wirelessPairing,
+    currentWorkspace: currentWorkspace ?? this.currentWorkspace,
   );
 }
 

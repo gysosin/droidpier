@@ -80,6 +80,27 @@ class ReportingOpenDexFacade implements OpenDexFacade {
       _report(delegate.raiseWindow(sessionId));
 
   @override
+  Future<VoidResult> selectWorkspace(int workspace) =>
+      _report(delegate.selectWorkspace(workspace));
+
+  @override
+  Future<VoidResult> moveWindowToWorkspace(String sessionId, int workspace) =>
+      _report(delegate.moveWindowToWorkspace(sessionId, workspace));
+
+  @override
+  Future<VoidResult> setWindowScale(String sessionId, double scale) =>
+      _report(delegate.setWindowScale(sessionId, scale));
+
+  @override
+  Future<VoidResult> setWindowOrientation(
+    String sessionId, {
+    required bool landscape,
+  }) => _report(delegate.setWindowOrientation(sessionId, landscape: landscape));
+
+  @override
+  Future<VoidResult> openUrl(String url) => _report(delegate.openUrl(url));
+
+  @override
   Future<VoidResult> sendPointer(
     String sessionId,
     WindowPointerSample sample,

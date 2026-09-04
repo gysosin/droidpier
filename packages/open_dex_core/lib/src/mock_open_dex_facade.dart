@@ -282,6 +282,54 @@ class MockOpenDexFacade implements OpenDexFacade {
   }
 
   @override
+  Future<VoidResult> selectWorkspace(int workspace) async {
+    if (!isValidWorkspace(workspace)) return _invalidWorkspace;
+    _emit(_snapshot.copyWith(currentWorkspace: workspace));
+    return const CommandSuccess(null);
+  }
+
+  @override
+  Future<VoidResult> moveWindowToWorkspace(
+    String sessionId,
+    int workspace,
+  ) async {
+    if (!isValidWorkspace(workspace)) return _invalidWorkspace;
+    return _updateWindow(
+      sessionId,
+      (window) => window.copyWith(workspace: workspace),
+    );
+  }
+
+  @override
+  Future<VoidResult> setWindowScale(String sessionId, double scale) async {
+    if (!isValidWindowScale(scale)) return _invalidWindowScale;
+    return _updateWindow(sessionId, (window) => window.copyWith(scale: scale));
+  }
+
+  @override
+  Future<VoidResult> setWindowOrientation(
+    String sessionId, {
+    required bool landscape,
+  }) => _updateWindow(sessionId, (window) {
+    if (window.isLandscape == landscape) return window;
+    // Rotating swaps the aspect rather than resizing to a remembered box, so
+    // rotating back lands exactly where it started without storing anything.
+    return window.copyWith(
+      isLandscape: landscape,
+      geometry: WindowGeometry(
+        x: window.geometry.x,
+        y: window.geometry.y,
+        width: window.geometry.height,
+        height: window.geometry.width,
+      ),
+    );
+  });
+
+  @override
+  Future<VoidResult> openUrl(String url) async =>
+      isWebUrl(url) ? const CommandSuccess(null) : _invalidUrl;
+
+  @override
   Future<VoidResult> sendPointer(
     String sessionId,
     WindowPointerSample sample,
@@ -672,20 +720,11 @@ class MockOpenDexFacade implements OpenDexFacade {
     WindowGeometry? geometry,
     WindowDisplayState? displayState,
     int? zOrder,
-  }) => WindowSessionState(
-    id: source.id,
-    application: source.application,
-    status: source.status,
-    displayId: source.displayId,
-    isFocused: isFocused ?? source.isFocused,
-    geometry: geometry ?? source.geometry,
-    displayState: displayState ?? source.displayState,
-    zOrder: zOrder ?? source.zOrder,
-    surface: source.surface,
-    producedFramesPerSecond: source.producedFramesPerSecond,
-    presentedFramesPerSecond: source.presentedFramesPerSecond,
-    droppedFramesPerSecond: source.droppedFramesPerSecond,
-    error: source.error,
+  }) => source.copyWith(
+    isFocused: isFocused,
+    geometry: geometry,
+    displayState: displayState,
+    zOrder: zOrder,
   );
 
   static const _missingWindow = CommandFailure<void>(
@@ -701,6 +740,30 @@ class MockOpenDexFacade implements OpenDexFacade {
       code: OpenDexErrorCode.capabilityUnavailable,
       message: 'The application window size or position is invalid.',
       capability: 'window-management',
+    ),
+  );
+
+  static const _invalidWorkspace = CommandFailure<void>(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That workspace does not exist.',
+      capability: 'window-management',
+    ),
+  );
+
+  static const _invalidWindowScale = CommandFailure<void>(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That zoom level is outside the range a window can be drawn at.',
+      capability: 'window-management',
+    ),
+  );
+
+  static const _invalidUrl = CommandFailure<void>(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'That is not a web address the desk can open.',
+      capability: 'url-launcher',
     ),
   );
 
