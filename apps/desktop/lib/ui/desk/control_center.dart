@@ -552,6 +552,17 @@ class _Volume extends StatelessWidget {
               ),
             ),
           ),
+          // The number, tabular so the three rows stay in column as they move.
+          // A slider says roughly; a person setting a phone's volume from a
+          // desk wants to know it is the same 68 it was yesterday.
+          SizedBox(
+            width: 34,
+            child: Text(
+              '${(level.current / max * 100).round()}%',
+              textAlign: TextAlign.right,
+              style: DexTheme.data(colors, size: 11, color: colors.text),
+            ),
+          ),
         ],
       ),
     );
@@ -665,9 +676,12 @@ class _Clipboard extends StatelessWidget {
       ClipboardAvailability.available when !clipboard.syncEnabled =>
         'Off — nothing is read from the phone',
       ClipboardAvailability.available => switch (clipboard.kind) {
-        ClipboardKind.empty => 'Nothing copied yet',
-        ClipboardKind.text => clipboard.text ?? '',
-        ClipboardKind.image => 'An image is ready to paste',
+        ClipboardKind.empty => 'On — nothing copied yet',
+        // The text itself is not the state. It used to be both, so a long
+        // clipboard pushed out the one line that said whether sharing was
+        // even on.
+        ClipboardKind.text => 'On — sharing with the phone',
+        ClipboardKind.image => 'On — an image is ready to paste',
       },
     };
 
@@ -702,6 +716,32 @@ class _Clipboard extends StatelessWidget {
             ),
           ],
         ),
+        // What is actually on the clipboard, in machine type, in its own well.
+        // A person checking the bridge works wants to see the thing that
+        // crossed it.
+        if (clipboard.availability == ClipboardAvailability.available &&
+            clipboard.syncEnabled &&
+            clipboard.kind == ClipboardKind.text &&
+            (clipboard.text?.isNotEmpty ?? false)) ...<Widget>[
+          const SizedBox(height: DexSpace.sm),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.md,
+              vertical: DexSpace.sm,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.40),
+              borderRadius: BorderRadius.circular(DexRadius.control),
+            ),
+            child: Text(
+              clipboard.text!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DexTheme.data(colors, size: 10, color: colors.text),
+            ),
+          ),
+        ],
         if (_notice case final String notice) ...<Widget>[
           const SizedBox(height: DexSpace.sm),
           _Banner(

@@ -199,6 +199,21 @@ class _NotificationCenterState extends State<NotificationCenter> {
                               ),
                             },
                           ),
+                          // What this panel is and is not. Dismissing here
+                          // asks the phone to dismiss; the phone decides, and
+                          // anything it does on its own arrives here without
+                          // the desk being told first. Saying so is cheaper
+                          // than a person discovering it.
+                          const SizedBox(height: DexSpace.md),
+                          Divider(color: c.line, height: DexStroke.hairline),
+                          const SizedBox(height: DexSpace.md),
+                          Center(
+                            child: Text(
+                              'The phone remains the source of truth',
+                              textAlign: TextAlign.center,
+                              style: DexTheme.data(c, size: 10),
+                            ),
+                          ),
                         ],
                       ),
                     ),
