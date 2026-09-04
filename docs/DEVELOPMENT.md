@@ -56,6 +56,21 @@ For each package under `packages/` and `plugins/open_dex_platform`, run
 existing Flutter suite and inspect actual rendered output. Golden updates need
 visual review; a successful image comparison alone does not establish usability.
 
+### Goldens do not blur shadows
+
+`flutter test`'s renderer ignores `BoxShadow.blurRadius`. It draws the shadow as
+a hard-edged rounded rect offset by `offset`, at the shadow colour's full alpha.
+A bare `Container` with `blurRadius: 40, offset: (0, 14)` renders as a flat 14 px
+band and then nothing, with no project code involved.
+
+So every panel and window under `apps/desktop/test/ui/goldens/` carries a crisp
+dark strip below its bottom edge that looks like an unfinished shadow and is not
+visible to any user. Read a golden's shadows as *"a shadow is present, offset by
+this much"*, never as what one looks like — judging softness, spread or layering
+needs the running application. This is recorded because reaching a conclusion of
+"nothing is wrong" took measuring the band's taper against the corner radius and
+its alpha against the shadow colour.
+
 Run `python3 tool/verify_source.py`, `git diff --check` and `bash -n tool/*.sh`.
 Use synthetic data for notification, clipboard, stream and screenshot checks.
 
