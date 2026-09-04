@@ -782,7 +782,7 @@ class SystemTray extends StatelessWidget {
     'Jun',
     'Jul',
     'Aug',
-    'Sep',
+    'Sept',
     'Oct',
     'Nov',
     'Dec',
@@ -793,7 +793,9 @@ class SystemTray extends StatelessWidget {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
     final int h = now.hour % 12 == 0 ? 12 : now.hour % 12;
     final String m = now.minute.toString().padLeft(2, '0');
-    final String ap = now.hour < 12 ? 'AM' : 'PM';
+    // Lowercase, as the reference sets it: the meridiem is a suffix, not
+    // a word, and capitals make it shout.
+    final String ap = now.hour < 12 ? 'am' : 'pm';
 
     // When the bar cannot give the tray its full width it is scrolled rather
     // than shed, reversed, so it gives way from the bell end and the clock —

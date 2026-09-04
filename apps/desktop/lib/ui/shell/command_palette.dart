@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 
 import '../motion/dex_motion.dart';
@@ -126,7 +127,10 @@ class _CommandPaletteState extends State<CommandPalette> {
                   decoration: BoxDecoration(
                     color: c.surface,
                     borderRadius: BorderRadius.circular(DexRadius.control),
-                    border: Border.all(color: c.line, width: DexStroke.hairline),
+                    border: Border.all(
+                      color: c.line,
+                      width: DexStroke.hairline,
+                    ),
                   ),
                   child: Text('ESC', style: DexTheme.data(c, size: 9)),
                 ),
@@ -137,9 +141,7 @@ class _CommandPaletteState extends State<CommandPalette> {
               ),
               filled: true,
               fillColor: c.surface.withValues(alpha: 0.72),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: DexSpace.md,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: DexSpace.md),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DexRadius.control),
                 borderSide: BorderSide(color: c.line),
@@ -180,10 +182,19 @@ class _CommandPaletteState extends State<CommandPalette> {
               ),
             )
           else
-            Flexible(child: _Results(results: results, selected: selected, colors: c, groupLabel: _groupLabel, onRun: (int i) {
-              setState(() => _selected = i);
-              _runSelected();
-            }, onHover: (int i) => setState(() => _selected = i))),
+            Flexible(
+              child: _Results(
+                results: results,
+                selected: selected,
+                colors: c,
+                groupLabel: _groupLabel,
+                onRun: (int i) {
+                  setState(() => _selected = i);
+                  _runSelected();
+                },
+                onHover: (int i) => setState(() => _selected = i),
+              ),
+            ),
           // How to drive it. The palette is keyboard-first and the keys are
           // not guessable from looking at it.
           const SizedBox(height: DexSpace.md),
@@ -197,7 +208,10 @@ class _CommandPaletteState extends State<CommandPalette> {
                   style: DexTheme.data(c, size: 10),
                 ),
               ),
-              Text('Unified Shell Dispatcher', style: DexTheme.data(c, size: 10)),
+              Text(
+                'Unified Shell Dispatcher',
+                style: DexTheme.data(c, size: 10),
+              ),
             ],
           ),
         ],

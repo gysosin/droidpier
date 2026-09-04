@@ -132,8 +132,8 @@ class ShortcutSheet extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Anything not claimed here goes straight to the focused '
-                  'Android window.',
+                  'All unclaimed keystrokes pass directly through to the '
+                  'active Android window',
                   style: DexTheme.data(c, size: 10),
                 ),
               ),
@@ -244,19 +244,15 @@ class _EscapeLadder extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'ESCAPE LADDER',
-                  style: DexTheme.data(
-                    colors,
-                    size: 10,
-                    color: colors.signal,
-                  ).copyWith(letterSpacing: 1.4),
+                  'The Ordered Escape Ladder',
+                  style: t.labelLarge?.copyWith(color: colors.text),
                 ),
                 const SizedBox(height: DexSpace.xs),
                 Text(
-                  'Esc closes whatever is open, one layer at a time: the '
-                  'topmost panel first, then the one beneath it, and only '
-                  'then does it reach the window.',
-                  style: t.bodySmall?.copyWith(color: colors.text),
+                  'Pressing Esc closes whatever is open, exactly one layer '
+                  'at a time: the topmost panel first, then the one beneath '
+                  'it, and only then does it reach the window.',
+                  style: DexTheme.data(colors, size: 11),
                 ),
               ],
             ),

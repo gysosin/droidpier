@@ -79,7 +79,10 @@ class _TokenSheetState extends State<TokenSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text('Design System Explorer', style: t.titleLarge),
+                    Text(
+                      'DroidPier Token & Specimen Explorer',
+                      style: t.titleLarge,
+                    ),
                     Text(
                       'Every token, in both modes and both finishes',
                       style: t.bodySmall?.copyWith(color: c.muted),
@@ -225,7 +228,10 @@ class _Type extends StatelessWidget {
       children: <Widget>[
         _Heading('Display — ${DexType.display}', colors: colors),
         Text('Bringing up the link', style: t.headlineMedium),
-        _Note('Screen titles, boot stages, empty-state headlines.', colors: colors),
+        _Note(
+          'Screen titles, boot stages, empty-state headlines.',
+          colors: colors,
+        ),
         _Heading('Body — ${DexType.body}', colors: colors),
         Text(
           'All prose, labels, buttons and menus. Deliberately not Inter.',
@@ -350,14 +356,26 @@ class _Geometry extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
-            _Box('minimum ${DexHit.minimum.round()}', DexHit.minimum,
-                colors.signal, colors),
+            _Box(
+              'minimum ${DexHit.minimum.round()}',
+              DexHit.minimum,
+              colors.signal,
+              colors,
+            ),
             const SizedBox(width: DexSpace.md),
-            _Box('comfortable ${DexHit.comfortable.round()}',
-                DexHit.comfortable, colors.trace, colors),
+            _Box(
+              'comfortable ${DexHit.comfortable.round()}',
+              DexHit.comfortable,
+              colors.trace,
+              colors,
+            ),
             const SizedBox(width: DexSpace.md),
-            _Box('primary ${DexHit.primary.round()}', DexHit.primary,
-                colors.warn, colors),
+            _Box(
+              'primary ${DexHit.primary.round()}',
+              DexHit.primary,
+              colors.warn,
+              colors,
+            ),
           ],
         ),
         _Heading('Radii', colors: colors),
@@ -464,7 +482,6 @@ class _PanelSpecimen extends StatelessWidget {
   }
 }
 
-
 class _Swatch extends StatelessWidget {
   const _Swatch(this.name, this.colour, this.colors);
 
@@ -476,10 +493,8 @@ class _Swatch extends StatelessWidget {
   Widget build(BuildContext context) {
     // The hex is on the swatch. A specimen sheet that shows a colour without
     // naming it cannot be used to check anything.
-    final String hex = '#${(colour.toARGB32() & 0xFFFFFF)
-        .toRadixString(16)
-        .padLeft(6, '0')
-        .toUpperCase()}';
+    final String hex =
+        '#${(colour.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
     final int alpha = (colour.a * 255).round();
     return SizedBox(
       width: 132,
@@ -660,9 +675,8 @@ class _Note extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: DexSpace.md),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: colors.muted,
-        ),
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: colors.muted),
       ),
     );
   }
@@ -723,10 +737,7 @@ class _RoleCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: value,
               borderRadius: BorderRadius.circular(DexRadius.control),
-              border: Border.all(
-                color: colors.line,
-                width: DexStroke.hairline,
-              ),
+              border: Border.all(color: colors.line, width: DexStroke.hairline),
             ),
           ),
           const SizedBox(height: DexSpace.xs),
@@ -752,9 +763,8 @@ class _RoleCard extends StatelessWidget {
         children: <Widget>[
           Text(
             name,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colors.text,
-            ),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: colors.text),
           ),
           const SizedBox(height: DexSpace.sm),
           Row(
@@ -807,11 +817,15 @@ class _TabStrip extends StatelessWidget {
                     horizontal: DexSpace.md,
                     vertical: DexSpace.sm,
                   ),
-                  constraints: const BoxConstraints(minHeight: DexHit.comfortable),
+                  constraints: const BoxConstraints(
+                    minHeight: DexHit.comfortable,
+                  ),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: i == selected ? colors.signal : Colors.transparent,
+                        color: i == selected
+                            ? colors.signal
+                            : Colors.transparent,
                         width: DexStroke.focusRing,
                       ),
                     ),

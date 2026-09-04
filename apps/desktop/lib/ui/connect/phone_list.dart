@@ -72,7 +72,7 @@ class PhoneList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConnectPanel(
-      title: 'Phones',
+      title: 'Connected Devices',
       subtitle: 'Plugged in over USB, or already connected over Wi-Fi.',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -270,6 +270,8 @@ class _DeviceRow extends StatelessWidget {
                           if (device.androidVersion != null)
                             'Android ${device.androidVersion}',
                         ].join('  ·  '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: DexTheme.data(colors, size: 11),
                       ),
                     ],

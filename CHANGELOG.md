@@ -53,6 +53,25 @@ click by click, rather than against its source. What changed on screen:
 - **Token sheet**: Dark / Light and Glass / Matte toggles, underlined tabs,
   and every semantic role as a card showing both hexes.
 - 91 more Lucide glyphs are bundled under `DexIcons`.
+- **Window bodies**: a starting window shows the app's tile, name and
+  package; a reconnecting one a 32 px ring above *Reconnecting to <app>*;
+  a stopped one a rose tint, a 40 px alert mark and a *Close* beside *Try
+  again*; a window with no video surface yet shows tile, name, package and a
+  chip saying so — in the reference's composition, with this app's honest
+  words.
+- **Modal shells** are radius 20 under a 70 % scrim blurred at 12, as the
+  reference draws every overlay; the window context menu is a 192 px slate
+  card at radius 12; the tray clock reads `12:56 am` over `5 Sept`.
+- **Diagnostics** closes with *Copy diagnostics report* and the close hint;
+  **Connection** is headed `HARDWARE MANAGER` / *Manage Android Phones* over
+  *Connected Devices*; the token sheet is the *DroidPier Token & Specimen
+  Explorer*; the shortcut sheet carries *The Ordered Escape Ladder* and the
+  reference's footer line.
+- **Companion preview**: the phone-side app, rendered inside a phone frame
+  as a review surface in the preview harness (`companion`), reading the
+  mock snapshot for its link state, readouts, permissions and pairing. Not
+  in the product, on purpose: a phone drawn on the desk is a picture of a
+  phone.
 
 Not shipped, and why: the reference's Wi-Fi SSID subline (the facade does
 not carry an SSID, and a placeholder would be a lie); its two-way Dark/Light

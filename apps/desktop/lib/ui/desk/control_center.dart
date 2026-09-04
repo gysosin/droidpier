@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -262,7 +263,11 @@ class ControlCenter extends StatelessWidget {
                           foregroundColor: c.text,
                           minimumSize: const Size(0, DexHit.comfortable),
                         ),
-                        icon: Icon(DexIcons.portrait, size: 14, color: c.signal),
+                        icon: Icon(
+                          DexIcons.portrait,
+                          size: 14,
+                          color: c.signal,
+                        ),
                         label: const Text(
                           'Manage Phones…',
                           maxLines: 1,

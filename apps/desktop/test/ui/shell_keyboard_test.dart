@@ -107,7 +107,7 @@ void main() {
     // snapshot happened to arrive. Nothing else in this test moves it.
     String render(DateTime n) {
       final int h = n.hour % 12 == 0 ? 12 : n.hour % 12;
-      final String ap = n.hour < 12 ? 'AM' : 'PM';
+      final String ap = n.hour < 12 ? 'am' : 'pm';
       return '$h:${n.minute.toString().padLeft(2, '0')} $ap';
     }
 
@@ -196,7 +196,7 @@ void main() {
     await settle();
     // One surface now: the phone list and the three ways to add one over
     // Wi-Fi, rather than a dialog that opens a second dialog.
-    expect(find.text('Connect a phone'), findsOneWidget);
+    expect(find.text('Manage Android Phones'), findsOneWidget);
     expect(find.text('Add over Wi-Fi'), findsOneWidget);
 
     // And back out of it without connecting — Escape must reach it, and one
@@ -204,7 +204,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await settle();
     expect(
-      find.text('Connect a phone'),
+      find.text('Manage Android Phones'),
       findsNothing,
       reason: 'no screen is a dead end',
     );

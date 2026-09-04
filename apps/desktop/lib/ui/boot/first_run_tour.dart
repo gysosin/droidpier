@@ -100,9 +100,7 @@ class _FirstRunTourState extends State<FirstRunTour> {
         // Dims the desk without hiding it: the point is that the person sees
         // where these things live, not that they read a modal.
         Positioned.fill(
-          child: ColoredBox(
-            color: Colors.black.withValues(alpha: 0.45),
-          ),
+          child: ColoredBox(color: Colors.black.withValues(alpha: 0.45)),
         ),
         Positioned(
           left: 0,
@@ -126,7 +124,11 @@ class _FirstRunTourState extends State<FirstRunTour> {
                       // one — progress you can see without reading.
                       Row(
                         children: <Widget>[
-                          for (int i = 0; i < kTourSteps.length; i++) ...<Widget>[
+                          for (
+                            int i = 0;
+                            i < kTourSteps.length;
+                            i++
+                          ) ...<Widget>[
                             if (i > 0) const SizedBox(width: DexSpace.xs),
                             Expanded(
                               child: Container(

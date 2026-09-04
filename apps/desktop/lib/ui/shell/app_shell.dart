@@ -1153,6 +1153,10 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
+/// The blur under a modal scrim. Half the panel blur: the scrim is there to
+/// retire the desk, not to frost it.
+const double _scrimSigma = 12;
+
 /// An overlay over the desk.
 ///
 /// [floating] presents the child as a window sitting on the desk rather than
@@ -1189,13 +1193,16 @@ class _Overlay extends StatelessWidget {
             // panels off actually turns them all off.
             child: Builder(
               builder: (BuildContext context) {
+                // slate-950 at 70% under a 12 px blur, as the reference
+                // scrims every modal: dark enough to retire the desk, light
+                // enough that its shapes still read through.
                 final Widget scrim = ColoredBox(
                   color: Colors.black.withValues(
-                    alpha: isDark ? 0.55 : 0.30,
+                    alpha: isDark ? 0.70 : 0.35,
                   ),
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
-                final double sigma = DexGlass.of(context).blur;
+                const double sigma = _scrimSigma;
                 return BackdropFilter(
                   filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                   child: scrim,
@@ -1215,7 +1222,7 @@ class _Overlay extends StatelessWidget {
               // that most needs the shared primitive the one place not using
               // it. That is how a glass design drifts into eleven glasses.
               child: GlassPanel(
-                radius: DexRadius.dialog,
+                radius: DexRadius.modal,
                 fill: DexGlass.of(context).substrate,
                 child: child,
               ),

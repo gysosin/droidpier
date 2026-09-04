@@ -448,13 +448,19 @@ class _Body extends StatelessWidget {
           technicalDetails: failure?.technicalDetails,
           action: 'Try again',
           onAction: () => intents.retry(window.id),
+          onClose: () => intents.close(window.id),
         );
       case WindowSessionStatus.starting:
-        return _Skeleton(colors: c, label: 'Opening…');
+        return _Skeleton(colors: c, app: window.session.application);
       case WindowSessionStatus.suspended:
         return _Dimmed(window: window, colors: c, label: 'Paused');
       case WindowSessionStatus.reconnecting:
-        return _Dimmed(window: window, colors: c, label: 'Reconnecting…');
+        return _Dimmed(
+          window: window,
+          colors: c,
+          label: 'Reconnecting to ${window.session.application.label}',
+          spinning: true,
+        );
       case WindowSessionStatus.closed:
         return const SizedBox.shrink();
       case WindowSessionStatus.streaming:
@@ -467,16 +473,40 @@ class _Body extends StatelessWidget {
 }
 
 class _Skeleton extends StatelessWidget {
-  const _Skeleton({required this.colors, required this.label});
+  const _Skeleton({required this.colors, required this.app});
 
   final DexColors colors;
-  final String label;
+  final AndroidApplication app;
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
     return ColoredBox(
       color: colors.raised,
-      child: Center(child: Text(label, style: DexTheme.data(colors, size: 11))),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 56,
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colors.signal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: AppGlyph(app: app, size: 32),
+            ),
+            const SizedBox(height: DexSpace.md),
+            Text(
+              'Starting ${app.label}',
+              style: t.labelLarge?.copyWith(color: colors.text),
+            ),
+            const SizedBox(height: DexSpace.xs),
+            Text(app.packageName, style: DexTheme.data(colors, size: 10)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -488,11 +518,16 @@ class _Dimmed extends StatelessWidget {
     required this.window,
     required this.colors,
     required this.label,
+    this.spinning = false,
   });
 
   final WorkspaceWindow window;
   final DexColors colors;
   final String label;
+
+  /// A ring while the link is being re-established. Only then: a ring on a
+  /// paused window would claim work that is not happening.
+  final bool spinning;
 
   @override
   Widget build(BuildContext context) {
@@ -507,9 +542,25 @@ class _Dimmed extends StatelessWidget {
           ColoredBox(color: colors.raised),
         ColoredBox(color: colors.bg.withValues(alpha: 0.62)),
         Center(
-          child: Text(
-            label,
-            style: DexTheme.data(colors, size: 11, color: colors.text),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (spinning) ...<Widget>[
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.signal,
+                  ),
+                ),
+                const SizedBox(height: DexSpace.md),
+              ],
+              Text(
+                label,
+                style: DexTheme.data(colors, size: 11, color: colors.text),
+              ),
+            ],
           ),
         ),
       ],
@@ -521,6 +572,7 @@ class _Notice extends StatelessWidget {
   const _Notice({
     required this.colors,
     required this.title,
+    this.onClose,
     required this.detail,
     this.guidance,
     this.technicalDetails,
@@ -530,6 +582,9 @@ class _Notice extends StatelessWidget {
 
   final DexColors colors;
   final String title;
+
+  /// Closes the window. Retrying is not the only answer to a stopped app.
+  final VoidCallback? onClose;
   final String detail;
 
   /// What to try next. The detail says what failed.
@@ -547,7 +602,10 @@ class _Notice extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
     return ColoredBox(
-      color: colors.raised,
+      color: Color.alphaBlend(
+        colors.fault.withValues(alpha: 0.05),
+        colors.raised,
+      ),
       child: Center(
         // Scrollable because a window can legitimately be dragged down to its
         // minimum 240x180, and this notice overflowed it by 68 px — the person
@@ -557,6 +615,8 @@ class _Notice extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              Icon(DexIcons.triangleAlert, size: 40, color: colors.fault),
+              const SizedBox(height: DexSpace.md),
               Text(title, style: t.bodyLarge),
               const SizedBox(height: DexSpace.xs),
               Text(
@@ -570,7 +630,16 @@ class _Notice extends StatelessWidget {
               ],
               if (action != null) ...<Widget>[
                 const SizedBox(height: DexSpace.md),
-                OutlinedButton(onPressed: onAction, child: Text(action!)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    FilledButton(onPressed: onAction, child: Text(action!)),
+                    if (onClose case final VoidCallback close) ...<Widget>[
+                      const SizedBox(width: DexSpace.sm),
+                      TextButton(onPressed: close, child: const Text('Close')),
+                    ],
+                  ],
+                ),
               ],
               if (technicalDetails case final String detail
                   when detail.trim().isNotEmpty) ...<Widget>[
@@ -649,14 +718,7 @@ class _SurfaceState extends State<_Surface> {
       // Today that means the app really is running — in its own external
       // window — and the embedded view is not available yet. Say so, rather
       // than showing a blank rectangle the person has to interpret.
-      return _Notice(
-        colors: colors,
-        title: '${window.session.application.label} is running',
-        detail:
-            'Its screen is still opening in a separate window. Showing it '
-            'inside this one needs the video surface the desktop backend is '
-            'still wiring up.',
-      );
+      return _NoSurface(app: window.session.application, colors: colors);
     }
 
     final Size pixels = surface != null
@@ -856,21 +918,21 @@ class _LiveBadge extends StatelessWidget {
               ).copyWith(letterSpacing: 1.4, height: 2),
             ),
             TextSpan(
-              text: 'Produced   ${_rate(window.session.producedFramesPerSecond)}\n',
+              text:
+                  'Produced   ${_rate(window.session.producedFramesPerSecond)}\n',
               style: DexTheme.data(c, size: 11, color: c.text),
             ),
             TextSpan(
-              text: 'Presented  ${_rate(window.presentedFramesPerSecond ?? window.session.presentedFramesPerSecond)}\n',
+              text:
+                  'Presented  ${_rate(window.presentedFramesPerSecond ?? window.session.presentedFramesPerSecond)}\n',
               style: DexTheme.data(c, size: 11, color: c.trace),
             ),
             TextSpan(
-              text: 'Dropped    ${_rate(window.session.droppedFramesPerSecond)}',
+              text:
+                  'Dropped    ${_rate(window.session.droppedFramesPerSecond)}',
               style: DexTheme.data(c, size: 11, color: c.text),
             ),
-            TextSpan(
-              text: '\n\n$detail',
-              style: DexTheme.data(c, size: 10),
-            ),
+            TextSpan(text: '\n\n$detail', style: DexTheme.data(c, size: 10)),
           ],
         ),
         decoration: BoxDecoration(
@@ -1105,6 +1167,81 @@ class _StageChrome extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Streaming with no texture to show: the app is running in its own external
+/// window and the embedded view is not available yet.
+///
+/// Composed as the reference composes its placeholder — the app's tile, its
+/// name, its package, a chip — but the chip says what is true here. The
+/// reference's chip claims a hardware surface streaming at a rate; with no
+/// surface there is no rate, and a number here would be invented.
+class _NoSurface extends StatelessWidget {
+  const _NoSurface({required this.app, required this.colors});
+
+  final AndroidApplication app;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return ColoredBox(
+      color: colors.raised,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(DexSpace.xl),
+          // Scaled down, never overflowed: a window can be shrunk to its
+          // minimum, and the placeholder has to fit whatever that is.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 64,
+                  height: 64,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.signal.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(DexRadius.panel),
+                  ),
+                  child: AppGlyph(app: app, size: 36),
+                ),
+                const SizedBox(height: DexSpace.md),
+                Text(
+                  '${app.label} is running',
+                  textAlign: TextAlign.center,
+                  style: t.titleMedium?.copyWith(color: colors.text),
+                ),
+                const SizedBox(height: DexSpace.xs),
+                Text(app.packageName, style: DexTheme.data(colors, size: 11)),
+                const SizedBox(height: DexSpace.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DexSpace.md,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.bg.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(DexRadius.pill),
+                    border: Border.all(
+                      color: colors.line,
+                      width: DexStroke.hairline,
+                    ),
+                  ),
+                  child: Text(
+                    'Opening in a separate window \u00b7 no video surface yet',
+                    textAlign: TextAlign.center,
+                    style: DexTheme.data(colors, size: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

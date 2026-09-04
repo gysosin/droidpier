@@ -14,18 +14,18 @@ Each item is something visible. Tick it when the golden shows it.
 - [x] **Wallpaper bloom is a circle.** The reference paints a 650×650 disc pinned
       top-right, `radial-gradient(circle at 100% 0%, white 15% → transparent 70%)`,
       with a soft but *visible* edge. Ours is a diffuse gradient with no edge.
-- [ ] **Hover motion.** Desk icon tiles scale to 1.05 on hover; the launcher
+- [x] **Hover motion.** Desk icon tiles scale to 1.05 on hover; the launcher
       button scales to 1.02 and brightens its border; every chip brightens its
       fill (`white/10 → white/20`). All transitions 150 ms. Ours lifts 1 % and
       changes fill only.
-- [ ] **Modal shells are radius 20**, not 16, everywhere the reference uses a
+- [x] **Modal shells are radius 20**, not 16, everywhere the reference uses a
       card over a scrim (drawer, palette, sheet, settings, connect, permissions,
       diagnostics, companion). The switcher, recovery and tour cards are 24.
-- [ ] **Scrims.** Modals: `slate-950/70` + blur 12. Drawer: `slate-950/60` +
+- [x] **Scrims.** Modals: `slate-950/70` + blur 12. Drawer: `slate-950/60` +
       blur 24. Tour: blur 8. Recovery: `#0B1120/92` + blur 24.
 - [x] **Rotate icon** is `rotateCw`, not a phone glyph; window control order is
       rotate · fullscreen · minimise · maximise · close.
-- [ ] **Accent propagation.** With Phosphor selected the clock's second hand,
+- [x] **Accent propagation.** With Phosphor selected the clock's second hand,
       the selected workspace key, the launcher button, toggles and the
       selected-row fills all go amber. Verify every `signal` use is `withAccent`.
 
@@ -36,7 +36,7 @@ Each item is something visible. Tick it when the golden shows it.
       `e` `#EA4335`, bold, tight tracking), placeholder "Search the web or
       apps…", a **search** icon on the right (ours has a mic), `rounded-full`,
       `max-w-sm`.
-- [ ] **Desk icons**: four, not six. 48 px `rounded-[14px]` tile, label 11 px
+- [x] **Desk icons**: four, not six. 48 px `rounded-[14px]` tile, label 11 px
       white with a drop shadow, wrapper `p-2 rounded-[14px] hover:bg-white/10`,
       tile `scale-105` on hover.
 - [x] **Widget column** is 310 wide at `right: 40`, cards `p-4 rounded-[16px]`
@@ -62,7 +62,7 @@ Each item is something visible. Tick it when the golden shows it.
 - [x] **Running-app chips** are dot + name only, no icon.
 - [x] **Media pill** is a round play/pause (`bg-white/15`) plus the title at
       11 px — not glyph + title + artist + three transport buttons.
-- [ ] **Tray clock** reads `12:56 am` over `5 Sept` (lowercase meridiem, day +
+- [x] **Tray clock** reads `12:56 am` over `5 Sept` (lowercase meridiem, day +
       short month).
 - [ ] **Hover** on chips brightens; the launcher scales 1.02.
 
@@ -71,17 +71,17 @@ Each item is something visible. Tick it when the golden shows it.
 - [x] **Live tooltip** is a card, not a system tooltip: `w-48 rounded-[10px]
       bg-slate-900/95 border-white/20`, heading `STREAM PIPELINE` in mono, then
       Produced / Presented (emerald) / Dropped rows.
-- [ ] **Context menu**: `w-48 rounded-[12px] bg-slate-900/95`, rows "Snap left
+- [x] **Context menu**: `w-48 rounded-[12px] bg-slate-900/95`, rows "Snap left
       half ⊞ Left", "Snap right half", rotate, maximise/restore, "Close window"
       in rose.
-- [ ] **Starting**: whole body pulses; a `rounded-[14px]` accent-tinted tile with
+- [x] **Starting**: whole body pulses; a `rounded-[14px]` accent-tinted tile with
       a spinning refresh icon; "Opening X…"; mono "Allocating hardware video
       surface on device".
-- [ ] **Reconnecting**: a bare 32 px spinning signal ring; "Reconnecting to
+- [x] **Reconnecting**: a bare 32 px spinning signal ring; "Reconnecting to
       phone…"; mono "Re-establishing socket pipe on :3698".
-- [ ] **Failed**: `bg-rose/5 border-rose/30`, 40 px alert icon, "This app
+- [x] **Failed**: `bg-rose/5 border-rose/30`, 40 px alert icon, "This app
       stopped", **Try Again** + **Copy Technical Details**.
-- [ ] **Placeholder surface** (no video yet): a 64 px accent tile, the package
+- [x] **Placeholder surface** (no video yet): a 64 px accent tile, the package
       in mono, and a chip "Hardware video surface streaming at N fps".
 
 ## 5. Boot
@@ -111,7 +111,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 6. Launcher
 
-- [ ] Card is **672 wide**, `max-h 80vh`, radius 20, anchored **64 px** from the
+- [x] Card is **672 wide**, `max-h 80vh`, radius 20, anchored **64 px** from the
       top. Ours is 880 wide at 48.
 - [x] **Header row**, not a boxed field: 20 px search icon, a **borderless**
       input with placeholder "Search phone apps (e.g. 'wa' for WhatsApp, or app
@@ -119,10 +119,10 @@ Each item is something visible. Tick it when the golden shows it.
       row has `p-4` and a `border-b white/10`.
 - [x] **Pinned to Top** section carries a pin icon in signal and is hidden while
       searching. Pinned rows show the *category* as their subline.
-- [ ] Rows: `p-2.5 rounded-[12px] bg-white/4 border-white/5`, hover
+- [x] Rows: `p-2.5 rounded-[12px] bg-white/4 border-white/5`, hover
       `bg-white/14 border-white/20`; a pin/unpin button appears on hover; the
       keyboard-selected row is `bg-white/25 border-white/40 ring-1`.
-- [ ] Body has `p-4` and `space-y-5` between sections.
+- [x] Body has `p-4` and `space-y-5` between sections.
 - [x] **Footer** `p-3 border-t`: "↑/↓ to navigate · Enter to launch" left,
       "Live device apps (Pixel 8 Pro)" right in mono — the *device name*.
 
@@ -146,10 +146,10 @@ Each item is something visible. Tick it when the golden shows it.
 - [ ] Groups `LAUNCHER & DESK` / `WINDOW MANAGEMENT` / `HARDWARE & DIAGNOSTICS`,
       **single column**, each row a `p-2 rounded-[10px] bg-white/3` card with the
       kbd chip on the right. Keep the registry as the source.
-- [ ] An **Escape Ladder card**: "The Ordered Escape Ladder", "Pressing [Esc]
+- [x] An **Escape Ladder card**: "The Ordered Escape Ladder", "Pressing [Esc]
       closes whatever is open, exactly one layer at a time:", then the chain in
       signal mono.
-- [ ] Footer: "All unclaimed keystrokes pass directly through to the active
+- [x] Footer: "All unclaimed keystrokes pass directly through to the active
       Android window".
 
 ## 9. Window switcher
@@ -161,7 +161,7 @@ Each item is something visible. Tick it when the golden shows it.
       + label top-left, status dot top-right**, a centred `rounded-[8px]
       bg-black/40` mono preview slot ("44 fps live stream" / "Minimised to
       Dock"), package in mono at the bottom.
-- [ ] Selected: `bg-white/25 border-white/50 ring-2 ring-signal scale-1.02`.
+- [x] Selected: `bg-white/25 border-white/50 ring-2 ring-signal scale-1.02`.
 
 ## 10. Diagnostics
 
@@ -176,7 +176,7 @@ Each item is something visible. Tick it when the golden shows it.
       (emerald) / DROPPED.
 - [x] `RECENTLY CLOSED SESSIONS (LAST 8)` card with a clock icon and bullet
       lines.
-- [ ] Footer: "Copy diagnostics report" (copy icon, `bg-white/10`) left; "Press
+- [x] Footer: "Copy diagnostics report" (copy icon, `bg-white/10`) left; "Press
       Ctrl+Shift+D to close" right.
 
 ## 11. Control centre
@@ -213,9 +213,9 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 14. Connection
 
-- [ ] Eyebrow `HARDWARE MANAGER` in signal mono; title **"Manage Android
+- [x] Eyebrow `HARDWARE MANAGER` in signal mono; title **"Manage Android
       Phones"**; X.
-- [ ] Left header "Connected Devices" + "Look again" with a refresh icon
+- [x] Left header "Connected Devices" + "Look again" with a refresh icon
       (`bg-white/10`).
 - [ ] Device cards: 40 px `rounded-[10px] bg-white/10` phone icon well; name;
       mono `model · version`; a **transport badge** top-right (`USB` signal/20,
@@ -230,7 +230,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 15. Permissions
 
-- [ ] Header: **shield-check in emerald** + "What the desk can use" + subtitle +
+- [x] Header: **shield-check in emerald** + "What the desk can use" + subtitle +
       X.
 - [ ] Rows carry a **40 px icon well** (bell / music / copy / phone-call /
       volume).
@@ -259,7 +259,7 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 18. Token sheet
 
-- [ ] Header: palette icon well, "DroidPier Token & Specimen Explorer", mono
+- [x] Header: palette icon well, "DroidPier Token & Specimen Explorer", mono
       subtitle, **Dark / Light** and **Glass / Matte** segmented controls, X.
 - [x] Tabs are **underlined** in signal, not a segmented pill.
 - [x] Semantic roles as **cards** showing **both** hexes (`#0B1120 / #EEF2FB`)
@@ -283,13 +283,13 @@ Each item is something visible. Tick it when the golden shows it.
 
 ## 21. Android companion view
 
-- [ ] Not in the product. A phone frame `max-w-sm h-640 rounded-[36px]
+- [x] Not in the product. A phone frame `max-w-sm h-640 rounded-[36px]
       bg-#1C1B1F border-8 slate-800` on **Material 3 tokens**: status bar, app
       bar (avatar `D`, "DroidPier Companion" / "Jetpack Compose M3 UI"), tabs
       Dashboard / Permissions / Pairing, a "Connected to Desktop" card with
       DURATION and DATA TX, a FOREGROUND NOTIFICATION card, a full-width rose
       "Disconnect Desktop Session", a gesture bar.
-- [ ] **Where it lives**: the preview harness, as a review surface. Shipping an
+- [x] **Where it lives**: the preview harness, as a review surface. Shipping an
       imitation of another app's screens inside the desktop is exactly the fake
       phone screenshot §14 forbids; a review surface is where the reference
       itself keeps it (a demo button, not product chrome).

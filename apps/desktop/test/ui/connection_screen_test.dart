@@ -827,15 +827,15 @@ void main() {
       await settle(tester);
 
       // One surface, carrying both halves. There is nothing left to stack.
-      expect(find.text('Connect a phone'), findsOneWidget);
-      expect(find.text('Phones'), findsOneWidget);
+      expect(find.text('Manage Android Phones'), findsOneWidget);
+      expect(find.text('Connected Devices'), findsOneWidget);
       expect(find.text('Add over Wi-Fi'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Pair over Wi-Fi'), findsNothing);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await settle(tester);
       expect(
-        find.text('Connect a phone'),
+        find.text('Manage Android Phones'),
         findsNothing,
         reason: 'one layer, so one Escape',
       );

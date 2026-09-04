@@ -226,7 +226,7 @@ class _AppDrawerState extends State<AppDrawer> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 672),
                 child: GlassPanel(
-                  radius: DexRadius.panel,
+                  radius: DexRadius.modal,
                   blur: 32,
                   fill: DexGlass.of(context).substrate,
                   // Each band pads itself; the header and footer carry rules.

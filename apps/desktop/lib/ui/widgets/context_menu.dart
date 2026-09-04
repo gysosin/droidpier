@@ -53,9 +53,11 @@ Future<void> showDexContextMenu({
   final VoidCallback? chosen = await showMenu<VoidCallback>(
     context: context,
     position: position,
-    color: c.raised,
+    // A 192 px slate card at radius 12, as the reference draws it.
+    color: c.surface.withValues(alpha: 0.95),
+    constraints: const BoxConstraints(minWidth: 192, maxWidth: 192),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(DexRadius.dialog),
+      borderRadius: BorderRadius.circular(DexRadius.card),
       side: BorderSide(color: c.line, width: DexStroke.hairline),
     ),
     items: <PopupMenuEntry<VoidCallback>>[

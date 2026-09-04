@@ -88,7 +88,7 @@ class PermissionPanel extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Icon(DexIcons.shield, size: 22, color: c.trace),
+                        Icon(DexIcons.shieldCheck, size: 22, color: c.trace),
                         const SizedBox(width: DexSpace.md),
                         Expanded(
                           child: Column(

@@ -490,7 +490,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'DEVICE LINK',
+                'HARDWARE MANAGER',
                 style: DexTheme.data(
                   c,
                   size: 9,
@@ -498,7 +498,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                 ).copyWith(letterSpacing: 1.6),
               ),
               const SizedBox(height: DexSpace.xs),
-              Text('Connect a phone', style: t.titleLarge),
+              Text('Manage Android Phones', style: t.titleLarge),
               const SizedBox(height: DexSpace.xs),
               Text(
                 'Plug in over USB with USB debugging on, or add one over '

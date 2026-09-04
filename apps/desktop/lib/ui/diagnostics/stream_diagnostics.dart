@@ -106,17 +106,6 @@ class StreamDiagnostics extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (onCopyDiagnostics case final VoidCallback copy)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  right: DexSpace.sm,
-                                ),
-                                child: OutlinedButton.icon(
-                                  onPressed: copy,
-                                  icon: const Icon(DexIcons.copy, size: 14),
-                                  label: const Text('Copy diagnostics'),
-                                ),
-                              ),
                             IconButton(
                               onPressed: onClose,
                               icon: const Icon(DexIcons.close, size: 18),
@@ -218,6 +207,40 @@ class StreamDiagnostics extends StatelessWidget {
                               ),
                             ),
                         ],
+                        const SizedBox(height: DexSpace.lg),
+                        Divider(
+                          color: glass.stroke,
+                          height: DexStroke.hairline,
+                        ),
+                        const SizedBox(height: DexSpace.md),
+                        // The footer the reference closes with: the report on
+                        // the left, the way out on the right.
+                        Row(
+                          children: <Widget>[
+                            if (onCopyDiagnostics case final VoidCallback copy)
+                              Flexible(
+                                child: OutlinedButton.icon(
+                                  onPressed: copy,
+                                  icon: const Icon(DexIcons.copy, size: 14),
+                                  label: const Text(
+                                    'Copy diagnostics report',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: DexSpace.md),
+                            Expanded(
+                              child: Text(
+                                'Press Ctrl+Shift+D to close',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: DexTheme.data(c, size: 10),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

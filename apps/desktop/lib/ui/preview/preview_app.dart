@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_dex_core/open_dex_core.dart';
 
@@ -25,6 +26,7 @@ import '../permissions/permission_panel.dart';
 import '../recovery/recovery_overlay.dart';
 import '../shell/app_shell.dart';
 import '../widgets/link_rail.dart';
+import 'companion_view.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -260,6 +262,13 @@ class _PreviewAppState extends State<PreviewApp> {
         );
       case _Surface.tokens:
         return _centred(TokenSheet(onClose: () {}));
+      case _Surface.companion:
+        return _centred(
+          CompanionPreview(
+            snapshot: state,
+            onDisconnect: () => _select(MockScenario.disconnected),
+          ),
+        );
     }
   }
 
@@ -386,7 +395,9 @@ class _PreviewBar extends StatelessWidget {
                   onPressed: onToggleMode,
                   tooltip: 'Toggle light and dark',
                   icon: Icon(
-                    mode == ThemeMode.dark ? DexIcons.lightMode : DexIcons.darkMode,
+                    mode == ThemeMode.dark
+                        ? DexIcons.lightMode
+                        : DexIcons.darkMode,
                   ),
                 ),
               ],
@@ -424,4 +435,5 @@ enum _Surface {
   tour,
   mirror,
   tokens,
+  companion,
 }
