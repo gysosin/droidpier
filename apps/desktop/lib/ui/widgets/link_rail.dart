@@ -459,7 +459,10 @@ class LinkRailChip extends StatelessWidget {
           // committed stroke, so the two readings of the rail are one object.
           Container(
             width: DexSpace.xxl,
-            height: DexStroke.railTrace,
+            // Twice the rail stroke. The 4px token is the boot screen's
+            // full-width trace; the chip's segment is a badge, and at 4px in a
+            // 28px-tall pill it read as a hairline rather than as a signal.
+            height: DexStroke.railTrace * 2,
             decoration: BoxDecoration(
               color: tint,
               borderRadius: BorderRadius.circular(DexRadius.pill),

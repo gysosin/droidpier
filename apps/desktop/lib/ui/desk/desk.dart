@@ -344,7 +344,7 @@ class _Furniture extends StatelessWidget {
 
   /// The bare clock's diameter, and the width below which it is dropped so it
   /// cannot collide with the search bars.
-  static const double _clockSize = 300;
+  static const double _clockSize = 280;
   static const double _clockMinWidth = 860;
 
   /// The right-hand column's width, and the desk width below which it is
@@ -385,12 +385,16 @@ class _Furniture extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              top: 190,
+              // Directly under the search pill, as the reference has it: the
+              // rail at 16, the pill at 56, the icons at 112. They used to
+              // start at 190, which left a band of empty wallpaper between the
+              // pill and the first app.
+              top: 112,
               bottom: 0,
               child: AnimatedOpacity(
                 duration: DexDuration.standard,
                 curve: DexMotion.arrive,
-                opacity: recessive ? 0.5 : 1,
+                opacity: recessive ? 0.4 : 1,
                 child: DeskIcons(
                   applications: applications,
                   onLaunch: onLaunch,
@@ -441,18 +445,21 @@ class _Furniture extends StatelessWidget {
                   child: AnimatedOpacity(
                     duration: DexDuration.standard,
                     curve: DexMotion.arrive,
-                    opacity: recessive ? 0.5 : 1,
+                    opacity: recessive ? 0.4 : 1,
                     child: Container(
                       width: _clockSize,
                       height: _clockSize,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: <BoxShadow>[
+                          // The reference's dial shadow: lifted, and pulled in
+                          // rather than spread, so it reads as a disc sitting
+                          // on the wallpaper instead of glowing against it.
                           BoxShadow(
-                            color: Color(0x59000000),
-                            blurRadius: 34,
-                            spreadRadius: 2,
-                            offset: Offset(0, 12),
+                            color: Color(0x73000000),
+                            blurRadius: 36,
+                            spreadRadius: -4,
+                            offset: Offset(0, 16),
                           ),
                         ],
                       ),
@@ -476,7 +483,7 @@ class _Furniture extends StatelessWidget {
                 child: AnimatedOpacity(
                   duration: DexDuration.standard,
                   curve: DexMotion.arrive,
-                  opacity: recessive ? 0.5 : 1,
+                  opacity: recessive ? 0.4 : 1,
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
