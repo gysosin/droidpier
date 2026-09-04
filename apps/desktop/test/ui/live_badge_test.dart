@@ -111,16 +111,18 @@ void main() {
     expect(tip.message, contains('9'));
     expect(
       tip.message,
-      contains('counts changes, not speed'),
+      contains('count changes, not speed'),
       reason: 'the number needs its meaning attached wherever it appears',
     );
     expect(
       tip.message,
-      contains('Frames on screen'),
+      contains('presented'),
       reason:
-          'this is the presented rate. It read "Screen updates" while it was '
-          'fed the produced rate, which was five times larger — the most '
-          'visible number in the app naming the wrong quantity.',
+          'every rate is named. This tooltip once read "Screen updates" while '
+          'it was fed the produced rate, which was five times larger — the '
+          'most visible number in the app naming the wrong quantity. All three '
+          'now appear together, each labelled, so no one number can be read as '
+          'another.',
     );
   });
 

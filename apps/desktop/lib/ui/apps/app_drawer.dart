@@ -1,5 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -200,14 +202,23 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
         ),
         SafeArea(
+          // Anchored near the top and sized to what it holds, rather than
+          // centred and stretched to fill. A fixed full-height card meant three
+          // apps sat in the corner of ~850px of empty glass, and the fix for
+          // that had been to push search results down to hug the field — which
+          // moved the void to the top rather than removing it. A card that
+          // hugs its content has no void at any number of apps.
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DexSpace.xxl,
-              vertical: DexSpace.xl,
+            padding: const EdgeInsets.fromLTRB(
+              DexSpace.xxl,
+              DexSpace.xxxl,
+              DexSpace.xxl,
+              DexSpace.xl,
             ),
-            child: Center(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
+                constraints: const BoxConstraints(maxWidth: 880),
                 child: GlassPanel(
                   radius: DexRadius.panel,
                   blur: 32,
@@ -223,24 +234,24 @@ class _AppDrawerState extends State<AppDrawer> {
                     behavior: HitTestBehavior.opaque,
                     onTap: () {},
                     child: Column(
+                      // Hug the content. Flexible rather than Expanded, so the
+                      // card is as tall as what it holds until it runs out of
+                      // screen, and scrolls after that.
+                      mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Expanded(child: _body(context, c, t)),
-                        const SizedBox(height: DexSpace.md),
-                        // The search field lives along the bottom of the panel,
-                        // as the reference has it — wide, not a slim toolbar.
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 760),
-                            child: _SearchField(
-                              controller: _query,
-                              focusNode: _searchFocus,
-                              colors: c,
-                              onChanged: (_) =>
-                                  setState(() => _selected = 0),
-                              onSubmitted: (_) => _launchSelected(),
-                            ),
-                          ),
+                        // Search heads the card. What you typed belongs above
+                        // what it found, which is the shape every launcher
+                        // search has and the only one where the results read
+                        // downward from the query.
+                        _SearchField(
+                          controller: _query,
+                          focusNode: _searchFocus,
+                          colors: c,
+                          onChanged: (_) => setState(() => _selected = 0),
+                          onSubmitted: (_) => _launchSelected(),
                         ),
+                        const SizedBox(height: DexSpace.lg),
+                        Flexible(child: _body(context, c, t)),
                       ],
                     ),
                   ),
@@ -292,18 +303,15 @@ class _AppDrawerState extends State<AppDrawer> {
     // result" is a visible thing rather than an inference.
     if (_searching) {
       final List<AndroidApplication> results = _results;
-      // Bottom-aligned, growing up out of the search field. Pinned to the top
-      // of a full-height panel, two results left a screen of empty glass
-      // between what you typed and what it found.
-      return Align(
-        alignment: Alignment.bottomLeft,
-        child: _ResultsList(
-          results: results,
-          selected: _selected.clamp(0, results.length - 1),
-          colors: c,
-          onLaunch: widget.onLaunch,
-          onHover: (int i) => setState(() => _selected = i),
-        ),
+      // Top-aligned, reading down out of the search field above. This used to
+      // be bottom-aligned to close a gap between the query and its results;
+      // the card hugging its content closes that gap on its own.
+      return _ResultsList(
+        results: results,
+        selected: _selected.clamp(0, results.length - 1),
+        colors: c,
+        onLaunch: widget.onLaunch,
+        onHover: (int i) => setState(() => _selected = i),
       );
     }
 
@@ -318,7 +326,7 @@ class _AppDrawerState extends State<AppDrawer> {
           // without reading anything else. An empty pin list drops the
           // section and its header together, as the other sections do.
           if (pinned.isNotEmpty) ...<Widget>[
-            _SectionHeader(label: 'Pinned', colors: c),
+            _SectionHeader(label: 'Pinned to top', colors: c),
             _AppGrid(
               apps: pinned,
               colors: c,
@@ -328,7 +336,10 @@ class _AppDrawerState extends State<AppDrawer> {
             const SizedBox(height: DexSpace.lg),
           ],
           if (system.isNotEmpty) ...<Widget>[
-            _SectionHeader(label: 'System apps', colors: c),
+            _SectionHeader(
+              label: 'System applications (${system.length})',
+              colors: c,
+            ),
             _AppGrid(
               apps: system,
               colors: c,
@@ -339,7 +350,10 @@ class _AppDrawerState extends State<AppDrawer> {
           if (system.isNotEmpty && user.isNotEmpty)
             const SizedBox(height: DexSpace.lg),
           if (user.isNotEmpty) ...<Widget>[
-            _SectionHeader(label: 'User apps', colors: c),
+            _SectionHeader(
+              label: 'User applications (${user.length})',
+              colors: c,
+            ),
             _AppGrid(
               apps: user,
               colors: c,
@@ -401,10 +415,12 @@ class _AppGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 116,
-        mainAxisExtent: 108,
-        crossAxisSpacing: DexSpace.md,
-        mainAxisSpacing: DexSpace.md,
+        // Three across on a full-width card, two when it narrows, as the
+        // reference's `grid-cols-2 sm:grid-cols-3` does.
+        maxCrossAxisExtent: 280,
+        mainAxisExtent: 56,
+        crossAxisSpacing: DexSpace.sm,
+        mainAxisSpacing: DexSpace.sm,
       ),
       itemCount: apps.length,
       itemBuilder: (BuildContext context, int i) => _AppTile(
@@ -446,7 +462,7 @@ class _SearchField extends StatelessWidget {
         hintText: 'Search apps…',
         hintStyle: Theme.of(context).textTheme.bodyLarge
             ?.copyWith(color: colors.muted),
-        prefixIcon: Icon(Icons.search, size: 18, color: colors.muted),
+        prefixIcon: Icon(DexIcons.search, size: 18, color: colors.muted),
         filled: true,
         fillColor: colors.surface.withValues(alpha: 0.72),
         contentPadding: const EdgeInsets.symmetric(vertical: DexSpace.md),
@@ -471,6 +487,13 @@ class _SearchField extends StatelessWidget {
   }
 }
 
+/// One application, as a row card.
+///
+/// The reference lays the drawer out as rows in a three-column grid rather
+/// than as a wall of square icons: a small accent tile, the name, and the
+/// machine value under it. That second line is the point — a launcher for
+/// technical users that hides the package name is hiding the only unambiguous
+/// identifier an app has, and two apps can carry the same label.
 class _AppTile extends StatelessWidget {
   const _AppTile({
     required this.app,
@@ -487,10 +510,16 @@ class _AppTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
+    final DexGlass glass = DexGlass.of(context);
     final bool placeholder = isPlaceholderLabel(app.label, app.packageName);
     final String shown = placeholder
         ? displayNameFor(app.packageName)
         : app.label;
+    // The subline carries the package for a real label, and for a guessed one
+    // it is the only truth on the row, so it is never dropped.
+    final String subline = app.isSystemApp && !placeholder
+        ? 'System'
+        : app.packageName;
 
     return Semantics(
       button: true,
@@ -506,41 +535,47 @@ class _AppTile extends StatelessWidget {
           child: AnimatedContainer(
             duration: DexDuration.micro,
             curve: DexMotion.arrive,
-            padding: const EdgeInsets.all(DexSpace.sm),
-            // Borderless: the icon floats over the blurred desk, with only a
-            // faint rounded highlight on hover — no boxed tile.
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: hovered
-                  ? DexGlass.of(context).fill
-                  : Colors.transparent,
+              // Selection out-contrasts hover, hover out-contrasts rest.
+              color: hovered ? glass.fill : glass.fillSubtle,
               borderRadius: BorderRadius.circular(DexRadius.card),
+              border: Border.all(
+                color: hovered ? glass.stroke : Colors.transparent,
+                width: DexStroke.hairline,
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: <Widget>[
                 // AppGlyph, not a local Image.memory: it caches one MemoryImage
                 // per package, so the grid does not re-decode (and blink) every
                 // time the shell rebuilds — which media/telemetry updates now do
                 // often.
-                AppGlyph(app: app, size: 40),
-                const SizedBox(height: DexSpace.sm),
-                Text(
-                  placeholder ? displayNameFor(app.packageName) : app.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: t.labelSmall?.copyWith(color: colors.text),
-                ),
-                if (placeholder)
-                  // The derived name is a guess, so the package it came from
-                  // stays visible beneath it. A guess must never hide the truth.
-                  Text(
-                    app.packageName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: DexTheme.data(colors, size: 9),
+                AppGlyph(app: app, size: 32),
+                const SizedBox(width: DexSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        shown,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: t.labelLarge?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        subline,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DexTheme.data(colors, size: 10),
+                      ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),
@@ -549,6 +584,7 @@ class _AppTile extends StatelessWidget {
     );
   }
 }
+
 class _Skeleton extends StatelessWidget {
   const _Skeleton({required this.colors});
 

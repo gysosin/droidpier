@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 
 import '../motion/dex_motion.dart';
@@ -111,7 +113,7 @@ class _CommandPaletteState extends State<CommandPalette> {
             decoration: InputDecoration(
               hintText: 'Type a command…',
               hintStyle: t.bodyLarge?.copyWith(color: c.muted),
-              prefixIcon: Icon(Icons.chevron_right, size: 18, color: c.muted),
+              prefixIcon: Icon(DexIcons.forward, size: 18, color: c.muted),
               filled: true,
               fillColor: c.surface.withValues(alpha: 0.72),
               contentPadding: const EdgeInsets.symmetric(

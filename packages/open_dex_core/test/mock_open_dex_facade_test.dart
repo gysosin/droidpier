@@ -76,6 +76,18 @@ void main() {
     expect(facade.snapshot.currentWorkspace, 3);
   });
 
+  test('a launched app lands on the workspace you are looking at', () async {
+    final facade = MockOpenDexFacade();
+    addTearDown(facade.dispose);
+
+    expect((await facade.selectWorkspace(3)).isSuccess, isTrue);
+    await facade.launchApplication('com.android.chrome');
+
+    // Opening an app on desk 3 and having it appear on desk 1 is the kind of
+    // thing that reads as the window failing to open at all.
+    expect(facade.snapshot.windows.single.workspace, 3);
+  });
+
   test('a window can be moved to another workspace', () async {
     final facade = MockOpenDexFacade();
     addTearDown(facade.dispose);

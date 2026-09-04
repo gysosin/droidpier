@@ -20,6 +20,7 @@ See [LICENSE](../LICENSE), [NOTICE](../NOTICE) and the texts in [licenses](../li
 | libusb | scrcpy's pinned build inputs | LGPL-2.1-or-later |
 | ADB | Pinned android-tools source and `tool/adb-build-inputs.tsv` | Apache/BSD/MIT and LGPL libusb; sources and `licenses/adb/` notices included |
 | Instrument Sans, Space Grotesk, Public Sans, IBM Plex Mono | Bundled font files | SIL Open Font License 1.1; individual notices in `licenses/fonts/` |
+| Lucide icons | Bundled icon font `apps/desktop/assets/icons/lucide.ttf` | ISC; portions MIT (Feather, Cole Bemis). Notice in `licenses/fonts/LUCIDE-LICENSE.txt` |
 | AppImage runtime | Pinned runtime asset | See its included upstream license/source notices |
 | musl, zstd, zlib, mimalloc | AppImage upstream build and Alpine package recipes | MIT, BSD-3-Clause, Zlib; complete texts in `licenses/` |
 | libfuse / squashfuse | AppImage upstream build | LGPL/GPL component distinctions and BSD-2-Clause; complete texts in `licenses/` |

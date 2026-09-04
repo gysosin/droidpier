@@ -7,6 +7,8 @@ import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
 import '../util/app_display_name.dart';
+import '../widgets/link_rail.dart';
+import 'health_hud.dart';
 
 /// What each streaming window is actually doing, on demand.
 ///
@@ -101,6 +103,42 @@ class StreamDiagnostics extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: DexSpace.md),
+                        // The link, before the streams that ride it. Reading
+                        // per-window frame rates without knowing the latency
+                        // and throughput under them is how a healthy link gets
+                        // blamed for a slow app, and the reverse.
+                        Row(
+                          children: <Widget>[
+                            _LinkSummary(
+                              label: 'LINK LATENCY',
+                              measurement: snapshot.telemetry.linkLatency,
+                              grade: _latencyGrade(
+                                snapshot.telemetry.linkLatency,
+                                c,
+                              ),
+                              colors: c,
+                              glass: glass,
+                            ),
+                            const SizedBox(width: DexSpace.sm),
+                            _LinkSummary(
+                              label: 'THROUGHPUT',
+                              measurement: snapshot.telemetry.throughput,
+                              grade: null,
+                              colors: c,
+                              glass: glass,
+                              value: c.trace,
+                            ),
+                            const SizedBox(width: DexSpace.sm),
+                            _LinkSummary(
+                              label: 'COMPOSITOR RATE',
+                              measurement: snapshot.telemetry.framesPerSecond,
+                              grade: null,
+                              colors: c,
+                              glass: glass,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: DexSpace.lg),
                         if (windows.isEmpty)
                           Text(
                             'No app windows are open.',
@@ -132,6 +170,88 @@ class StreamDiagnostics extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Grades the link's round trip against the thresholds the health readout
+/// already uses, so the two surfaces cannot disagree about what "good" is.
+({String text, Color colour})? _latencyGrade(
+  TelemetryMeasurement? m,
+  DexColors c,
+) {
+  if (m == null) return null;
+  return switch (gradeLatency(m.value)) {
+    HealthGrade.good => (text: 'optimal', colour: c.trace),
+    HealthGrade.fair => (text: 'usable', colour: c.warn),
+    HealthGrade.poor => (text: 'degraded', colour: c.fault),
+    // Ungraded is a state, not a fault: painting it red teaches people to
+    // ignore red.
+    HealthGrade.unknown => null,
+  };
+}
+
+/// One of the three link readouts across the top of the panel.
+///
+/// A measurement the phone has not reported renders as an em dash. Never a
+/// zero: a meter with an invented number in it is worse than an empty one.
+class _LinkSummary extends StatelessWidget {
+  const _LinkSummary({
+    required this.label,
+    required this.measurement,
+    required this.grade,
+    required this.colors,
+    required this.glass,
+    this.value,
+  });
+
+  final String label;
+  final TelemetryMeasurement? measurement;
+  final ({String text, Color colour})? grade;
+  final DexColors colors;
+  final DexGlass glass;
+  final Color? value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: glass.fillSubtle,
+          borderRadius: BorderRadius.circular(DexRadius.card),
+          border: Border.all(color: glass.stroke, width: DexStroke.hairline),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              label,
+              style: DexTheme.data(
+                colors,
+                size: 9,
+              ).copyWith(letterSpacing: 1.4),
+            ),
+            const SizedBox(height: DexSpace.xs),
+            Text(
+              measurement == null ? '—' : LinkRailTrace.format(measurement!),
+              style: DexTheme.data(
+                colors,
+                size: 15,
+                color: value ?? colors.text,
+              ).copyWith(fontWeight: FontWeight.w500),
+            ),
+            if (grade case final ({String text, Color colour}) g) ...<Widget>[
+              const SizedBox(height: 2),
+              Text(
+                g.text,
+                style: DexTheme.data(colors, size: 10, color: g.colour),
+              ),
+            ],
+          ],
         ),
       ),
     );

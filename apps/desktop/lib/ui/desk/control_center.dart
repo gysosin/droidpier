@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -132,16 +134,16 @@ class ControlCenter extends StatelessWidget {
       clipboard.availability == ClipboardAvailability.available;
 
   static (String, IconData) _describe(DeviceControl c) => switch (c) {
-    DeviceControl.wifi => ('Wi-Fi', Icons.wifi),
-    DeviceControl.bluetooth => ('Bluetooth', Icons.bluetooth),
+    DeviceControl.wifi => ('Wi-Fi', DexIcons.wifi),
+    DeviceControl.bluetooth => ('Bluetooth', DexIcons.bluetooth),
     // "Airplane mode" does not fit the tile and rendered as "Airplane mo…".
     // A truncated label reads as a rendering fault; the shorter word is
     // unambiguous next to the aeroplane icon.
-    DeviceControl.airplaneMode => ('Airplane', Icons.airplanemode_active),
-    DeviceControl.rotationLock => ('Rotation lock', Icons.screen_lock_rotation),
-    DeviceControl.torch => ('Torch', Icons.flashlight_on),
-    DeviceControl.mobileData => ('Mobile data', Icons.signal_cellular_alt),
-    DeviceControl.location => ('Location', Icons.location_on),
+    DeviceControl.airplaneMode => ('Airplane', DexIcons.airplane),
+    DeviceControl.rotationLock => ('Rotation lock', DexIcons.rotationLock),
+    DeviceControl.torch => ('Torch', DexIcons.torch),
+    DeviceControl.mobileData => ('Mobile data', DexIcons.cellular),
+    DeviceControl.location => ('Location', DexIcons.location),
   };
 
   @override
@@ -403,7 +405,7 @@ class _WidePill extends StatelessWidget {
                 ),
                 if (locked != null)
                   Icon(
-                    Icons.lock_outline,
+                    DexIcons.locked,
                     size: 12,
                     color: on ? Colors.white : c.muted,
                   ),
@@ -550,6 +552,17 @@ class _Volume extends StatelessWidget {
               ),
             ),
           ),
+          // The number, tabular so the three rows stay in column as they move.
+          // A slider says roughly; a person setting a phone's volume from a
+          // desk wants to know it is the same 68 it was yesterday.
+          SizedBox(
+            width: 34,
+            child: Text(
+              '${(level.current / max * 100).round()}%',
+              textAlign: TextAlign.right,
+              style: DexTheme.data(colors, size: 11, color: colors.text),
+            ),
+          ),
         ],
       ),
     );
@@ -594,7 +607,7 @@ class _Banner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.info_outline, size: 14, color: tint),
+          Icon(DexIcons.info, size: 14, color: tint),
           const SizedBox(width: DexSpace.sm),
           Expanded(
             child: Column(
@@ -663,9 +676,12 @@ class _Clipboard extends StatelessWidget {
       ClipboardAvailability.available when !clipboard.syncEnabled =>
         'Off — nothing is read from the phone',
       ClipboardAvailability.available => switch (clipboard.kind) {
-        ClipboardKind.empty => 'Nothing copied yet',
-        ClipboardKind.text => clipboard.text ?? '',
-        ClipboardKind.image => 'An image is ready to paste',
+        ClipboardKind.empty => 'On — nothing copied yet',
+        // The text itself is not the state. It used to be both, so a long
+        // clipboard pushed out the one line that said whether sharing was
+        // even on.
+        ClipboardKind.text => 'On — sharing with the phone',
+        ClipboardKind.image => 'On — an image is ready to paste',
       },
     };
 
@@ -700,6 +716,32 @@ class _Clipboard extends StatelessWidget {
             ),
           ],
         ),
+        // What is actually on the clipboard, in machine type, in its own well.
+        // A person checking the bridge works wants to see the thing that
+        // crossed it.
+        if (clipboard.availability == ClipboardAvailability.available &&
+            clipboard.syncEnabled &&
+            clipboard.kind == ClipboardKind.text &&
+            (clipboard.text?.isNotEmpty ?? false)) ...<Widget>[
+          const SizedBox(height: DexSpace.sm),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.md,
+              vertical: DexSpace.sm,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.40),
+              borderRadius: BorderRadius.circular(DexRadius.control),
+            ),
+            child: Text(
+              clipboard.text!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DexTheme.data(colors, size: 10, color: colors.text),
+            ),
+          ),
+        ],
         if (_notice case final String notice) ...<Widget>[
           const SizedBox(height: DexSpace.sm),
           _Banner(

@@ -4,6 +4,96 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- The theme selector is a real segmented control rather than Material chips.
+  Material fills a selected chip from `secondaryContainer`, which resolved to
+  emerald here — so choosing a theme lit up in the colour this design reserves
+  for telemetry. A reserved role stops meaning anything the moment it is spent
+  on selection.
+- A phone that is ready reads emerald, and one waiting for you to tap "Allow"
+  reads amber. Ready was blue, which is the colour of the Connect button beside
+  it; waiting was red, though nothing had failed — a prompt is simply open on a
+  screen you are not looking at.
+- The recovery card opens on a ringed mark carrying the phase, and the shape
+  changes with it rather than only the colour.
+- "Needs phone settings" is amber rather than red. A capability waiting on a
+  screen you have not opened yet is a state, not a failure, and painting states
+  red is how people learn to ignore red. Granted is emerald, which is the
+  colour this design reserves for reported facts.
+- The window switcher shows each window's state as the same dot the dock draws,
+  names the package under the label, and says which window releasing Alt will
+  focus. Two windows of the same application were previously indistinguishable
+  in it.
+- The shortcut sheet says what happens to keys it does not claim: they go
+  straight to the focused Android window.
+- Removed eight golden images that no test referenced, two of them left over
+  from a design direction this product no longer uses. A baseline nothing
+  compares against is not a baseline; it is a picture of how things used to
+  look, sitting in the folder where the record of how they do look is kept.
+- Shadows match the reference exactly. Every panel had been carrying one layer
+  of black at 35% with no spread — three and a half times the ink, spreading
+  wider than the panel it belonged to, which over a lit wallpaper reads as a
+  smudge under every surface. Panels now use the reference's two layers at 10%,
+  both pulled in by a negative spread. Windows keep a real shadow, at the
+  reference's own values, because a window is the one thing on the desk that
+  should cast one. The launcher button loses its blue halo for a plain
+  elevation, and the rail's station glow stops blooming past the node.
+- The desk clock follows the theme. Its face was a hardcoded near-black disc,
+  so on the pale light desk it was the one thing that stayed dark.
+- A design-token sheet, reachable from the command palette. Every semantic
+  role, glass alpha, accent, wallpaper, type slot, radius, spacing step and
+  duration, rendered from the tokens themselves rather than from a copy of
+  them — so a value that drifts shows up beside the ones it should match. Glass
+  and matte specimens sit side by side, because the only way to judge whether
+  the matte fallback still reads as the same product is to see both at once.
+- The first-run tour can happen. It was 214 lines with a test file covering
+  every step, and it could never appear: the shell defaulted "already seen" to
+  true, nothing passed it, and there was nowhere to remember it. Finishing it
+  now sticks; an unreadable saved value shows it again rather than silently
+  never showing it.
+- The phone mirror has a door. Docked bottom-right above the taskbar, where its
+  own documentation always said it belonged and where nothing ever put it, and
+  reachable from the command palette. It goes flat whenever a window is
+  streaming.
+- Removed a carded clock widget that nothing built, and two card sizes nothing
+  asked for. The test that guarded against a second clock now counts the clocks
+  on the desk instead of asserting that one particular unused widget is absent.
+- One icon set, drawn at one weight. The interface had been picking between
+  Material's filled, outlined and rounded variants per call site, so a filled
+  battery sat beside an outlined settings gear in the same tray. Icons now come
+  from a single bundled Lucide face through one vocabulary that names what a
+  glyph means rather than what it looks like, so the mismatch cannot recur.
+  Against hairline edges, mono readouts and 1px rules, an outline set reads as
+  instrumentation rather than as a phone launcher.
+- Virtual desktops. The dock carries four numbered keys; choosing one changes
+  which windows are on screen, and a window opened on desk 3 stays on desk 3.
+  Switching is a change of view, not of state — a window on another desk keeps
+  its size, position and stream, and comes back exactly as it was. The keys
+  shed on a narrow bar, where reaching the launcher matters more.
+- The launcher button says "Your apps" instead of being a coloured square with
+  a glyph in it. It is the one control that opens everything, and an unlabelled
+  icon asks a first-time user to guess at the moment they have least to go on.
+- Fixed: the taskbar's width budget let two clusters claim more room than the
+  bar had. It survived while the dock held less; the additions above overflowed
+  it by 49 px at 1280 with windows open. There is now one budget — measure what
+  cannot shrink, split what is left — so the bar cannot overflow at any width.
+  A comment claiming the tray shed controls one by one has been corrected: it
+  scrolls, from the bell end, so the clock stays put.
+- The launcher is the size of what it holds. It was a fixed full-height card,
+  so three apps sat in the corner of roughly 850 px of empty glass. Search
+  results had been pushed down to hug the field to stop a gap opening between
+  the query and its results, which moved the void to the top rather than
+  removing it. The card now hugs its content, sits near the top of the screen,
+  and heads with the search field — so results read downward from what you
+  typed, and a phone's worth of apps still fits and scrolls.
+- The Link Rail's connected state is on the desk. The rail is the one object
+  this product asks you to learn, and it has three states: the full rail during
+  boot, the recovery rail, and the collapsed live trace. The third — the state a
+  connected user looks at all day — was built and then wired only into the
+  preview harness, so the desk never showed it. It now sits in the top-left
+  corner carrying `RTT`, `TX` and `RATE` from live telemetry, sheds readouts as
+  the window narrows rather than overflowing, and is the one piece of desk
+  furniture that does *not* fade behind a streaming window: whether the link is
+  healthy is exactly what you want to read while something is streaming.
 - The desk search opens links through the facade instead of starting `xdg-open`
   from a widget. A widget that reaches the host directly cannot be rendered in
   the preview harness or covered by a test without launching a real browser,

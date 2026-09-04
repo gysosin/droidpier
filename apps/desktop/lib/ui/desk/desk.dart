@@ -6,6 +6,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 import '../motion/dex_motion.dart';
 import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
+import '../widgets/link_rail.dart';
 import '../workspace/window_model.dart';
 import 'analog_clock.dart';
 import 'control_center.dart';
@@ -49,6 +50,8 @@ class Desk extends StatefulWidget {
     required this.onLaunchApplication,
     required this.workspace,
     required this.windows,
+    required this.currentWorkspace,
+    required this.onSelectWorkspace,
     required this.minimisedWindows,
     this.liveClock = false,
     super.key,
@@ -111,6 +114,10 @@ class Desk extends StatefulWidget {
 
   /// Passed through to the dock so a minimised window can be restored from it.
   final List<WorkspaceWindow> windows;
+
+  /// Which virtual desktop is on screen, and how to change it. 1-based.
+  final int currentWorkspace;
+  final ValueChanged<int> onSelectWorkspace;
   final Set<String> minimisedWindows;
 
   /// Whether the analog clock runs its own live one-second ticker (product) or
@@ -219,6 +226,8 @@ class _DeskState extends State<Desk> {
             rise: 18,
             child: TaskbarBar(
               windows: widget.windows,
+              currentWorkspace: widget.currentWorkspace,
+              onSelectWorkspace: widget.onSelectWorkspace,
               minimised: widget.minimisedWindows,
               onOpenLauncher: widget.onOpenLauncher,
               onFocus: widget.onFocusWindow,
@@ -329,9 +338,13 @@ class _Furniture extends StatelessWidget {
   final ValueChanged<String> onWebSearch;
   final bool liveClock;
 
+  /// Where the search bar starts, leaving the corner above it to the collapsed
+  /// Link Rail.
+  static const double _searchTop = 56;
+
   /// The bare clock's diameter, and the width below which it is dropped so it
   /// cannot collide with the search bars.
-  static const double _clockSize = 300;
+  static const double _clockSize = 280;
   static const double _clockMinWidth = 860;
 
   /// The right-hand column's width, and the desk width below which it is
@@ -372,21 +385,46 @@ class _Furniture extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              top: 190,
+              // Directly under the search pill, as the reference has it: the
+              // rail at 16, the pill at 56, the icons at 112. They used to
+              // start at 190, which left a band of empty wallpaper between the
+              // pill and the first app.
+              top: 112,
               bottom: 0,
               child: AnimatedOpacity(
                 duration: DexDuration.standard,
                 curve: DexMotion.arrive,
-                opacity: recessive ? 0.5 : 1,
+                opacity: recessive ? 0.4 : 1,
                 child: DeskIcons(
                   applications: applications,
                   onLaunch: onLaunch,
                 ),
               ),
             ),
-            // Search bars, top-left.
+            // The Link Rail, collapsed. First thing on the desk, and the only
+            // furniture that does not recede behind a stream: whether the link
+            // is healthy is exactly what a user wants to read while something
+            // is streaming.
             Positioned(
               top: DexSpace.lg,
+              left: DexSpace.lg,
+              child: Entrance(
+                order: 0,
+                child: LinkRailChip(
+                  telemetry: snapshot.telemetry,
+                  live: snapshot.recovery.phase == RecoveryPhase.idle ||
+                      snapshot.recovery.phase == RecoveryPhase.recovered,
+                  readings: w >= 900
+                      ? 3
+                      : w >= 700
+                      ? 2
+                      : 1,
+                ),
+              ),
+            ),
+            // Search bars, below the rail.
+            Positioned(
+              top: _searchTop,
               left: DexSpace.lg,
               child: Entrance(
                 order: 1,
@@ -407,18 +445,21 @@ class _Furniture extends StatelessWidget {
                   child: AnimatedOpacity(
                     duration: DexDuration.standard,
                     curve: DexMotion.arrive,
-                    opacity: recessive ? 0.5 : 1,
+                    opacity: recessive ? 0.4 : 1,
                     child: Container(
                       width: _clockSize,
                       height: _clockSize,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: <BoxShadow>[
+                          // The reference's dial shadow: lifted, and pulled in
+                          // rather than spread, so it reads as a disc sitting
+                          // on the wallpaper instead of glowing against it.
                           BoxShadow(
-                            color: Color(0x59000000),
-                            blurRadius: 34,
-                            spreadRadius: 2,
-                            offset: Offset(0, 12),
+                            color: Color(0x73000000),
+                            blurRadius: 36,
+                            spreadRadius: -4,
+                            offset: Offset(0, 16),
                           ),
                         ],
                       ),
@@ -442,7 +483,7 @@ class _Furniture extends StatelessWidget {
                 child: AnimatedOpacity(
                   duration: DexDuration.standard,
                   curve: DexMotion.arrive,
-                  opacity: recessive ? 0.5 : 1,
+                  opacity: recessive ? 0.4 : 1,
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

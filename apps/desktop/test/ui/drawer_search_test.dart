@@ -144,7 +144,7 @@ void main() {
   ) async {
     await pumpDrawer(tester, launched: <String>[]);
     // The section header renders uppercased.
-    expect(find.text('USER APPS'), findsOneWidget);
+    expect(find.textContaining('USER APPLICATIONS'), findsOneWidget);
     expect(find.text('Enter'), findsNothing);
   });
 }

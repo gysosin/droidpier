@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/dex_icons.dart';
+
 import '../theme/dex_colors.dart';
 import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
@@ -15,7 +17,9 @@ class DeskSearchBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 620),
+      // The reference sets this at max-w-sm. A 620px bar across the top-left
+      // reads as a browser chrome; a pill reads as a desk affordance.
+      constraints: const BoxConstraints(maxWidth: 384),
       child: _SearchBar(
         hint: 'Search Google',
         onSubmit: (String q) => onSearch(
@@ -87,7 +91,7 @@ class _SearchBarState extends State<_SearchBar> {
           const SizedBox(width: DexSpace.sm),
           IconButton(
             onPressed: _submit,
-            icon: Icon(Icons.mic_none, size: 18, color: c.muted),
+            icon: Icon(DexIcons.microphone, size: 18, color: c.muted),
             splashRadius: 18,
             tooltip: 'Search',
           ),

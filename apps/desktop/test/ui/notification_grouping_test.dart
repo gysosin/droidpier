@@ -82,6 +82,8 @@ void main() {
   ) async {
     await pump(tester, many(6));
 
+    await tester.ensureVisible(find.text('Show 3 more'));
+    await tester.pump();
     await tester.tap(find.text('Show 3 more'));
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
@@ -95,10 +97,14 @@ void main() {
   testWidgets('collapsing puts them away again', (WidgetTester tester) async {
     await pump(tester, many(6));
 
+    await tester.ensureVisible(find.text('Show 3 more'));
+    await tester.pump();
     await tester.tap(find.text('Show 3 more'));
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));
     }
+    await tester.ensureVisible(find.text('Show less'));
+    await tester.pump();
     await tester.tap(find.text('Show less'));
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 120));

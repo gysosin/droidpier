@@ -10,7 +10,9 @@ import '../apps/app_drawer.dart';
 import '../apps/app_ranking.dart';
 import '../boot/boot_screen.dart';
 import '../boot/first_run_tour.dart';
+import '../design/token_sheet.dart';
 import '../desk/desk.dart';
+import '../desk/phone_mirror.dart';
 import '../diagnostics/diagnostics_report.dart';
 import '../diagnostics/health_hud.dart';
 import '../diagnostics/stream_diagnostics.dart';
@@ -271,6 +273,18 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  /// The windows on the workspace currently on screen.
+  ///
+  /// Filtered here rather than in the window manager: a window on another desk
+  /// still exists, still holds its geometry and its surface, and comes back
+  /// exactly as it was when that desk is selected again. Switching desks is a
+  /// change of view, not of state.
+  List<WorkspaceWindow> _visibleWindows(BuildContext context) =>
+      <WorkspaceWindow>[
+        for (final WorkspaceWindow w in _windows(context))
+          if (w.session.workspace == _s.currentWorkspace) w,
+      ];
+
   /// Notes a window that has gone, for the diagnostics panel. The controller
   /// reports the closure; formatting it needs the clock, which lives here.
   void _logExit(WorkspaceWindow gone) {
@@ -361,8 +375,17 @@ class _AppShellState extends State<AppShell> {
   /// asked for.
   bool _healthHudOpen = false;
 
+  /// The docked phone mirror. Off by default: it is an honest picture of the
+  /// hardware rather than a second workspace, and it costs screen space.
+  bool _phoneMirrorOpen = false;
+
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
+
+  /// The token specimen sheet. Deliberately reachable in the shipped
+  /// product rather than only from the preview harness: a token that has
+  /// drifted is easiest to see beside the ones it should match.
+  bool _tokensOpen = false;
 
   /// The command palette. Ctrl+Shift+P.
   bool _paletteOpen = false;
@@ -445,6 +468,18 @@ class _AppShellState extends State<AppShell> {
         run: () => setState(() => _settingsOpen = true),
       ),
       DexCommandEntry(
+        title: 'Show design tokens',
+        keywords: const <String>[
+          'colours',
+          'colors',
+          'type',
+          'spacing',
+          'radius',
+          'specimen',
+        ],
+        run: () => setState(() => _tokensOpen = true),
+      ),
+      DexCommandEntry(
         title: 'Show keyboard shortcuts',
         keywords: const <String>['help', 'keys'],
         run: () => setState(() => _sheetOpen = true),
@@ -453,6 +488,11 @@ class _AppShellState extends State<AppShell> {
         title: 'Toggle stream diagnostics',
         keywords: const <String>['fps', 'performance', 'debug'],
         run: () => setState(() => _diagnosticsOpen = !_diagnosticsOpen),
+      ),
+      DexCommandEntry(
+        title: 'Toggle the phone mirror',
+        keywords: const <String>['phone', 'hardware', 'dock', 'mirror'],
+        run: () => setState(() => _phoneMirrorOpen = !_phoneMirrorOpen),
       ),
       DexCommandEntry(
         title: 'Toggle the health readout',
@@ -502,11 +542,13 @@ class _AppShellState extends State<AppShell> {
     closeDiagnostics: () => setState(() => _diagnosticsOpen = false),
     isSwitcherOpen: () => _switcherOpen,
     cancelSwitch: () => setState(() => _switcherOpen = false),
-    isDeskSurfaceOpen: () => _drawerOpen || _permissionsOpen || _settingsOpen,
+    isDeskSurfaceOpen: () =>
+        _drawerOpen || _permissionsOpen || _settingsOpen || _tokensOpen,
     closeDeskSurfaces: () => setState(() {
       _drawerOpen = false;
       _permissionsOpen = false;
       _settingsOpen = false;
+      _tokensOpen = false;
     }),
     isConnectOpen: () => _connectOpen,
     closeConnect: () => setState(() => _connectOpen = false),
@@ -562,6 +604,7 @@ class _AppShellState extends State<AppShell> {
         _permissionsOpen ||
         _connectOpen ||
         _sheetOpen ||
+        _tokensOpen ||
         _paletteOpen) {
       return true;
     }
@@ -834,6 +877,27 @@ class _AppShellState extends State<AppShell> {
         // not sit on top of the tray it is reporting alongside. Per-window
         // when a window has focus, because an unattributable rate answers
         // "how fast" without answering "what".
+        // Docked bottom-right above the taskbar, where this widget's own doc
+        // has always said it belongs and where nothing ever put it.
+        if (_phoneMirrorOpen)
+          Positioned(
+            right: DexSpace.lg,
+            bottom: 72 + DexSpace.md,
+            child: PhoneMirror(
+              snapshot: _s,
+              now: _now,
+              // Flat whenever a window is streaming. A blurred panel over a
+              // live texture re-blurs the scene on every decoded frame, which
+              // is the most expensive mistake available on this desk.
+              overVideo: _wm.windows.values.any(
+                (WorkspaceWindow w) =>
+                    w.session.status == WindowSessionStatus.streaming,
+              ),
+              onClose: () => setState(() => _phoneMirrorOpen = false),
+              onLaunch: (AndroidApplication a) =>
+                  widget.facade.launchApplication(a.packageName),
+            ),
+          ),
         if (_healthHudOpen)
           Positioned(
             right: DexSpace.lg,
@@ -930,15 +994,17 @@ class _AppShellState extends State<AppShell> {
             // The desk hosts the compositor rather than being its
             // background, so the taskbar can paint above app windows and
             // reserve the work area from them.
+            currentWorkspace: _s.currentWorkspace,
+            onSelectWorkspace: (int n) => widget.facade.selectWorkspace(n),
             workspace: Workspace(
-              windows: _windows(context),
+              windows: _visibleWindows(context),
               intents: _intents,
               snapEnabled: widget.snapEnabled,
               // The desk is already behind it; a second ground here would
               // paint over the wallpaper, the icons and the widgets.
               emptyChild: const SizedBox.shrink(),
             ),
-            windows: _windows(context),
+            windows: _visibleWindows(context),
             minimisedWindows: _wm.windows.values
                 .where((WorkspaceWindow w) => w.isMinimised)
                 .map((WorkspaceWindow w) => w.id)
@@ -1010,6 +1076,12 @@ class _AppShellState extends State<AppShell> {
           commands: _commands,
           onDismiss: () => setState(() => _paletteOpen = false),
         ),
+      );
+    }
+    if (_tokensOpen) {
+      return _Overlay(
+        onDismiss: () => setState(() => _tokensOpen = false),
+        child: TokenSheet(onClose: () => setState(() => _tokensOpen = false)),
       );
     }
     if (_sheetOpen) {

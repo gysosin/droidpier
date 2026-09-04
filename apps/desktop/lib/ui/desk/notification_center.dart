@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_glyph.dart';
@@ -196,6 +198,21 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                 onActivate: widget.onActivate,
                               ),
                             },
+                          ),
+                          // What this panel is and is not. Dismissing here
+                          // asks the phone to dismiss; the phone decides, and
+                          // anything it does on its own arrives here without
+                          // the desk being told first. Saying so is cheaper
+                          // than a person discovering it.
+                          const SizedBox(height: DexSpace.md),
+                          Divider(color: c.line, height: DexStroke.hairline),
+                          const SizedBox(height: DexSpace.md),
+                          Center(
+                            child: Text(
+                              'The phone remains the source of truth',
+                              textAlign: TextAlign.center,
+                              style: DexTheme.data(c, size: 10),
+                            ),
                           ),
                         ],
                       ),
@@ -579,7 +596,7 @@ class _CloseButton extends StatelessWidget {
                   width: DexStroke.hairline,
                 ),
               ),
-              child: Icon(Icons.close, size: 15, color: c.text),
+              child: Icon(DexIcons.close, size: 15, color: c.text),
             ),
           ),
         ),
@@ -626,7 +643,7 @@ class _DismissButton extends StatelessWidget {
               width: DexHit.minimum,
               height: DexHit.minimum,
               child: Icon(
-                Icons.close,
+                DexIcons.close,
                 size: 13,
                 color: hovered && enabled ? c.text : c.muted,
               ),

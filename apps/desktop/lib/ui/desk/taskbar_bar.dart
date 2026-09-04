@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -26,6 +28,8 @@ class TaskbarBar extends StatelessWidget {
     required this.onFocus,
     required this.onClose,
     required this.trailing,
+    this.currentWorkspace = 1,
+    this.onSelectWorkspace,
     this.media,
     this.onMediaAction,
     this.onNavKey,
@@ -43,6 +47,10 @@ class TaskbarBar extends StatelessWidget {
 
   /// The system tray, at the right.
   final Widget trailing;
+
+  /// Which virtual desktop is on screen, and how to change it. 1-based.
+  final int currentWorkspace;
+  final ValueChanged<int>? onSelectWorkspace;
 
   /// The currently playing media, shown as a pill on the left.
   final MediaState? media;
@@ -86,18 +94,73 @@ class TaskbarBar extends StatelessWidget {
         // The nav pill is dropped on a narrow desk so the fixed clusters cannot
         // push the full-width bar past the screen edge.
         final bool showNav = onNavKey != null && width >= 760;
+        // 1100, not 760. The dock's fixed furniture — nav pill, launcher, tray
+        // and padding — already wants about 760, and these two additions cost
+        // roughly 150 and 76 more. Admitted at 760 they overflowed the bar by
+        // 65px at 800 wide with no windows open at all. Switching desks is a
+        // rarer job than reaching the launcher, so the keys are what a narrow
+        // desk gives up.
+        final bool showWorkspaces = onSelectWorkspace != null && width >= 1100;
+        // The launcher keeps its button at every width and loses only its
+        // label, which costs about 76px.
+        final bool labelLauncher = width >= 1100;
 
-        // What the running-apps strip may take: everything the fixed furniture
-        // does not need. 760 is that furniture measured — nav pill, grid button,
-        // tray and the bar's own padding — and 420 remains the ceiling so a dozen
-        // open apps cannot run the strip across a wide desk.
-        final double appsMax = (width - 760).clamp(0, 420).toDouble();
+        // The bar's whole width budget, in one place.
+        //
+        // It used to be two independent numbers — the apps strip could take
+        // `width - 760` and the tray `width - 140` — which between them could
+        // claim more than the bar had. That was survivable while the dock held
+        // less; adding the workspace keys and the launcher's label overflowed
+        // it by 49px at 1280 with two windows open.
+        //
+        // Now: measure what cannot shrink, then split what is left. The sum of
+        // the two flexible clusters is the remainder by construction, so the
+        // Row cannot overflow at any width.
+        const double kNavPill = 168;
+        const double kWorkspacePill = 160; // keys plus the gap before them
+        const double kMediaPill = 198; // pill plus the gap before it
+        const double kLauncher = 64;
+        // Measured, not guessed: "Your apps" renders 118px wide in the bundled
+        // face, plus the gap after the icon. Estimating it at 76 is what left
+        // the bar overflowing by 49px at 1280 with windows open.
+        const double kLauncherLabel = 126;
 
-        // What is left for the tray once the bar's padding, the grid button and a
-        // minimum left cluster are accounted for.
-        final double trayMax = (width - 140)
+        // Slack. Every constant above is a measured width, and measured widths
+        // move with the font, the locale and the icon set. The flexible
+        // clusters give up the difference, which costs a few pixels of
+        // running-apps strip and nothing a user would notice — whereas
+        // under-counting overflows the bar, which they would.
+        const double kSlack = 40;
+
+        // Each glass pill adds its own horizontal padding, and the bar can
+        // carry four of them. Left unaccounted, that chrome is invisible in the
+        // budget right up until the flexible clusters actually fill their caps
+        // — which is what the labelled task chips made happen.
+        const double kPillChrome = DexSpace.sm * 2;
+        final int pills =
+            ((showNav || live.isNotEmpty) ? 1 : 0) +
+            (showWorkspaces ? 1 : 0) +
+            (showMedia ? 1 : 0) +
+            1; // the tray always has one
+
+        final double fixed =
+            kSlack +
+            pills * kPillChrome +
+            (showNav ? kNavPill : 0) +
+            (showWorkspaces ? kWorkspacePill : 0) +
+            (showMedia ? kMediaPill : 0) +
+            kLauncher +
+            (labelLauncher ? kLauncherLabel : 0);
+        final double spare = (width - DexSpace.lg * 2 - fixed)
             .clamp(0, double.infinity)
             .toDouble();
+
+        // The tray gets first call on the spare: the clock, the battery and
+        // the notification count are read far more often than the running-apps
+        // strip is clicked. It is capped anyway, so a wide desk gives the
+        // surplus to the apps rather than stretching a row of icons.
+        final double trayMax = (spare * 0.62).clamp(120, 400).toDouble();
+        final double appsMax = (spare - trayMax).clamp(0, 420).toDouble();
 
         return Padding(
           padding: const EdgeInsets.only(
@@ -164,6 +227,24 @@ class TaskbarBar extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (showWorkspaces) ...<Widget>[
+                if (showNav || live.isNotEmpty)
+                  const SizedBox(width: DexSpace.sm),
+                _Pill(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      for (int i = 1; i <= kWorkspaceCount; i++)
+                        _WorkspaceKey(
+                          number: i,
+                          current: i == currentWorkspace,
+                          colors: c,
+                          onSelect: () => onSelectWorkspace!(i),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               if (showMedia) ...<Widget>[
                 const SizedBox(width: DexSpace.sm),
                 _Pill(
@@ -176,7 +257,11 @@ class TaskbarBar extends StatelessWidget {
               ],
               const Spacer(),
               // CENTRE: the apps-grid button.
-              _AppsGridButton(onPressed: onOpenLauncher, colors: c),
+              _AppsGridButton(
+                onPressed: onOpenLauncher,
+                colors: c,
+                labelled: labelLauncher,
+              ),
               const Spacer(),
               // RIGHT: the system tray, bounded and scrollable.
               //
@@ -252,25 +337,25 @@ class _NavPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _NavButton(
-            icon: Icons.menu,
+            icon: DexIcons.menu,
             label: 'Menu',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.menu) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.radio_button_unchecked,
+            icon: DexIcons.home,
             label: 'Home',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.home) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.arrow_back_ios_new,
+            icon: DexIcons.back,
             label: 'Back',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.back) : null,
             colors: colors,
           ),
           _NavButton(
-            icon: Icons.search,
+            icon: DexIcons.search,
             label: 'Search',
             onPressed: enabled ? () => onNavKey(AndroidNavKey.search) : null,
             colors: colors,
@@ -327,11 +412,85 @@ class _NavButton extends StatelessWidget {
 
 /// The centre apps-grid button — a filled square with a 2×2 grid, as the
 /// reference has it.
+/// The centre launcher button.
+///
+/// It says "Your apps" rather than being a coloured square with a glyph in it.
+/// This is the one control on the desk that opens everything, and an unlabelled
+/// icon asks a first-time user to guess at exactly the moment they have the
+/// least to go on. The label is dropped on a narrow bar, where the word costs
+/// more than it earns.
+/// One numbered virtual-desktop key.
+///
+/// Sized at the WCAG 2.2 minimum rather than the comfortable step: four of
+/// these sit in one pill next to controls that are already fighting for width,
+/// and the floor is a floor, not a compromise.
+class _WorkspaceKey extends StatelessWidget {
+  const _WorkspaceKey({
+    required this.number,
+    required this.current,
+    required this.colors,
+    required this.onSelect,
+  });
+
+  final int number;
+  final bool current;
+  final DexColors colors;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexGlass glass = DexGlass.of(context);
+    return Semantics(
+      button: true,
+      selected: current,
+      label: 'Workspace $number',
+      child: Tooltip(
+        message: 'Workspace $number',
+        child: HoverLift(
+          builder: (BuildContext context, bool hovered) => InkWell(
+            onTap: onSelect,
+            borderRadius: BorderRadius.circular(DexRadius.control),
+            child: AnimatedContainer(
+              duration: DexDuration.micro,
+              curve: DexMotion.arrive,
+              width: DexHit.minimum,
+              height: DexHit.minimum,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                // Selection out-contrasts hover, hover out-contrasts rest.
+                color: current
+                    ? colors.signal.withValues(alpha: 0.28)
+                    : hovered
+                    ? glass.fillStrong
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(DexRadius.control),
+              ),
+              child: Text(
+                '$number',
+                style: DexTheme.data(
+                  colors,
+                  size: 11,
+                  color: current ? colors.text : colors.muted,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AppsGridButton extends StatelessWidget {
-  const _AppsGridButton({required this.onPressed, required this.colors});
+  const _AppsGridButton({
+    required this.onPressed,
+    required this.colors,
+    this.labelled = true,
+  });
 
   final VoidCallback onPressed;
   final DexColors colors;
+  final bool labelled;
 
   @override
   Widget build(BuildContext context) {
@@ -347,24 +506,52 @@ class _AppsGridButton extends StatelessWidget {
             child: AnimatedContainer(
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
-              width: 52,
               height: 44,
+              padding: EdgeInsets.symmetric(
+                horizontal: labelled ? DexSpace.lg : DexSpace.md,
+              ),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
                 borderRadius: BorderRadius.circular(DexRadius.panel),
-                boxShadow: <BoxShadow>[
+                // The reference gives this button a plain elevation shadow,
+                // not a coloured halo. A glow behind a filled accent button
+                // reads as a highlight effect rather than as a control, and
+                // this design spends its one glow on the live dot.
+                boxShadow: const <BoxShadow>[
                   BoxShadow(
-                    color: colors.signal.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+                    color: Color(0x1A000000),
+                    blurRadius: 25,
+                    spreadRadius: -5,
+                    offset: Offset(0, 20),
+                  ),
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 10,
+                    spreadRadius: -6,
+                    offset: Offset(0, 8),
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.grid_view_rounded,
-                size: 20,
-                color: Colors.white,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    DexIcons.appsGrid,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                  if (labelled) ...<Widget>[
+                    const SizedBox(width: DexSpace.sm),
+                    Text(
+                      'Your apps',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -429,20 +616,20 @@ class _MediaMini extends StatelessWidget {
           ),
           const SizedBox(width: DexSpace.xs),
           _MiniTransport(
-            icon: Icons.skip_previous,
+            icon: DexIcons.previous,
             label: 'Previous track',
             onPressed: () => onAction(MediaAction.previous),
             colors: colors,
           ),
           _MiniTransport(
-            icon: _playing ? Icons.pause : Icons.play_arrow,
+            icon: _playing ? DexIcons.pause : DexIcons.play,
             label: _playing ? 'Pause' : 'Play',
             accent: true,
             onPressed: () => onAction(MediaAction.playPause),
             colors: colors,
           ),
           _MiniTransport(
-            icon: Icons.skip_next,
+            icon: DexIcons.next,
             label: 'Next track',
             onPressed: () => onAction(MediaAction.next),
             colors: colors,
@@ -542,7 +729,7 @@ class _MiniArt extends StatelessWidget {
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.control),
       ),
-      child: Icon(Icons.music_note, size: 16, color: colors.muted),
+      child: Icon(DexIcons.music, size: 16, color: colors.muted),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) return fallback;
@@ -655,9 +842,11 @@ class _TaskEntry extends StatelessWidget {
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
               height: 44,
-              width: 48,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: DexSpace.xs),
+              padding: const EdgeInsets.symmetric(
+                horizontal: DexSpace.sm,
+                vertical: DexSpace.xs,
+              ),
               // Borderless: the entry sits inside the dock pill already, so its
               // own hairline made a double edge. State reads from the fill and
               // the running dot instead.
@@ -669,18 +858,42 @@ class _TaskEntry extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              // A dot, the icon and the name, reading left to right. It used
+              // to be an icon with a dot under it and no label, which asks a
+              // person to recognise a 24px glyph rather than read a word — and
+              // two windows of the same app were indistinguishable.
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  AppGlyph(app: window.session.application, size: 24),
-                  const SizedBox(height: 3),
                   Container(
-                    width: 5,
-                    height: 5,
+                    width: 6,
+                    height: 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _dot,
+                      // The focused entry's dot carries a glow, which is the
+                      // reference's one use of it and the only place on the
+                      // dock where anything is lit.
+                      boxShadow: active
+                          ? <BoxShadow>[
+                              BoxShadow(color: _dot, blurRadius: 6),
+                            ]
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: DexSpace.sm),
+                  AppGlyph(app: window.session.application, size: 20),
+                  const SizedBox(width: DexSpace.sm),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 92),
+                    child: Text(
+                      window.session.application.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: active ? colors.text : colors.muted,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                      ),
                     ),
                   ),
                 ],
@@ -744,10 +957,15 @@ class SystemTray extends StatelessWidget {
     final String m = now.minute.toString().padLeft(2, '0');
     final String ap = now.hour < 12 ? 'AM' : 'PM';
 
-    // On a bar this narrow the tray sheds rather than overflows. The date is
-    // the first to go — the time is the readout people glance at — and the
-    // fullscreen toggle follows it, because F11 still does the same job and
-    // the title bar carries its own control.
+    // When the bar cannot give the tray its full width it is scrolled rather
+    // than shed, reversed, so it gives way from the bell end and the clock —
+    // the readout people actually glance at — stays put. TaskbarBar owns that
+    // decision because only it knows what width is left.
+    //
+    // This comment used to describe per-control shedding, with the date going
+    // first and the fullscreen toggle after it. That never existed in the
+    // build method, and it would not have helped anyway: the date sits under
+    // the time in a column, so dropping it saves height, not width.
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -766,7 +984,7 @@ class SystemTray extends StatelessWidget {
         ),
         const SizedBox(width: DexSpace.xs),
         _TrayButton(
-          icon: Icons.settings_outlined,
+          icon: DexIcons.settings,
           label: 'Settings',
           onPressed: onOpenSettings,
           colors: c,
@@ -799,7 +1017,7 @@ class SystemTray extends StatelessWidget {
         ),
         const SizedBox(width: DexSpace.xs),
         _TrayButton(
-          icon: fullscreenActive ? Icons.fullscreen_exit : Icons.fullscreen,
+          icon: fullscreenActive ? DexIcons.fullscreenExit : DexIcons.fullscreen,
           label: fullscreenActive ? 'Exit fullscreen' : 'Fullscreen',
           onPressed: onToggleFullscreen,
           colors: c,
@@ -847,13 +1065,13 @@ class _StatusCluster extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   if (telemetry.wifiEnabled ?? false) ...<Widget>[
-                    Icon(Icons.wifi, size: 15, color: colors.muted),
+                    Icon(DexIcons.wifi, size: 15, color: colors.muted),
                     const SizedBox(width: DexSpace.sm),
                   ],
                   if (battery != null) ...<Widget>[
                     if (telemetry.charging)
-                      Icon(Icons.bolt, size: 14, color: colors.signal),
-                    Icon(Icons.battery_full, size: 15, color: colors.muted),
+                      Icon(DexIcons.charging, size: 14, color: colors.signal),
+                    Icon(DexIcons.batteryFull, size: 15, color: colors.muted),
                     const SizedBox(width: 4),
                     Text('$battery%', style: DexTheme.data(colors, size: 11)),
                   ],
@@ -909,7 +1127,7 @@ class _Bell extends StatelessWidget {
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: <Widget>[
-                  Icon(Icons.notifications_none, size: 18, color: colors.text),
+                  Icon(DexIcons.notifications, size: 18, color: colors.text),
                   if (count > 0)
                     Positioned(
                       top: 6,

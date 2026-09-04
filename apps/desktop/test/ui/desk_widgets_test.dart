@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_android_dex/ui/desk/desk.dart';
+import 'package:open_android_dex/ui/desk/analog_clock.dart';
 import 'package:open_android_dex/ui/desk/desk_widgets.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
 import 'package:open_android_dex/ui/workspace/window_model.dart';
@@ -50,6 +51,8 @@ void main() {
             workspace: const SizedBox.expand(),
             windows: const <WorkspaceWindow>[],
             minimisedWindows: const <String>{},
+          currentWorkspace: 1,
+          onSelectWorkspace: (_) {},
           ),
         ),
       ),
@@ -90,10 +93,13 @@ void main() {
   testWidgets('the desk does not grow a second clock', (
     WidgetTester tester,
   ) async {
-    // A carded ClockWidget is among the four, and the desk already has a large
-    // bare analog clock in that corner. Two clocks is not composition.
+    // There was once a carded ClockWidget written for the right-hand column,
+    // and the desk already has a bare analog clock in that corner. Two clocks
+    // is not composition. This asserts the count directly rather than the
+    // absence of one particular widget, which only held while that widget
+    // existed to be absent.
     await pumpDesk(tester, const Size(1600, 1000));
-    expect(find.byType(ClockWidget), findsNothing);
+    expect(find.byType(AnalogClock), findsOneWidget);
   });
 
   testWidgets('the column does not overflow the desk', (

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -8,80 +10,7 @@ import '../util/relative_time.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
-import 'analog_clock.dart';
 import 'desk_card.dart';
-
-/// Clock. The largest type on the desk, because a glance is the whole job.
-class ClockWidget extends StatelessWidget {
-  const ClockWidget({required this.now, this.recessive = false, super.key});
-
-  final DateTime now;
-  final bool recessive;
-
-  static const List<String> _days = <String>[
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
-  static const List<String> _months = <String>[
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final DexColors c = Theme.of(context).extension<DexColors>()!;
-
-    // A prominent drawn analog face filling a tall card, with the day and date
-    // beneath it — a large clock, not a small dial. The digital time still
-    // lives in the taskbar tray.
-    return DeskCard(
-      label: 'Clock',
-      size: DeskCardSize.feature,
-      recessive: recessive,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: AnalogClock(now: now),
-              ),
-            ),
-          ),
-          const SizedBox(height: DexSpace.md),
-          Text(
-            _days[now.weekday - 1],
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: c.text,
-            ),
-          ),
-          Text(
-            '${_months[now.month - 1]} ${now.day}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: c.muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Now playing, as a desk widget rather than a panel row.
 class NowPlayingWidget extends StatelessWidget {
@@ -134,14 +63,14 @@ class NowPlayingWidget extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     _Transport(
-                      icon: Icons.skip_previous,
+                      icon: DexIcons.previous,
                       label: 'Previous track',
                       enabled: _available,
                       onPressed: () => onAction(MediaAction.previous),
                       colors: c,
                     ),
                     _Transport(
-                      icon: _playing ? Icons.pause : Icons.play_arrow,
+                      icon: _playing ? DexIcons.pause : DexIcons.play,
                       label: _playing ? 'Pause' : 'Play',
                       enabled: _available,
                       accent: true,
@@ -149,7 +78,7 @@ class NowPlayingWidget extends StatelessWidget {
                       colors: c,
                     ),
                     _Transport(
-                      icon: Icons.skip_next,
+                      icon: DexIcons.next,
                       label: 'Next track',
                       enabled: _available,
                       onPressed: () => onAction(MediaAction.next),
@@ -182,7 +111,7 @@ class _Artwork extends StatelessWidget {
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.card),
       ),
-      child: Icon(Icons.music_note, size: 22, color: colors.muted),
+      child: Icon(DexIcons.music, size: 22, color: colors.muted),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) {
@@ -293,17 +222,17 @@ class PhoneWidget extends StatelessWidget {
           const SizedBox(height: DexSpace.sm),
           Row(
             children: <Widget>[
-              _Radio(on: telemetry.wifiEnabled, icon: Icons.wifi, colors: c),
+              _Radio(on: telemetry.wifiEnabled, icon: DexIcons.wifi, colors: c),
               const SizedBox(width: DexSpace.md),
               _Radio(
                 on: telemetry.bluetoothEnabled,
-                icon: Icons.bluetooth,
+                icon: DexIcons.bluetooth,
                 colors: c,
               ),
               const SizedBox(width: DexSpace.md),
               _Radio(
                 on: telemetry.airplaneMode,
-                icon: Icons.airplanemode_active,
+                icon: DexIcons.airplane,
                 colors: c,
               ),
               const Spacer(),

@@ -1,6 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../apps/app_glyph.dart';
+import '../theme/dex_icons.dart';
 import '../util/error_guidance.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -87,13 +92,16 @@ class AppWindow extends StatelessWidget {
                   ? DexStroke.focusRing
                   : DexStroke.hairline,
             ),
+            // The reference's exact window shadows. A window is the one thing
+            // on this desk that should cast a real one — it is a window — so
+            // these stay heavy, unlike the panels around them.
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: Colors.black.withValues(
-                  alpha: window.isFocused ? 0.45 : 0.28,
+                  alpha: window.isFocused ? 0.55 : 0.35,
                 ),
-                blurRadius: window.isFocused ? 40 : 24,
-                offset: const Offset(0, 14),
+                blurRadius: window.isFocused ? 50 : 32,
+                offset: Offset(0, window.isFocused ? 20 : 12),
               ),
             ],
           ),
@@ -163,8 +171,7 @@ class _TitleBar extends StatelessWidget {
   /// yet, so neither ships — not even greyed out. A control that does nothing
   /// is worse than no control.
   void _showMenu(BuildContext context, Offset at) {
-    final bool maximised =
-        window.displayState == WindowDisplayState.maximised;
+    final bool maximised = window.displayState == WindowDisplayState.maximised;
 
     showDexContextMenu(
       context: context,
@@ -176,10 +183,8 @@ class _TitleBar extends StatelessWidget {
           if (snap != WindowSnap.maximise)
             DexMenuAction(
               label: snap.label,
-              onSelected: () => intents.move(
-                window.id,
-                snap.geometryIn(workspaceSize),
-              ),
+              onSelected: () =>
+                  intents.move(window.id, snap.geometryIn(workspaceSize)),
             ),
         const DexMenuAction.separator(),
         DexMenuAction(
@@ -193,10 +198,8 @@ class _TitleBar extends StatelessWidget {
         ),
         DexMenuAction(
           label: 'Minimise',
-          onSelected: () => intents.setDisplayState(
-            window.id,
-            WindowDisplayState.minimised,
-          ),
+          onSelected: () =>
+              intents.setDisplayState(window.id, WindowDisplayState.minimised),
         ),
         // Absent rather than disabled where the host has no fullscreen
         // surface, matching what the title bar's own button does.
@@ -228,10 +231,7 @@ class _TitleBar extends StatelessWidget {
     if (window.displayState != WindowDisplayState.normal) {
       intents.setDisplayState(window.id, WindowDisplayState.normal);
     }
-    intents.move(
-      window.id,
-      rotatedGeometry(window.geometry, workspaceSize),
-    );
+    intents.move(window.id, rotatedGeometry(window.geometry, workspaceSize));
   }
 
   void _toggleMaximise() {
@@ -278,30 +278,49 @@ class _TitleBar extends StatelessWidget {
         onDragMove?.call(d.delta);
       },
       child: Container(
-        height: 34,
+        // 40, as the reference's h-10 title bar. At 34 the row was tight
+        // enough that the controls had no breathing room either side.
+        height: 40,
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: DexSpace.md),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                window.session.application.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: t.labelLarge?.copyWith(
-                  color: window.isFocused ? c.text : c.muted,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // A window can be dragged down to 240 wide. The controls are
+            // actions and the mark identifies the window, so the Live badge —
+            // a status readout, repeated in the dock and the diagnostics
+            // panel — is what a narrow bar gives up.
+            final bool showLive =
+                window.session.status == WindowSessionStatus.streaming &&
+                constraints.maxWidth >= 320;
+            return Row(
+              children: <Widget>[
+                // The app's own mark, so a window is identifiable from its bar
+                // alone — which is what the dock, the switcher and the taskbar all
+                // rely on, and the one place it was missing.
+                AppGlyph(app: window.session.application, size: 16),
+                const SizedBox(width: DexSpace.sm),
+                Expanded(
+                  child: Text(
+                    window.session.application.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.labelLarge?.copyWith(
+                      color: window.isFocused ? c.text : c.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            if (window.session.status == WindowSessionStatus.streaming)
-              _LiveBadge(rate: window.presentedFramesPerSecond),
-          ],
+                if (showLive) _LiveBadge(window: window),
+              ],
+            );
+          },
         ),
       ),
     );
 
     return Container(
-      height: 34,
+      // Matches the draggable label's own height, and the reference's h-10.
+      height: 40,
       decoration: BoxDecoration(
         color: window.isFocused ? c.raised : c.surface,
         border: Border(
@@ -317,7 +336,7 @@ class _TitleBar extends StatelessWidget {
           if (intents.fullscreen != null &&
               window.session.status == WindowSessionStatus.streaming)
             _WindowButton(
-              icon: Icons.open_in_full,
+              icon: DexIcons.maximise,
               label: 'Fullscreen ${window.session.application.label}',
               onPressed: () => intents.fullscreen!(window.id),
             ),
@@ -325,15 +344,15 @@ class _TitleBar extends StatelessWidget {
           // being another ambiguous expand glyph.
           _WindowButton(
             icon: rotateActionLabel(window.geometry) == 'Portrait'
-                ? Icons.stay_current_portrait
-                : Icons.stay_current_landscape,
+                ? DexIcons.portrait
+                : DexIcons.landscape,
             label:
                 '${rotateActionLabel(window.geometry)} '
                 '${window.session.application.label}',
             onPressed: _rotate,
           ),
           _WindowButton(
-            icon: Icons.remove,
+            icon: DexIcons.minimise,
             label: 'Minimise ${window.session.application.label}',
             onPressed: () => intents.setDisplayState(
               window.id,
@@ -342,15 +361,15 @@ class _TitleBar extends StatelessWidget {
           ),
           _WindowButton(
             icon: window.displayState == WindowDisplayState.maximised
-                ? Icons.fullscreen_exit
-                : Icons.fullscreen,
+                ? DexIcons.fullscreenExit
+                : DexIcons.fullscreen,
             label: window.displayState == WindowDisplayState.maximised
                 ? 'Restore ${window.session.application.label}'
                 : 'Maximise ${window.session.application.label}',
             onPressed: _toggleMaximise,
           ),
           _WindowButton(
-            icon: Icons.close,
+            icon: DexIcons.close,
             label: 'Close ${window.session.application.label}',
             danger: true,
             onPressed: () => intents.close(window.id),
@@ -547,11 +566,7 @@ class _Notice extends StatelessWidget {
               ),
               if (guidance case final String advice) ...<Widget>[
                 const SizedBox(height: DexSpace.sm),
-                Text(
-                  advice,
-                  textAlign: TextAlign.center,
-                  style: t.bodyMedium,
-                ),
+                Text(advice, textAlign: TextAlign.center, style: t.bodyMedium),
               ],
               if (action != null) ...<Widget>[
                 const SizedBox(height: DexSpace.md),
@@ -566,7 +581,7 @@ class _Notice extends StatelessWidget {
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, DexHit.comfortable),
                   ),
-                  icon: const Icon(Icons.content_copy, size: 14),
+                  icon: const Icon(DexIcons.copy, size: 14),
                   label: const Text('Copy technical details'),
                 ),
                 Text(
@@ -592,11 +607,7 @@ class _Notice extends StatelessWidget {
 /// handle the host registers for that window's video, and Flutter's [Texture]
 /// composites it into our tree like any other widget.
 class _Surface extends StatefulWidget {
-  const _Surface({
-    required this.window,
-    required this.colors,
-    this.intents,
-  });
+  const _Surface({required this.window, required this.colors, this.intents});
 
   final WorkspaceWindow window;
   final DexColors colors;
@@ -673,7 +684,8 @@ class _SurfaceState extends State<_Surface> {
     // one-second sample, so null means no interval has finished yet, while an
     // explicit 0.0 means one finished and presented nothing. Coalescing the
     // two would accuse every window that has only just opened.
-    final bool stalled = surface != null &&
+    final bool stalled =
+        surface != null &&
         intents != null &&
         !_everPresented &&
         rate != null &&
@@ -803,23 +815,30 @@ WindowInput _inputFor(WorkspaceWindow window, WorkspaceIntents intents) {
 /// the backend knows a pipeline was retired, and it reports that as a failed
 /// window instead.
 class _LiveBadge extends StatelessWidget {
-  const _LiveBadge({required this.rate});
+  const _LiveBadge({required this.window});
 
-  /// Frames per second reaching the screen, when the backend reports them.
+  final WorkspaceWindow window;
+
+  /// Formats a rate, or an em dash where the backend has not reported one.
   ///
-  /// Presented, never produced. This tooltip called the produced rate "screen
-  /// updates" while the pipeline was putting a fifth of it on screen, which
-  /// made the most visible number in the app the wrong one.
-  final double? rate;
+  /// Never an invented number: a missing measurement reads as missing.
+  static String _rate(double? v) => v == null ? '—' : '${v.round()}/s';
 
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
-    final String detail = rate == null
-        ? 'Streaming from the phone.'
-        : 'Streaming from the phone.\n'
-              'Frames on screen: ${rate!.round()} per second — a still screen '
-              'sends few, so this counts changes, not speed.';
+    // Produced, presented and dropped are shown together, always. Any one of
+    // them alone invites the wrong conclusion — a high produced rate with a low
+    // presented one is the pipeline dropping frames, and reporting only the
+    // first made the most visible number in the application the wrong one.
+    final String detail =
+        'Streaming from the phone.\n'
+        'Produced ${_rate(window.session.producedFramesPerSecond)} · '
+        // The live presented rate is tracked on the window rather than the
+        // session: it is the one the compositor actually measures.
+        'presented ${_rate(window.presentedFramesPerSecond ?? window.session.presentedFramesPerSecond)} · '
+        'dropped ${_rate(window.session.droppedFramesPerSecond)}\n'
+        'A still screen sends few frames, so these count changes, not speed.';
 
     return Semantics(
       label: 'Live',
@@ -827,20 +846,37 @@ class _LiveBadge extends StatelessWidget {
         message: detail,
         child: Padding(
           padding: const EdgeInsets.only(right: DexSpace.sm),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: c.trace,
-                  shape: BoxShape.circle,
-                ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DexSpace.sm,
+              vertical: 1,
+            ),
+            decoration: BoxDecoration(
+              color: c.trace.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(DexRadius.pill),
+              border: Border.all(
+                color: c.trace.withValues(alpha: 0.30),
+                width: DexStroke.hairline,
               ),
-              const SizedBox(width: DexSpace.xs),
-              Text('Live', style: DexTheme.data(c, size: 10)),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: c.trace,
+                    shape: BoxShape.circle,
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(color: c.trace, blurRadius: 6),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: DexSpace.xs),
+                Text('Live', style: DexTheme.data(c, size: 10, color: c.trace)),
+              ],
+            ),
           ),
         ),
       ),
@@ -1027,7 +1063,7 @@ class _StageChrome extends StatelessWidget {
                     minWidth: DexHit.primary,
                     minHeight: DexHit.primary,
                   ),
-                  icon: const Icon(Icons.fullscreen_exit),
+                  icon: const Icon(DexIcons.fullscreenExit),
                 ),
               ),
           ],

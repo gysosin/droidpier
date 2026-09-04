@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -58,7 +60,7 @@ class QrBody extends StatelessWidget {
         Center(child: _Expiry(expiresAt: pairing.expiresAt, clock: clock)),
         const SizedBox(height: DexSpace.md),
         const ConnectHint(
-          icon: Icons.qr_code_scanner,
+          icon: DexIcons.qrScan,
           text:
               'On the phone: Settings → Developer options → Wireless '
               'debugging → Pair device with QR code, then point its camera '

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
+import '../theme/dex_icons.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 
@@ -72,8 +73,12 @@ class RecoveryOverlay extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    if (_isWorking) _PulseTrace(color: c.signal),
-                    if (_isWorking) const SizedBox(width: DexSpace.md),
+                    // A ring carrying the phase, as the reference opens this
+                    // card. Colour alone is not a signal, so the shape changes
+                    // too: a cable while reconnecting, a check once recovered,
+                    // a fault mark when it has given up.
+                    _PhaseRing(phase: recovery.phase, colors: c),
+                    const SizedBox(width: DexSpace.md),
                     Expanded(child: Text(_headline, style: t.titleLarge)),
                   ],
                 ),
@@ -120,6 +125,41 @@ class RecoveryOverlay extends StatelessWidget {
 }
 
 /// The collapsed Link Rail trace, travelling while recovery is in progress.
+/// The phase, as a ringed mark.
+///
+/// Static. The reference spins and bounces this one, and it would be safe
+/// here — the overlay is unmounted on an idle desk, so `idle_cost_test` never
+/// sees it — but the pulse trace beside the headline already carries the fact
+/// that something is happening, and two moving things saying one thing is
+/// decoration. The colour and the shape carry the phase.
+class _PhaseRing extends StatelessWidget {
+  const _PhaseRing({required this.phase, required this.colors});
+
+  final RecoveryPhase phase;
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData icon, Color colour) = switch (phase) {
+      RecoveryPhase.recovered => (DexIcons.check, colors.trace),
+      RecoveryPhase.failed => (DexIcons.fault, colors.fault),
+      RecoveryPhase.reconnecting => (DexIcons.usb, colors.warn),
+      _ => (DexIcons.wifiTethering, colors.signal),
+    };
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colour.withValues(alpha: 0.20),
+        border: Border.all(color: colour, width: DexStroke.focusRing),
+      ),
+      child: Icon(icon, size: 18, color: colour),
+    );
+  }
+}
+
 class _PulseTrace extends StatefulWidget {
   const _PulseTrace({required this.color});
 

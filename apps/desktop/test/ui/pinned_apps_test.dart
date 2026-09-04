@@ -81,13 +81,13 @@ void main() {
   ) async {
     await pumpDrawer(tester);
     expect(
-      find.text('PINNED'),
+      find.text('PINNED TO TOP'),
       findsNothing,
       reason: 'an empty section header is worse than no section',
     );
 
     await pumpDrawer(tester, pinned: <String>['com.whatsapp']);
-    expect(find.text('PINNED'), findsOneWidget);
+    expect(find.text('PINNED TO TOP'), findsOneWidget);
   });
 
   testWidgets('a pin naming an uninstalled package is skipped', (
@@ -95,6 +95,6 @@ void main() {
   ) async {
     // Uninstalling an app should not leave a broken tile behind.
     await pumpDrawer(tester, pinned: <String>['com.gone.forever']);
-    expect(find.text('PINNED'), findsNothing);
+    expect(find.text('PINNED TO TOP'), findsNothing);
   });
 }
