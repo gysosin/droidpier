@@ -4,6 +4,20 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- Virtual desktops. The dock carries four numbered keys; choosing one changes
+  which windows are on screen, and a window opened on desk 3 stays on desk 3.
+  Switching is a change of view, not of state — a window on another desk keeps
+  its size, position and stream, and comes back exactly as it was. The keys
+  shed on a narrow bar, where reaching the launcher matters more.
+- The launcher button says "Your apps" instead of being a coloured square with
+  a glyph in it. It is the one control that opens everything, and an unlabelled
+  icon asks a first-time user to guess at the moment they have least to go on.
+- Fixed: the taskbar's width budget let two clusters claim more room than the
+  bar had. It survived while the dock held less; the additions above overflowed
+  it by 49 px at 1280 with windows open. There is now one budget — measure what
+  cannot shrink, split what is left — so the bar cannot overflow at any width.
+  A comment claiming the tray shed controls one by one has been corrected: it
+  scrolls, from the bell end, so the clock stays put.
 - The launcher is the size of what it holds. It was a fixed full-height card,
   so three apps sat in the corner of roughly 850 px of empty glass. Search
   results had been pushed down to hug the field to stop a gap opening between

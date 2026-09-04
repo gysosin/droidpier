@@ -54,6 +54,8 @@ void main() {
             ),
             windows: const <WorkspaceWindow>[],
             minimisedWindows: const <String>{},
+          currentWorkspace: 1,
+          onSelectWorkspace: (_) {},
           ),
         ),
       ),

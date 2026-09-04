@@ -173,6 +173,8 @@ void main() {
               ),
           ],
           minimisedWindows: const <String>{},
+          currentWorkspace: 1,
+          onSelectWorkspace: (_) {},
         ),
       );
       _expectNoOverflow(tester, size);

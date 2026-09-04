@@ -271,6 +271,18 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  /// The windows on the workspace currently on screen.
+  ///
+  /// Filtered here rather than in the window manager: a window on another desk
+  /// still exists, still holds its geometry and its surface, and comes back
+  /// exactly as it was when that desk is selected again. Switching desks is a
+  /// change of view, not of state.
+  List<WorkspaceWindow> _visibleWindows(BuildContext context) =>
+      <WorkspaceWindow>[
+        for (final WorkspaceWindow w in _windows(context))
+          if (w.session.workspace == _s.currentWorkspace) w,
+      ];
+
   /// Notes a window that has gone, for the diagnostics panel. The controller
   /// reports the closure; formatting it needs the clock, which lives here.
   void _logExit(WorkspaceWindow gone) {
@@ -930,15 +942,17 @@ class _AppShellState extends State<AppShell> {
             // The desk hosts the compositor rather than being its
             // background, so the taskbar can paint above app windows and
             // reserve the work area from them.
+            currentWorkspace: _s.currentWorkspace,
+            onSelectWorkspace: (int n) => widget.facade.selectWorkspace(n),
             workspace: Workspace(
-              windows: _windows(context),
+              windows: _visibleWindows(context),
               intents: _intents,
               snapEnabled: widget.snapEnabled,
               // The desk is already behind it; a second ground here would
               // paint over the wallpaper, the icons and the widgets.
               emptyChild: const SizedBox.shrink(),
             ),
-            windows: _windows(context),
+            windows: _visibleWindows(context),
             minimisedWindows: _wm.windows.values
                 .where((WorkspaceWindow w) => w.isMinimised)
                 .map((WorkspaceWindow w) => w.id)

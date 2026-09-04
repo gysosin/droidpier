@@ -396,6 +396,9 @@ class OpenDexController implements OpenDexFacade {
       application: application,
       status: WindowSessionStatus.starting,
       isFocused: true,
+      // Opening an app on desk 3 and having it appear on desk 1 reads as the
+      // window failing to open at all.
+      workspace: _snapshot.currentWorkspace,
       geometry: WindowGeometry(
         x: 64 + cascade * 28,
         y: 64 + cascade * 28,

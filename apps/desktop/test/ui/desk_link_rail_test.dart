@@ -53,6 +53,8 @@ void main() {
             workspace: const SizedBox.expand(),
             windows: windows,
             minimisedWindows: const <String>{},
+          currentWorkspace: 1,
+          onSelectWorkspace: (_) {},
           ),
         ),
       ),
