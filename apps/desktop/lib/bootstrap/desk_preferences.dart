@@ -97,6 +97,7 @@ class DeskPreferencesData {
     this.accentIndex = 0,
     this.glassEnabled = true,
     this.reduceMotion = false,
+    this.tourCompleted = false,
     this.snapEnabled = true,
     this.windowGeometry = const <String, StoredWindowGeometry>{},
     this.pinnedPackages = const <String>[],
@@ -124,6 +125,13 @@ class DeskPreferencesData {
   /// Can only ever reduce; see `DexMotion.enabled`.
   final bool reduceMotion;
 
+  /// Whether the first-run tour has been seen through to the end.
+  ///
+  /// False on a fresh install, so the tour actually happens. It never did:
+  /// the shell defaulted it to true and nothing persisted it, so 214 fully
+  /// tested lines could not appear in the product.
+  final bool tourCompleted;
+
   final bool snapEnabled;
 
   /// Remembered window placement by package name. Capped at
@@ -143,6 +151,7 @@ class DeskPreferencesData {
     int? accentIndex,
     bool? glassEnabled,
     bool? reduceMotion,
+    bool? tourCompleted,
     bool? snapEnabled,
     Map<String, StoredWindowGeometry>? windowGeometry,
     List<String>? pinnedPackages,
@@ -153,6 +162,7 @@ class DeskPreferencesData {
     accentIndex: accentIndex ?? this.accentIndex,
     glassEnabled: glassEnabled ?? this.glassEnabled,
     reduceMotion: reduceMotion ?? this.reduceMotion,
+    tourCompleted: tourCompleted ?? this.tourCompleted,
     snapEnabled: snapEnabled ?? this.snapEnabled,
     windowGeometry: windowGeometry ?? this.windowGeometry,
     pinnedPackages: pinnedPackages ?? this.pinnedPackages,
@@ -165,6 +175,7 @@ class DeskPreferencesData {
     'accentIndex': accentIndex,
     'glassEnabled': glassEnabled,
     'reduceMotion': reduceMotion,
+    'tourCompleted': tourCompleted,
     'snapEnabled': snapEnabled,
     'windowGeometry': windowGeometry.map(
       (String packageName, StoredWindowGeometry geometry) =>
@@ -193,6 +204,7 @@ class DeskPreferencesData {
     final Object? accent = json['accentIndex'];
     final Object? glass = json['glassEnabled'];
     final Object? motion = json['reduceMotion'];
+    final Object? tour = json['tourCompleted'];
     final Object? snap = json['snapEnabled'];
 
     // Each entry decodes independently: one malformed record is dropped rather
@@ -235,6 +247,9 @@ class DeskPreferencesData {
       accentIndex: accent is int && accent >= 0 ? accent : 0,
       glassEnabled: glass is bool ? glass : true,
       reduceMotion: motion is bool ? motion : false,
+      // Anything unreadable shows the tour again. Once too often is
+      // recoverable; never is the failure this replaces.
+      tourCompleted: tour is bool ? tour : false,
       snapEnabled: snap is bool ? snap : true,
       windowGeometry: geometry,
       pinnedPackages: pinned,

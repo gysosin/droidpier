@@ -7,12 +7,10 @@ import '../theme/dex_tokens.dart';
 import '../theme/glass.dart';
 
 /// Widget sizes, following the desktop convention people already know from
-/// macOS and DeX: small is a glance, medium is a glance plus a control, large
+/// macOS and DeX: medium is a glance plus a control,
 /// is a short list.
 enum DeskCardSize {
-  small(160, 160),
   medium(340, 160),
-  large(340, 260),
   feature(300, 320);
 
   const DeskCardSize(this.width, this.height);
@@ -32,7 +30,7 @@ class DeskCard extends StatelessWidget {
   const DeskCard({
     required this.label,
     required this.child,
-    this.size = DeskCardSize.small,
+    this.size = DeskCardSize.medium,
     this.recessive = false,
     this.trailing,
     super.key,
