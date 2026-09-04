@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import '../util/error_guidance.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
@@ -317,7 +319,7 @@ class _TitleBar extends StatelessWidget {
           if (intents.fullscreen != null &&
               window.session.status == WindowSessionStatus.streaming)
             _WindowButton(
-              icon: Icons.open_in_full,
+              icon: DexIcons.maximise,
               label: 'Fullscreen ${window.session.application.label}',
               onPressed: () => intents.fullscreen!(window.id),
             ),
@@ -325,15 +327,15 @@ class _TitleBar extends StatelessWidget {
           // being another ambiguous expand glyph.
           _WindowButton(
             icon: rotateActionLabel(window.geometry) == 'Portrait'
-                ? Icons.stay_current_portrait
-                : Icons.stay_current_landscape,
+                ? DexIcons.portrait
+                : DexIcons.landscape,
             label:
                 '${rotateActionLabel(window.geometry)} '
                 '${window.session.application.label}',
             onPressed: _rotate,
           ),
           _WindowButton(
-            icon: Icons.remove,
+            icon: DexIcons.minimise,
             label: 'Minimise ${window.session.application.label}',
             onPressed: () => intents.setDisplayState(
               window.id,
@@ -342,15 +344,15 @@ class _TitleBar extends StatelessWidget {
           ),
           _WindowButton(
             icon: window.displayState == WindowDisplayState.maximised
-                ? Icons.fullscreen_exit
-                : Icons.fullscreen,
+                ? DexIcons.fullscreenExit
+                : DexIcons.fullscreen,
             label: window.displayState == WindowDisplayState.maximised
                 ? 'Restore ${window.session.application.label}'
                 : 'Maximise ${window.session.application.label}',
             onPressed: _toggleMaximise,
           ),
           _WindowButton(
-            icon: Icons.close,
+            icon: DexIcons.close,
             label: 'Close ${window.session.application.label}',
             danger: true,
             onPressed: () => intents.close(window.id),
@@ -566,7 +568,7 @@ class _Notice extends StatelessWidget {
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, DexHit.comfortable),
                   ),
-                  icon: const Icon(Icons.content_copy, size: 14),
+                  icon: const Icon(DexIcons.copy, size: 14),
                   label: const Text('Copy technical details'),
                 ),
                 Text(
@@ -1027,7 +1029,7 @@ class _StageChrome extends StatelessWidget {
                     minWidth: DexHit.primary,
                     minHeight: DexHit.primary,
                   ),
-                  icon: const Icon(Icons.fullscreen_exit),
+                  icon: const Icon(DexIcons.fullscreenExit),
                 ),
               ),
           ],

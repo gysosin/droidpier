@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_glyph.dart';
@@ -144,16 +146,16 @@ class _StatusBar extends StatelessWidget {
           const _PunchHole(),
           const Spacer(),
           if (telemetry.wifiEnabled ?? false)
-            const Icon(Icons.wifi, size: 11, color: Colors.white),
+            const Icon(DexIcons.wifi, size: 11, color: Colors.white),
           if (telemetry.bluetoothEnabled ?? false) ...<Widget>[
             const SizedBox(width: 3),
-            const Icon(Icons.bluetooth, size: 11, color: Colors.white),
+            const Icon(DexIcons.bluetooth, size: 11, color: Colors.white),
           ],
           const SizedBox(width: 3),
           Icon(
             telemetry.charging
-                ? Icons.battery_charging_full
-                : Icons.battery_std,
+                ? DexIcons.batteryCharging
+                : DexIcons.battery,
             size: 12,
             // Battery is the one readout that changes meaning with its value,
             // so it is the one that gets a colour.
@@ -230,7 +232,7 @@ class _CloseDot extends StatelessWidget {
                       : Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 10, color: Colors.white),
+                child: const Icon(DexIcons.close, size: 10, color: Colors.white),
               ),
             ),
           ),

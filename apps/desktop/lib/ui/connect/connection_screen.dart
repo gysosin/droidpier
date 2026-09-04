@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -500,7 +502,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         IconButton(
           onPressed: widget.onClose,
           tooltip: 'Close',
-          icon: const Icon(Icons.close),
+          icon: const Icon(DexIcons.close),
         ),
       ],
     );

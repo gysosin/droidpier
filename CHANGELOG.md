@@ -4,6 +4,13 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- One icon set, drawn at one weight. The interface had been picking between
+  Material's filled, outlined and rounded variants per call site, so a filled
+  battery sat beside an outlined settings gear in the same tray. Icons now come
+  from a single bundled Lucide face through one vocabulary that names what a
+  glyph means rather than what it looks like, so the mismatch cannot recur.
+  Against hairline edges, mono readouts and 1px rules, an outline set reads as
+  instrumentation rather than as a phone launcher.
 - Virtual desktops. The dock carries four numbered keys; choosing one changes
   which windows are on screen, and a window opened on desk 3 stays on desk 3.
   Switching is a change of view, not of state — a window on another desk keeps

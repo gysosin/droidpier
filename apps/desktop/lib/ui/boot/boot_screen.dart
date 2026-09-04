@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -284,8 +286,8 @@ class _DeviceLine extends StatelessWidget {
       children: <Widget>[
         Icon(
           device.connectionKind == DeviceConnectionKind.usb
-              ? Icons.usb
-              : Icons.wifi,
+              ? DexIcons.usb
+              : DexIcons.wifi,
           size: 14,
           color: colors.muted,
         ),
@@ -503,7 +505,7 @@ class _ErrorNote extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, DexHit.comfortable),
                 ),
-                icon: const Icon(Icons.content_copy, size: 14),
+                icon: const Icon(DexIcons.copy, size: 14),
                 label: const Text('Copy technical details'),
               ),
             ),

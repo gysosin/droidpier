@@ -25,6 +25,7 @@ Future<void> _loadFonts() async {
     await l.load();
   }
   for (final entry in <String, List<String>>{
+    'Lucide': ['assets/icons/lucide.ttf'],
     'InstrumentSans': ['assets/fonts/InstrumentSans.ttf'],
     'SpaceGrotesk': ['assets/fonts/SpaceGrotesk.ttf'],
     'PublicSans': ['assets/fonts/PublicSans.ttf'],

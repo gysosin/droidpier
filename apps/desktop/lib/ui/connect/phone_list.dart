@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -221,8 +223,8 @@ class _DeviceRow extends StatelessWidget {
               children: <Widget>[
                 Icon(
                   device.connectionKind == DeviceConnectionKind.usb
-                      ? Icons.usb
-                      : Icons.wifi,
+                      ? DexIcons.usb
+                      : DexIcons.wifi,
                   size: 18,
                   color: enabled ? colors.text : colors.muted,
                 ),

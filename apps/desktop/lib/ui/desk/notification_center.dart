@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/dex_icons.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_glyph.dart';
@@ -579,7 +581,7 @@ class _CloseButton extends StatelessWidget {
                   width: DexStroke.hairline,
                 ),
               ),
-              child: Icon(Icons.close, size: 15, color: c.text),
+              child: Icon(DexIcons.close, size: 15, color: c.text),
             ),
           ),
         ),
@@ -626,7 +628,7 @@ class _DismissButton extends StatelessWidget {
               width: DexHit.minimum,
               height: DexHit.minimum,
               child: Icon(
-                Icons.close,
+                DexIcons.close,
                 size: 13,
                 color: hovered && enabled ? c.text : c.muted,
               ),
