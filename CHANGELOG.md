@@ -4,6 +4,12 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- A design-token sheet, reachable from the command palette. Every semantic
+  role, glass alpha, accent, wallpaper, type slot, radius, spacing step and
+  duration, rendered from the tokens themselves rather than from a copy of
+  them — so a value that drifts shows up beside the ones it should match. Glass
+  and matte specimens sit side by side, because the only way to judge whether
+  the matte fallback still reads as the same product is to see both at once.
 - The first-run tour can happen. It was 214 lines with a test file covering
   every step, and it could never appear: the shell defaulted "already seen" to
   true, nothing passed it, and there was nowhere to remember it. Finishing it
