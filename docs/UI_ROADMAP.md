@@ -1,11 +1,30 @@
 # UI roadmap
 
-> **Status, 2026-09-01.** Tier 1 items 1.1–1.6 and structure item 4.4 are
-> implemented; see the changelog. Item 1.3 shipped without "always on top" and
-> "move to workspace", because neither has an API behind it — there is no
-> always-on-top in `open_dex_api`, and workspaces are item 2.1. Item 1.5
-> shipped pinning via the context menu; drag-to-taskbar is deferred. Structure
-> item 4.1, splitting `app_shell.dart`, is still open.
+> **Status, 2026-09-04.** Tier 1 items 1.1–1.6 and structure item 4.4 are
+> implemented; see the changelog. Item 1.3 shipped without "always on top",
+> which has no API behind it. Item 1.5 shipped pinning via the context menu;
+> drag-to-taskbar is deferred. Structure item 4.1, splitting `app_shell.dart`,
+> is still open.
+>
+> **Workspaces (item 2.1) shipped.** `OpenDexFacade` carries
+> `selectWorkspace` and `moveWindowToWorkspace`, windows hold a workspace, and
+> the taskbar offers four numbered keys. Per-window zoom and window rotation
+> landed at the same time, and `openUrl` moved link opening out of `lib/ui`.
+>
+> **The interface was reworked against `UI_REDESIGN_BRIEF.md`.** The Link
+> Rail's connected state is on the desk, the launcher and the dock were
+> recomposed, one bundled icon face replaced a mix of Material variants, panel
+> shadows were matched to the brief, and four surfaces that were built but
+> unreachable — the first-run tour, the phone mirror among them — were given
+> doors. A design-token sheet (deliverable 15.1) renders every token from the
+> tokens themselves, and the preview harness now offers all seventeen surfaces
+> rather than six.
+>
+> **Not ported, deliberately:** the reference implementation's Android
+> companion mock-up. It draws an imitation of the companion app's screens
+> inside the desktop application, and §14 of the brief forbids drawing a fake
+> phone screenshot anywhere. The companion's own UI work stays in §2 below,
+> against the real APK.
 
 Proposals for the desktop shell, the Android companion and the test surface that
 guards both. Nothing here is a release commitment; see [Roadmap](ROADMAP.md) for
