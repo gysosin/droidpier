@@ -4,6 +4,10 @@
 
 Desktop shell improvements. Keyboard, launcher and window management.
 
+- Removed eight golden images that no test referenced, two of them left over
+  from a design direction this product no longer uses. A baseline nothing
+  compares against is not a baseline; it is a picture of how things used to
+  look, sitting in the folder where the record of how they do look is kept.
 - Shadows match the reference exactly. Every panel had been carrying one layer
   of black at 35% with no spread — three and a half times the ink, spreading
   wider than the panel it belonged to, which over a lit wallpaper reads as a
