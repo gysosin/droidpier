@@ -75,6 +75,8 @@ ShellShortcutHooks _hooks() => ShellShortcutHooks(
   closeDeskSurfaces: () {},
   isConnectOpen: () => false,
   closeConnect: () {},
+  previousWorkspace: () {},
+  nextWorkspace: () {},
 );
 
 void main() {

@@ -348,9 +348,15 @@ what each item became. Approved as a plan first; delivered in steps.
   window; shows the host name and link uptime, `LINK RATE` from telemetry.
 - [x] **One glyph scale** — `DexIconSize` — across every surface;
   `AppGlyph`'s radius cliff moved to the drawer's tile size.
-- [ ] Real app tiles from the phone (the agent resolves icons from each app's
-  own resources; MIUI hands out themed discs today).
-- [ ] Workspaces: move-to-desk in the window menu, Ctrl+Alt+←/→, desk label.
+- [x] **Real app tiles from the phone.** The agent resolves each app's icon
+  from the app's own resources at xxhdpi (`loadIcon`) before falling back to
+  the launcher-themed drawable MIUI hands out; the rounded-square mask then
+  shapes real artwork. Verified on the desk, not by a JVM test: Drawables
+  do not render off-device.
+- [x] **Desks that do something.** *Move to desk n* in the window menu
+  (`WorkspaceIntents.moveToWorkspace`), Ctrl+Alt+←/→ in the shortcut
+  registry, and `DeskSwitchLabel` naming the desk after a switch, gone
+  after 900 ms with no timer or frame left behind.
 - [x] **Live phone mirror.** `startDisplayMirror` / `stopDisplayMirror` on
   the facade, `DisplayMirrorState` on the snapshot, a `DisplayMirrorGateway`
   port, and `DirectScrcpyDisplayMirrorGateway` streaming display 0 (long side

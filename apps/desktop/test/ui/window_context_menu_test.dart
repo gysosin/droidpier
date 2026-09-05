@@ -40,7 +40,10 @@ void main() {
     List<String> closed,
     WorkspaceIntents intents,
   })
-  recorder({ValueChanged<String>? fullscreen}) {
+  recorder({
+    ValueChanged<String>? fullscreen,
+    void Function(String id, int workspace)? moveToWorkspace,
+  }) {
     final List<(String, WindowGeometry)> moves = <(String, WindowGeometry)>[];
     final List<(String, WindowDisplayState)> states =
         <(String, WindowDisplayState)>[];
@@ -58,6 +61,7 @@ void main() {
         close: closed.add,
         retry: (_) {},
         fullscreen: fullscreen,
+        moveToWorkspace: moveToWorkspace,
       ),
     );
   }
@@ -100,10 +104,7 @@ void main() {
   /// Right-clicks the draggable label region, which is where the menu is
   /// attached — deliberately not over the window buttons.
   Future<void> rightClickTitleBar(WidgetTester tester) async {
-    await tester.tapAt(
-      tester.getCenter(find.text('Example')),
-      buttons: 2,
-    );
+    await tester.tapAt(tester.getCenter(find.text('Example')), buttons: 2);
     await tester.pumpAndSettle();
   }
 
@@ -123,7 +124,10 @@ void main() {
 
     expect(r.moves, hasLength(1));
     expect(r.moves.single.$1, 'w1');
-    expect(r.moves.single.$2.width, WindowSnap.left.geometryIn(workspace).width);
+    expect(
+      r.moves.single.$2.width,
+      WindowSnap.left.geometryIn(workspace).width,
+    );
     expect(r.moves.single.$2.x, WindowSnap.left.geometryIn(workspace).x);
   });
 
@@ -212,18 +216,44 @@ void main() {
     expect(called, isTrue);
   });
 
-  testWidgets('nothing offers always-on-top or move-to-workspace', (
-    WidgetTester tester,
-  ) async {
-    // Both were asked for and both were cut: there is no always-on-top in the
-    // window API and workspaces do not exist. If either ever appears here
-    // without an intent behind it, this fails.
+  testWidgets('nothing offers always-on-top', (WidgetTester tester) async {
+    // Asked for and cut: there is no always-on-top in the window API. If it
+    // ever appears here without an intent behind it, this fails.
     final r = recorder();
     await pumpWindow(tester, r.intents);
     await rightClickTitleBar(tester);
-    expect(find.textContaining('always on top', findRichText: true), findsNothing);
+    expect(
+      find.textContaining('always on top', findRichText: true),
+      findsNothing,
+    );
     expect(find.textContaining('Always on top'), findsNothing);
-    expect(find.textContaining('workspace'), findsNothing);
-    expect(find.textContaining('Workspace'), findsNothing);
+  });
+
+  testWidgets('Move to desk lists the other desks and moves the window', (
+    WidgetTester tester,
+  ) async {
+    final List<(String, int)> moved = <(String, int)>[];
+    final r = recorder(
+      moveToWorkspace: (String id, int n) => moved.add((id, n)),
+    );
+    await pumpWindow(tester, r.intents);
+    await rightClickTitleBar(tester);
+    // The window is on desk 1, so desk 1 is not offered.
+    expect(find.text('Move to desk 1'), findsNothing);
+    expect(find.text('Move to desk 2'), findsOneWidget);
+    expect(find.text('Move to desk 3'), findsOneWidget);
+    expect(find.text('Move to desk 4'), findsOneWidget);
+    await tester.tap(find.text('Move to desk 3'));
+    await tester.pumpAndSettle();
+    expect(moved, <(String, int)>[('w1', 3)]);
+  });
+
+  testWidgets('Move to desk is absent where the host has no desks', (
+    WidgetTester tester,
+  ) async {
+    final r = recorder();
+    await pumpWindow(tester, r.intents);
+    await rightClickTitleBar(tester);
+    expect(find.textContaining('Move to desk'), findsNothing);
   });
 }

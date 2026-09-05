@@ -3,6 +3,7 @@ package io.github.shrey113.openandroiddex.agent;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Path;
@@ -12,6 +13,7 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Base64;
 
 import org.json.JSONObject;
@@ -59,12 +61,41 @@ final class ApplicationMetadataReader {
                 "isSystemApp",
                 (info.flags & ApplicationInfo.FLAG_SYSTEM) != 0
             );
-            String icon = encodeIcon(packageManager.getApplicationIcon(info));
+            String icon = encodeIcon(loadIcon(packageManager, info));
             if (icon != null) result.put("iconPngBase64", icon);
         } catch (Exception ignored) {
             // One malformed/unavailable package must not discard the catalog.
         }
         return result;
+    }
+
+    /**
+     * The app's own icon resource, before any launcher theme touches it.
+     *
+     * getApplicationIcon returns what the phone's launcher would draw, and on
+     * MIUI that is a bitmap already cut to the theme's circle, so the desk's
+     * rounded-square mask in encodeIcon had nothing square left to reveal.
+     * The resource itself is the developer's artwork: an adaptive icon XML
+     * inflates to an AdaptiveIconDrawable whose layers the mask can shape,
+     * and a legacy PNG is the tile as drawn. xxhdpi is asked for because the
+     * desk draws 48 px tiles from a 96 px bitmap. Falls back to the themed
+     * drawable when a package has no icon or its resources cannot be read.
+     */
+    private static Drawable loadIcon(PackageManager packageManager, ApplicationInfo info) {
+        if (info.icon != 0) {
+            try {
+                Resources resources = packageManager.getResourcesForApplication(info);
+                Drawable own = resources.getDrawableForDensity(
+                    info.icon,
+                    DisplayMetrics.DENSITY_XXHIGH,
+                    null
+                );
+                if (own != null) return own;
+            } catch (Exception ignored) {
+                // A package whose resources will not load still gets a tile.
+            }
+        }
+        return packageManager.getApplicationIcon(info);
     }
 
     private static String encodeIcon(Drawable drawable) {

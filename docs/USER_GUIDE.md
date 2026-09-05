@@ -81,6 +81,14 @@ Arrow **Up** and **Down** move the selection, **Enter** opens it.
 **Pinning.** Right-click any app and choose *Pin to top* to give it a row of its
 own above the rest.
 
+## Desks
+
+The taskbar's four keys are four desks. Each window lives on one of them:
+right-click a window's title bar and choose *Move to desk 2* to send it
+there, or press Ctrl+Alt+→ and Ctrl+Alt+← to step between desks from the
+keyboard. The desk names the one you land on for a moment. An app you open
+lands on the desk you are looking at.
+
 ## Phone mirror
 
 *Phone Mirror* in the desk header opens a phone-shaped frame at the bottom
