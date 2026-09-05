@@ -79,6 +79,22 @@ abstract final class DexHit {
   static const double primary = 44;
 }
 
+/// Glyph sizes: one scale, so a tray icon is never 15 in one place and 17 in
+/// another. The reference's own mapping — 14 for chrome (header pills,
+/// widget headers, window controls, pins), 16 for the tray and panel bodies,
+/// 20 for the control centre's toggles, 12 for the smallest inline marks,
+/// 32 for an empty state's mark, 48 for a desk tile.
+abstract final class DexIconSize {
+  static const double inline = 12;
+  static const double chrome = 14;
+  static const double tray = 16;
+  static const double control = 20;
+  static const double ring = 24;
+  static const double mark = 32;
+  static const double hero = 40;
+  static const double launcher = 48;
+}
+
 /// Font families.
 ///
 /// Space Grotesk carries display, Public Sans carries body, and IBM Plex Mono

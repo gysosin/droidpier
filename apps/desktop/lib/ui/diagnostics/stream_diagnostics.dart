@@ -85,7 +85,11 @@ class StreamDiagnostics extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Icon(DexIcons.activity, size: 22, color: c.trace),
+                            Icon(
+                              DexIcons.activity,
+                              size: DexIconSize.control,
+                              color: c.trace,
+                            ),
                             const SizedBox(width: DexSpace.md),
                             Expanded(
                               child: Column(
@@ -108,7 +112,10 @@ class StreamDiagnostics extends StatelessWidget {
                             ),
                             IconButton(
                               onPressed: onClose,
-                              icon: const Icon(DexIcons.close, size: 18),
+                              icon: const Icon(
+                                DexIcons.close,
+                                size: DexIconSize.tray,
+                              ),
                               color: c.muted,
                               tooltip: 'Close',
                               constraints: const BoxConstraints(
@@ -186,7 +193,11 @@ class StreamDiagnostics extends StatelessWidget {
                           const SizedBox(height: DexSpace.lg),
                           Row(
                             children: <Widget>[
-                              Icon(DexIcons.clock, size: 12, color: c.muted),
+                              Icon(
+                                DexIcons.clock,
+                                size: DexIconSize.inline,
+                                color: c.muted,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'RECENTLY CLOSED SESSIONS (LAST 8)',
@@ -221,7 +232,10 @@ class StreamDiagnostics extends StatelessWidget {
                               Flexible(
                                 child: OutlinedButton.icon(
                                   onPressed: copy,
-                                  icon: const Icon(DexIcons.copy, size: 14),
+                                  icon: const Icon(
+                                    DexIcons.copy,
+                                    size: DexIconSize.chrome,
+                                  ),
                                   label: const Text(
                                     'Copy diagnostics report',
                                     maxLines: 1,

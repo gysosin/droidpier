@@ -86,7 +86,7 @@ class _SearchBarState extends State<_SearchBar> {
           const SizedBox(width: DexSpace.sm),
           IconButton(
             onPressed: _submit,
-            icon: Icon(DexIcons.search, size: 16, color: c.muted),
+            icon: Icon(DexIcons.search, size: DexIconSize.tray, color: c.muted),
             splashRadius: 18,
             tooltip: 'Search',
           ),

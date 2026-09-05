@@ -159,7 +159,7 @@ class _FirstRunTourState extends State<FirstRunTour> {
                             ),
                             child: Icon(
                               DexIcons.sparkles,
-                              size: 18,
+                              size: DexIconSize.tray,
                               color: c.signal,
                             ),
                           ),

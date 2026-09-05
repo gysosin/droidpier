@@ -343,6 +343,7 @@ class _NavPill extends StatelessWidget {
           _NavButton(
             icon: DexIcons.back,
             label: 'Back',
+            size: DexIconSize.tray,
             onPressed: enabled ? () => onNavKey(AndroidNavKey.back) : null,
             colors: colors,
           ),
@@ -374,12 +375,14 @@ class _NavButton extends StatelessWidget {
   const _NavButton({
     required this.icon,
     required this.label,
+    this.size = DexIconSize.chrome,
     required this.onPressed,
     required this.colors,
   });
 
   final IconData icon;
   final String label;
+  final double size;
   final VoidCallback? onPressed;
   final DexColors colors;
 
@@ -405,7 +408,7 @@ class _NavButton extends StatelessWidget {
                 color: hovered ? glass.fillStrong : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
               ),
-              child: Icon(icon, size: 17, color: colors.text),
+              child: Icon(icon, size: size, color: colors.text),
             ),
           ),
         ),
@@ -559,7 +562,11 @@ class _AppsGridButton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(DexIcons.appsGrid, size: 18, color: colors.text),
+                    Icon(
+                      DexIcons.appsGrid,
+                      size: DexIconSize.tray,
+                      color: colors.text,
+                    ),
                     if (labelled) ...<Widget>[
                       const SizedBox(width: DexSpace.sm),
                       Text(
@@ -622,7 +629,7 @@ class _MediaMini extends StatelessWidget {
                 ),
                 child: Icon(
                   _playing ? DexIcons.pause : DexIcons.play,
-                  size: 12,
+                  size: DexIconSize.inline,
                   color: colors.text,
                 ),
               ),
@@ -774,6 +781,8 @@ class SystemTray extends StatelessWidget {
     required this.onOpenSettings,
     required this.onToggleFullscreen,
     required this.fullscreenActive,
+    this.controlsOpen = false,
+    this.notificationsOpen = false,
     super.key,
   });
 
@@ -789,6 +798,11 @@ class SystemTray extends StatelessWidget {
   final VoidCallback onOpenSettings;
   final VoidCallback onToggleFullscreen;
   final bool fullscreenActive;
+
+  /// Which of the tray's panels is open, so its door can show it — the
+  /// reference's signal ring on the cluster and the bell.
+  final bool controlsOpen;
+  final bool notificationsOpen;
 
   static const List<String> _months = <String>[
     'Jan',
@@ -830,6 +844,7 @@ class SystemTray extends StatelessWidget {
         _Bell(
           count: notificationCount,
           onPressed: onOpenNotifications,
+          active: notificationsOpen,
           colors: c,
         ),
         const SizedBox(width: DexSpace.xs),
@@ -837,6 +852,7 @@ class SystemTray extends StatelessWidget {
         _StatusCluster(
           telemetry: telemetry,
           onPressed: onOpenControls,
+          active: controlsOpen,
           colors: c,
         ),
         const SizedBox(width: DexSpace.xs),
@@ -847,29 +863,27 @@ class SystemTray extends StatelessWidget {
           colors: c,
         ),
         const SizedBox(width: DexSpace.xs),
-        InkWell(
-          onTap: onOpenControls,
-          borderRadius: BorderRadius.circular(DexRadius.card),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DexSpace.sm,
-              vertical: DexSpace.xs,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                SwapText(
-                  '$h:$m $ap',
-                  style: DexTheme.data(c, size: 12, color: c.text),
-                ),
-                Text(
-                  '${now.day} ${_months[now.month - 1]}',
-                  style: DexTheme.data(c, size: 10),
-                ),
-              ],
-            ),
+        // A readout, not a door: it opened the control centre, the same as
+        // the cluster beside it, and two doors to one room read as a mistake.
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DexSpace.sm,
+            vertical: DexSpace.xs,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              SwapText(
+                '$h:$m $ap',
+                style: DexTheme.data(c, size: 12, color: c.text),
+              ),
+              Text(
+                '${now.day} ${_months[now.month - 1]}',
+                style: DexTheme.data(c, size: 10),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: DexSpace.xs),
@@ -891,11 +905,15 @@ class _StatusCluster extends StatelessWidget {
   const _StatusCluster({
     required this.telemetry,
     required this.onPressed,
+    this.active = false,
     required this.colors,
   });
 
   final DeviceTelemetry telemetry;
   final VoidCallback onPressed;
+
+  /// Its panel is open: a signal ring, as the reference draws it.
+  final bool active;
   final DexColors colors;
 
   @override
@@ -904,7 +922,7 @@ class _StatusCluster extends StatelessWidget {
     final int? battery = telemetry.batteryPercentage;
     return Semantics(
       button: true,
-      label: 'Control panel',
+      label: active ? 'Control panel, open' : 'Control panel',
       child: Tooltip(
         message: 'Control panel',
         child: HoverLift(
@@ -917,20 +935,42 @@ class _StatusCluster extends StatelessWidget {
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: DexSpace.sm),
               decoration: BoxDecoration(
-                color: hovered ? glass.fillStrong : Colors.transparent,
+                color: active || hovered
+                    ? glass.fillStrong
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
+                boxShadow: active
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: colors.signal,
+                          spreadRadius: DexStroke.focusRing,
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   if (telemetry.wifiEnabled ?? false) ...<Widget>[
-                    Icon(DexIcons.wifi, size: 15, color: colors.muted),
+                    Icon(
+                      DexIcons.wifi,
+                      size: DexIconSize.chrome,
+                      color: colors.muted,
+                    ),
                     const SizedBox(width: DexSpace.sm),
                   ],
                   if (battery != null) ...<Widget>[
                     if (telemetry.charging)
-                      Icon(DexIcons.charging, size: 14, color: colors.signal),
-                    Icon(DexIcons.batteryFull, size: 15, color: colors.muted),
+                      Icon(
+                        DexIcons.charging,
+                        size: DexIconSize.tray,
+                        color: colors.signal,
+                      ),
+                    Icon(
+                      DexIcons.batteryFull,
+                      size: DexIconSize.tray,
+                      color: colors.muted,
+                    ),
                     const SizedBox(width: 4),
                     Text('$battery%', style: DexTheme.data(colors, size: 11)),
                   ],
@@ -949,11 +989,15 @@ class _Bell extends StatelessWidget {
   const _Bell({
     required this.count,
     required this.onPressed,
+    this.active = false,
     required this.colors,
   });
 
   final int count;
   final VoidCallback onPressed;
+
+  /// Its panel is open: a signal ring, as the reference draws it.
+  final bool active;
   final DexColors colors;
 
   @override
@@ -979,14 +1023,28 @@ class _Bell extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: hovered ? glass.fillStrong : Colors.transparent,
+                color: active || hovered
+                    ? glass.fillStrong
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
+                boxShadow: active
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: colors.signal,
+                          spreadRadius: DexStroke.focusRing,
+                        ),
+                      ]
+                    : null,
               ),
               child: Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: <Widget>[
-                  Icon(DexIcons.notifications, size: 18, color: colors.text),
+                  Icon(
+                    DexIcons.notifications,
+                    size: DexIconSize.tray,
+                    color: colors.text,
+                  ),
                   if (count > 0)
                     Positioned(
                       top: 6,
@@ -1058,7 +1116,7 @@ class _TrayButton extends StatelessWidget {
                 color: hovered ? glass.fillStrong : Colors.transparent,
                 borderRadius: BorderRadius.circular(DexRadius.card),
               ),
-              child: Icon(icon, size: 18, color: colors.text),
+              child: Icon(icon, size: DexIconSize.tray, color: colors.text),
             ),
           ),
         ),

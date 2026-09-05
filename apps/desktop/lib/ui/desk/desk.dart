@@ -277,6 +277,8 @@ class _DeskState extends State<Desk> {
                   onOpenNotifications: () =>
                       setState(() => _notificationsOpen = true),
                   notificationCount: snapshot.notifications.length,
+                  controlsOpen: _controlsOpen,
+                  notificationsOpen: _notificationsOpen,
                   onOpenSettings: widget.onOpenSettings,
                   onToggleFullscreen: widget.onToggleFullscreen,
                   fullscreenActive: widget.fullscreenActive,
@@ -295,8 +297,7 @@ class _DeskState extends State<Desk> {
             Positioned(
               bottom: _taskbarHeight + 6,
               right: DexSpace.lg,
-              child: Entrance(
-                rise: 6,
+              child: OverlayEntrance.card(
                 child: ControlCenter(
                   telemetry: snapshot.telemetry,
                   clipboard: snapshot.clipboard,
@@ -330,19 +331,21 @@ class _DeskState extends State<Desk> {
                 }
                 return KeyEventResult.ignored;
               },
-              child: NotificationCenter(
-                notifications: snapshot.notifications,
-                status: snapshot.notificationStatus,
-                applications: snapshot.applications,
-                now: now,
-                onClose: () => setState(() => _notificationsOpen = false),
-                onDismiss: widget.onDismissNotification,
-                onActivate: widget.onActivateNotification,
-                onDismissAll: widget.onDismissAllNotifications,
-                onOpenPermissions: () {
-                  setState(() => _notificationsOpen = false);
-                  widget.onOpenPermissions();
-                },
+              child: OverlayEntrance.card(
+                child: NotificationCenter(
+                  notifications: snapshot.notifications,
+                  status: snapshot.notificationStatus,
+                  applications: snapshot.applications,
+                  now: now,
+                  onClose: () => setState(() => _notificationsOpen = false),
+                  onDismiss: widget.onDismissNotification,
+                  onActivate: widget.onActivateNotification,
+                  onDismissAll: widget.onDismissAllNotifications,
+                  onOpenPermissions: () {
+                    setState(() => _notificationsOpen = false);
+                    widget.onOpenPermissions();
+                  },
+                ),
               ),
             ),
         ],
@@ -731,7 +734,7 @@ class _HeaderPill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Icon(icon, size: 14, color: iconColor),
+                  Icon(icon, size: DexIconSize.chrome, color: iconColor),
                   if (!compact) ...<Widget>[
                     const SizedBox(width: 6),
                     Text(

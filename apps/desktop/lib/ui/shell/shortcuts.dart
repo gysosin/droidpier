@@ -42,9 +42,7 @@ class DexKeyStroke {
   }) {
     if (pressed != key) return false;
     if (anyModifiers) return true;
-    return control == this.control &&
-        shift == this.shift &&
-        alt == this.alt;
+    return control == this.control && shift == this.shift && alt == this.alt;
   }
 
   /// How the cheat sheet writes this stroke, e.g. `Ctrl+Shift+D`.
@@ -106,12 +104,7 @@ DexShortcut? matchShortcut(
   required bool alt,
 }) {
   for (final DexShortcut s in registry) {
-    if (s.stroke.matches(
-          pressed,
-          control: control,
-          shift: shift,
-          alt: alt,
-        ) &&
+    if (s.stroke.matches(pressed, control: control, shift: shift, alt: alt) &&
         s.when()) {
       return s;
     }
@@ -244,11 +237,7 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
   // Before the plain Alt+Tab entry. Matching is exact so the order does not
   // strictly matter, but reading them adjacent keeps the pair obvious.
   DexShortcut(
-    stroke: const DexKeyStroke(
-      LogicalKeyboardKey.tab,
-      alt: true,
-      shift: true,
-    ),
+    stroke: const DexKeyStroke(LogicalKeyboardKey.tab, alt: true, shift: true),
     label: 'Switch window backwards',
     group: DexShortcutGroup.windows,
     when: _always,
@@ -289,10 +278,7 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
   DexShortcut(
     // `?` is Shift+/ on most layouts, so the modifiers cannot be pinned down.
     // Guarded by [ShellShortcutHooks.keyboardIsFree] instead of by modifiers.
-    stroke: const DexKeyStroke(
-      LogicalKeyboardKey.question,
-      anyModifiers: true,
-    ),
+    stroke: const DexKeyStroke(LogicalKeyboardKey.question, anyModifiers: true),
     label: 'Show keyboard shortcuts',
     group: DexShortcutGroup.session,
     when: hooks.keyboardIsFree,

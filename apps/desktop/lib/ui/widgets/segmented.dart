@@ -53,9 +53,7 @@ class DexSegmented extends StatelessWidget {
                     minWidth: 72,
                   ),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: DexSpace.md,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: DexSpace.md),
                   decoration: BoxDecoration(
                     color: i == selected ? glass.fillStrong : null,
                     borderRadius: BorderRadius.circular(DexRadius.control),

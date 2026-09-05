@@ -289,7 +289,11 @@ class _Placeholder extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: c.line, width: DexStroke.hairline),
             ),
-            child: Icon(DexIcons.portrait, size: 20, color: c.muted),
+            child: Icon(
+              DexIcons.portrait,
+              size: DexIconSize.control,
+              color: c.muted,
+            ),
           ),
           const SizedBox(height: DexSpace.md),
           Text(

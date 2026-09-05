@@ -198,12 +198,80 @@ class ReduceMotionScope extends InheritedWidget {
   /// False when no scope is present, so the platform setting decides alone —
   /// which is what every existing caller already relied on.
   static bool of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<ReduceMotionScope>()
-          ?.reduce ??
+      context.dependOnInheritedWidgetOfExactType<ReduceMotionScope>()?.reduce ??
       false;
 
   @override
   bool updateShouldNotify(ReduceMotionScope oldWidget) =>
       oldWidget.reduce != reduce;
+}
+
+/// One short entrance for anything that opens over the desk.
+///
+/// The reference names two animations on every overlay — `fade-in` for the
+/// scrim, `scale-up` for the card — and defines neither, so its surfaces
+/// snap. This is the motion those names describe: the scrim fades over
+/// [DexDuration.standard]; the card fades and grows from 96% over
+/// [DexDuration.enter], on [DexMotion.arrive]. Opacity and transform only.
+/// It runs once, when the surface first appears, and then nothing repaints;
+/// closing is instant, because a dismiss must not lag the key that asked for
+/// it. Reduced motion arrives at once.
+class OverlayEntrance extends StatefulWidget {
+  /// A panel or modal card: fades and scales in.
+  const OverlayEntrance.card({required this.child, super.key})
+    : scales = true,
+      duration = DexDuration.enter;
+
+  /// A full-screen tint: fades in only.
+  const OverlayEntrance.scrim({required this.child, super.key})
+    : scales = false,
+      duration = DexDuration.standard;
+
+  final Widget child;
+  final bool scales;
+  final Duration duration;
+
+  @override
+  State<OverlayEntrance> createState() => _OverlayEntranceState();
+}
+
+class _OverlayEntranceState extends State<OverlayEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _t = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (DexMotion.enabled(context)) {
+      _t.forward();
+    } else {
+      _t.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _t.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _t,
+      child: widget.child,
+      builder: (BuildContext context, Widget? child) {
+        final double v = DexMotion.arrive.transform(_t.value);
+        final Widget faded = Opacity(opacity: v, child: child);
+        if (!widget.scales) return faded;
+        return Transform.scale(scale: 0.96 + 0.04 * v, child: faded);
+      },
+    );
+  }
 }

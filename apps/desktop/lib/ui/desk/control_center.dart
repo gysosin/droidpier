@@ -276,7 +276,7 @@ class ControlCenter extends StatelessWidget {
                         ),
                         icon: Icon(
                           DexIcons.portrait,
-                          size: 14,
+                          size: DexIconSize.chrome,
                           color: c.signal,
                         ),
                         label: const Text(
@@ -297,7 +297,7 @@ class ControlCenter extends StatelessWidget {
                         ),
                         icon: Icon(
                           DexIcons.slidersHorizontal,
-                          size: 14,
+                          size: DexIconSize.chrome,
                           color: c.muted,
                         ),
                         label: const Text(
@@ -409,7 +409,7 @@ class _WidePill extends StatelessWidget {
                   ),
                   child: Icon(
                     icon,
-                    size: 19,
+                    size: DexIconSize.tray,
                     color: !known
                         ? c.muted.withValues(alpha: 0.4)
                         : on
@@ -440,7 +440,11 @@ class _WidePill extends StatelessWidget {
                   ),
                 ),
                 if (locked != null)
-                  Icon(DexIcons.locked, size: 12, color: c.muted),
+                  Icon(
+                    DexIcons.locked,
+                    size: DexIconSize.inline,
+                    color: c.muted,
+                  ),
               ],
             ),
           ),
@@ -510,7 +514,7 @@ class _CircleToggle extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  size: 20,
+                  size: DexIconSize.control,
                   color: !usable
                       ? c.muted.withValues(alpha: 0.4)
                       : on
@@ -656,7 +660,7 @@ class _Banner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(DexIcons.info, size: 14, color: tint),
+          Icon(DexIcons.info, size: DexIconSize.chrome, color: tint),
           const SizedBox(width: DexSpace.sm),
           Expanded(
             child: Column(
@@ -747,7 +751,7 @@ class _Clipboard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(DexIcons.copy, size: 16, color: colors.signal),
+              Icon(DexIcons.copy, size: DexIconSize.tray, color: colors.signal),
               const SizedBox(width: DexSpace.sm),
               Expanded(
                 child: Text(

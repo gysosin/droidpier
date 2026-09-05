@@ -290,9 +290,7 @@ class WindowController {
     if (w.isMinimised) {
       windows[id] = w.copyWith(displayState: WindowDisplayState.normal);
       notify();
-      unawaited(
-        facade.setWindowDisplayState(id, WindowDisplayState.normal),
-      );
+      unawaited(facade.setWindowDisplayState(id, WindowDisplayState.normal));
     }
     windows[id] = windows[id]!.copyWith(zOrder: _nextZ++);
     notify();
@@ -328,9 +326,7 @@ class WindowController {
       // window snaps shut again — the restore that looked instant and then
       // undid itself. `raiseAndFocus` always did this; the taskbar path did
       // not, which is why Alt-Tab restored and a dock click did not.
-      unawaited(
-        facade.setWindowDisplayState(id, WindowDisplayState.normal),
-      );
+      unawaited(facade.setWindowDisplayState(id, WindowDisplayState.normal));
     }
     facade.focusWindow(id);
   }

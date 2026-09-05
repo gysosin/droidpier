@@ -87,175 +87,173 @@ class DeskSettings extends StatelessWidget {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(DexSpace.xxl),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Container(
-                          width: DexHit.comfortable,
-                          height: DexHit.comfortable,
-                          decoration: BoxDecoration(
-                            color: DexGlass.of(context).fill,
-                            borderRadius: BorderRadius.circular(
-                              DexRadius.control,
-                            ),
-                          ),
-                          child: Icon(
-                            DexIcons.monitor,
-                            size: 18,
-                            color: c.signal,
+              // The reference's p-5: the rows fill the 672 card.
+              padding: const EdgeInsets.all(DexSpace.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        width: DexHit.comfortable,
+                        height: DexHit.comfortable,
+                        decoration: BoxDecoration(
+                          color: DexGlass.of(context).fill,
+                          borderRadius: BorderRadius.circular(
+                            DexRadius.control,
                           ),
                         ),
-                        const SizedBox(width: DexSpace.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Icon(
+                          DexIcons.monitor,
+                          size: DexIconSize.tray,
+                          color: c.signal,
+                        ),
+                      ),
+                      const SizedBox(width: DexSpace.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text('Desk Settings', style: t.titleLarge),
+                            Text(
+                              'How the desk behaves. Your phone’s own '
+                              'settings stay on the phone.',
+                              style: t.bodySmall?.copyWith(color: c.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DexSpace.xl),
+                  _Group(
+                    title: 'Appearance',
+                    icon: DexIcons.palette,
+                    colors: c,
+                    onReset: () {
+                      onThemeChanged(ThemeMode.system);
+                      onAccentChanged(0);
+                      onWallpaperChanged(0);
+                      onGlassChanged(true);
+                      onReduceMotionChanged(false);
+                    },
+                    children: <Widget>[
+                      _ChoiceRow(
+                        title: 'Theme',
+                        detail: 'Dark reduces glare on external panels.',
+                        colors: c,
+                        value: themeMode,
+                        onChanged: onThemeChanged,
+                      ),
+                      const SizedBox(height: DexSpace.md),
+                      _AccentRow(
+                        selected: accentIndex,
+                        onSelected: onAccentChanged,
+                        colors: c,
+                      ),
+                      const SizedBox(height: DexSpace.lg),
+                      _SwitchRow(
+                        title: 'Frosted Panels',
+                        detail:
+                            'Blurs the desk behind panels. Turn off for a '
+                            'flatter, cheaper desk on weaker hardware.',
+                        colors: c,
+                        value: glassEnabled,
+                        onChanged: onGlassChanged,
+                      ),
+                      const SizedBox(height: DexSpace.lg),
+                      _SwitchRow(
+                        title: 'Reduce Motion',
+                        detail:
+                            'Skips the entrance animations. Already on if '
+                            'your system asks for reduced motion.',
+                        colors: c,
+                        value: reduceMotion,
+                        onChanged: onReduceMotionChanged,
+                      ),
+                      const SizedBox(height: DexSpace.lg),
+                      _WallpaperRow(
+                        title: 'Lit Desktop Wallpaper',
+                        detail: 'The desk background.',
+                        colors: c,
+                        selected: wallpaperIndex,
+                        onSelected: onWallpaperChanged,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DexSpace.lg),
+                  _Group(
+                    title: 'Desktop Mode',
+                    colors: c,
+                    onReset: () => onSnapChanged(true),
+                    children: <Widget>[
+                      _SwitchRow(
+                        title: 'Window Snapping',
+                        detail: 'Halves and quarters at screen edges.',
+                        value: snapEnabled,
+                        onChanged: onSnapChanged,
+                        colors: c,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DexSpace.lg),
+                  _Group(
+                    title: 'Phone links',
+                    icon: DexIcons.smartphone,
+                    colors: c,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(DexSpace.sm),
+                        // Bounded on purpose: stretch needs a height to
+                        // stretch to, and the settings column scrolls.
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: <Widget>[
-                              Text('Desk Settings', style: t.titleLarge),
-                              Text(
-                                'How the desk behaves. Your phone’s own '
-                                'settings stay on the phone.',
-                                style: t.bodySmall?.copyWith(color: c.muted),
+                              if (onManagePhones != null) ...<Widget>[
+                                Expanded(
+                                  child: _LinkTile(
+                                    title: 'Manage Phones…',
+                                    detail: 'Switch phone or pair Wi-Fi',
+                                    onPressed: onManagePhones!,
+                                    colors: c,
+                                  ),
+                                ),
+                                const SizedBox(width: DexSpace.sm),
+                              ],
+                              if (onOpenPermissions != null) ...<Widget>[
+                                Expanded(
+                                  child: _LinkTile(
+                                    title: 'Permissions…',
+                                    detail:
+                                        'What the phone has granted the desk',
+                                    onPressed: onOpenPermissions!,
+                                    colors: c,
+                                  ),
+                                ),
+                                const SizedBox(width: DexSpace.sm),
+                              ],
+                              Expanded(
+                                child: _LinkTile(
+                                  title: 'Disconnect',
+                                  detail: deviceLabel == null
+                                      ? 'End active session'
+                                      : 'End the session with $deviceLabel',
+                                  onPressed: onDisconnect,
+                                  colors: c,
+                                  danger: true,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: DexSpace.xl),
-                    _Group(
-                      title: 'Appearance',
-                      icon: DexIcons.palette,
-                      colors: c,
-                      onReset: () {
-                        onThemeChanged(ThemeMode.system);
-                        onAccentChanged(0);
-                        onWallpaperChanged(0);
-                        onGlassChanged(true);
-                        onReduceMotionChanged(false);
-                      },
-                      children: <Widget>[
-                        _ChoiceRow(
-                          title: 'Theme',
-                          detail: 'Dark reduces glare on external panels.',
-                          colors: c,
-                          value: themeMode,
-                          onChanged: onThemeChanged,
-                        ),
-                        const SizedBox(height: DexSpace.md),
-                        _AccentRow(
-                          selected: accentIndex,
-                          onSelected: onAccentChanged,
-                          colors: c,
-                        ),
-                        const SizedBox(height: DexSpace.lg),
-                        _SwitchRow(
-                          title: 'Frosted Panels',
-                          detail:
-                              'Blurs the desk behind panels. Turn off for a '
-                              'flatter, cheaper desk on weaker hardware.',
-                          colors: c,
-                          value: glassEnabled,
-                          onChanged: onGlassChanged,
-                        ),
-                        const SizedBox(height: DexSpace.lg),
-                        _SwitchRow(
-                          title: 'Reduce Motion',
-                          detail:
-                              'Skips the entrance animations. Already on if '
-                              'your system asks for reduced motion.',
-                          colors: c,
-                          value: reduceMotion,
-                          onChanged: onReduceMotionChanged,
-                        ),
-                        const SizedBox(height: DexSpace.lg),
-                        _WallpaperRow(
-                          title: 'Lit Desktop Wallpaper',
-                          detail: 'The desk background.',
-                          colors: c,
-                          selected: wallpaperIndex,
-                          onSelected: onWallpaperChanged,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: DexSpace.lg),
-                    _Group(
-                      title: 'Desktop Mode',
-                      colors: c,
-                      onReset: () => onSnapChanged(true),
-                      children: <Widget>[
-                        _SwitchRow(
-                          title: 'Window Snapping',
-                          detail: 'Halves and quarters at screen edges.',
-                          value: snapEnabled,
-                          onChanged: onSnapChanged,
-                          colors: c,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: DexSpace.lg),
-                    _Group(
-                      title: 'Phone links',
-                      icon: DexIcons.smartphone,
-                      colors: c,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.all(DexSpace.sm),
-                          // Bounded on purpose: stretch needs a height to
-                          // stretch to, and the settings column scrolls.
-                          child: IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                if (onManagePhones != null) ...<Widget>[
-                                  Expanded(
-                                    child: _LinkTile(
-                                      title: 'Manage Phones…',
-                                      detail: 'Switch phone or pair Wi-Fi',
-                                      onPressed: onManagePhones!,
-                                      colors: c,
-                                    ),
-                                  ),
-                                  const SizedBox(width: DexSpace.sm),
-                                ],
-                                if (onOpenPermissions != null) ...<Widget>[
-                                  Expanded(
-                                    child: _LinkTile(
-                                      title: 'Permissions…',
-                                      detail:
-                                          'What the phone has granted the desk',
-                                      onPressed: onOpenPermissions!,
-                                      colors: c,
-                                    ),
-                                  ),
-                                  const SizedBox(width: DexSpace.sm),
-                                ],
-                                Expanded(
-                                  child: _LinkTile(
-                                    title: 'Disconnect',
-                                    detail: deviceLabel == null
-                                        ? 'End active session'
-                                        : 'End the session with $deviceLabel',
-                                    onPressed: onDisconnect,
-                                    colors: c,
-                                    danger: true,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: DexSpace.lg),
-                    _AboutCard(colors: c),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DexSpace.lg),
+                  _AboutCard(colors: c),
+                ],
               ),
             ),
           ),
@@ -294,7 +292,7 @@ class _Group extends StatelessWidget {
         Row(
           children: <Widget>[
             if (icon case final IconData glyph) ...<Widget>[
-              Icon(glyph, size: 12, color: colors.signal),
+              Icon(glyph, size: DexIconSize.inline, color: colors.signal),
               const SizedBox(width: 6),
             ],
             Expanded(
@@ -321,7 +319,11 @@ class _Group extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(DexIcons.rotateCcw, size: 11, color: colors.muted),
+                        Icon(
+                          DexIcons.rotateCcw,
+                          size: DexIconSize.inline,
+                          color: colors.muted,
+                        ),
                         const SizedBox(width: DexSpace.xs),
                         Text(
                           'Reset group',
@@ -537,53 +539,50 @@ class _Swatch extends StatelessWidget {
       selected: selected,
       label: '${choice.name} wallpaper',
       excludeSemantics: true,
-      child: Tooltip(
-        message: choice.name,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(DexRadius.card),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DexSpace.md,
-              vertical: DexSpace.sm,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DexSpace.md,
+            vertical: DexSpace.sm,
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.signal.withValues(alpha: 0.12)
+                : colors.surface.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(DexRadius.card),
+            border: Border.all(
+              color: selected ? colors.signal : colors.line,
+              width: selected ? DexStroke.focusRing : DexStroke.hairline,
             ),
-            decoration: BoxDecoration(
-              color: selected
-                  ? colors.signal.withValues(alpha: 0.12)
-                  : colors.surface.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(DexRadius.card),
-              border: Border.all(
-                color: selected ? colors.signal : colors.line,
-                width: selected ? DexStroke.focusRing : DexStroke.hairline,
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: choice.colors,
+                  ),
+                ),
               ),
-            ),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: choice.colors,
-                    ),
+              const SizedBox(width: DexSpace.sm),
+              Flexible(
+                child: Text(
+                  choice.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.bodySmall?.copyWith(
+                    color: selected ? colors.text : colors.muted,
                   ),
                 ),
-                const SizedBox(width: DexSpace.sm),
-                Flexible(
-                  child: Text(
-                    choice.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: t.bodySmall?.copyWith(
-                      color: selected ? colors.text : colors.muted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -704,7 +703,11 @@ class _AccentSwatch extends StatelessWidget {
                       ),
                     ),
                     child: selected
-                        ? Icon(DexIcons.check, size: 14, color: colors.bg)
+                        ? Icon(
+                            DexIcons.check,
+                            size: DexIconSize.chrome,
+                            color: colors.bg,
+                          )
                         : null,
                   ),
                   const SizedBox(height: 6),

@@ -68,10 +68,7 @@ Future<void> showDexContextMenu({
           PopupMenuItem<VoidCallback>(
             value: a.onSelected,
             height: DexHit.comfortable,
-            child: Text(
-              a.label,
-              style: t.bodyMedium?.copyWith(color: c.text),
-            ),
+            child: Text(a.label, style: t.bodyMedium?.copyWith(color: c.text)),
           ),
     ],
   );

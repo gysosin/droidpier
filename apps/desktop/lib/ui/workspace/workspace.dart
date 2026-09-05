@@ -342,8 +342,7 @@ class _Positioned extends StatelessWidget {
         surface.pixelSize.height <= 0) {
       return Offset.zero & workspaceSize;
     }
-    final double aspect =
-        surface.pixelSize.width / surface.pixelSize.height;
+    final double aspect = surface.pixelSize.width / surface.pixelSize.height;
     double w = workspaceSize.width;
     double h = w / aspect;
     if (h > workspaceSize.height) {

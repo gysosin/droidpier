@@ -70,7 +70,8 @@ List<AndroidApplication> rankApps(
 
   final int nowMs = now ?? DateTime.now().millisecondsSinceEpoch;
 
-  final List<(double, AndroidApplication)> scored = <(double, AndroidApplication)>[];
+  final List<(double, AndroidApplication)> scored =
+      <(double, AndroidApplication)>[];
   for (final AndroidApplication a in apps) {
     final double? base = _score(a, q);
     if (base == null) continue;
