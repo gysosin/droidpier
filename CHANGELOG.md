@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-beta.3 — 2026-09-05
 
 ### The desk search opens on the phone
 

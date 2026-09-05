@@ -22,7 +22,7 @@ Your apps run on your phone. Your computer provides the workspace.
 
 ## Download
 
-**0.1.0-beta.2 is an experimental Linux/Android preview.** These downloads are for
+**0.1.0-beta.3 is an experimental Linux/Android preview.** These downloads are for
 early testing. USB and direct-stream window workflows were exercised on one Android 13 phone;
 wireless pairing and the full Linux desktop/distribution matrix remain unverified. Read the release notes before installing; package
 availability is not a support guarantee. Windows and macOS remain in development.
@@ -31,10 +31,10 @@ availability is not a support guarantee. Windows and macOS remain in development
 
 | Platform | Package | Status |
 | --- | --- | --- |
-| Ubuntu / Debian / Linux Mint, x86-64 | [DEB](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-amd64.deb) | Experimental; Mint untested |
-| Fedora, x86-64 | [RPM](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.rpm) | Experimental |
-| Other compatible Linux desktops, x86-64 | [AppImage](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.AppImage) / [archive](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-0.1.0-beta.2-linux-x86_64.tar.gz) | Experimental; see minimum requirements |
-| Android | [Companion APK](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.2/droidpier-companion-0.1.0-beta.2.apk) | Experimental; Android 15 emulator tested |
+| Ubuntu / Debian / Linux Mint, x86-64 | [DEB](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.3/droidpier-0.1.0-beta.3-linux-amd64.deb) | Experimental; Mint untested |
+| Fedora, x86-64 | [RPM](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.3/droidpier-0.1.0-beta.3-linux-x86_64.rpm) | Experimental |
+| Other compatible Linux desktops, x86-64 | [AppImage](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.3/droidpier-0.1.0-beta.3-linux-x86_64.AppImage) / [archive](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.3/droidpier-0.1.0-beta.3-linux-x86_64.tar.gz) | Experimental; see minimum requirements |
+| Android | [Companion APK](https://github.com/gysosin/droidpier/releases/download/v0.1.0-beta.3/droidpier-companion-0.1.0-beta.3.apk) | Experimental |
 | Windows x64 | Installer / portable ZIP | In development |
 | macOS Apple Silicon / Intel | Separate DMGs | In development |
 
