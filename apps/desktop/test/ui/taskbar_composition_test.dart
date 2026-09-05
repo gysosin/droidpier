@@ -54,7 +54,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpBar(tester);
-    expect(find.text('Your apps'), findsOneWidget);
+    expect(find.text('Your Apps'), findsOneWidget);
   });
 
   testWidgets('the dock offers every workspace and marks the current one', (
@@ -150,7 +150,7 @@ void main() {
     // too rather than squeezing everything.
     await pumpBar(tester, size: const Size(640, 560));
 
-    expect(find.text('Your apps'), findsNothing);
+    expect(find.text('Your Apps'), findsNothing);
     expect(find.text('4'), findsNothing);
     expect(tester.takeException(), isNull);
   });

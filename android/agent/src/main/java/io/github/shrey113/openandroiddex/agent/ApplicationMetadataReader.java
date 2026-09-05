@@ -5,7 +5,12 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Looper;
 import android.util.Base64;
 
@@ -70,8 +75,47 @@ final class ApplicationMetadataReader {
             Bitmap.Config.ARGB_8888
         );
         Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, ICON_SIZE_PX, ICON_SIZE_PX);
-        drawable.draw(canvas);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && drawable instanceof AdaptiveIconDrawable) {
+            // Drawn layer by layer under the desk's own rounded-square mask.
+            // drawable.draw() applies the launcher's mask — a circle on some
+            // phones — and the desk then showed discs where its design, and
+            // the reference it follows, draw tiles. The desk decides the
+            // shape of its icons; the phone supplies the artwork.
+            AdaptiveIconDrawable adaptive = (AdaptiveIconDrawable) drawable;
+            float radius = ICON_SIZE_PX * 14f / 48f;
+            Path mask = new Path();
+            mask.addRoundRect(
+                new RectF(0, 0, ICON_SIZE_PX, ICON_SIZE_PX),
+                radius,
+                radius,
+                Path.Direction.CW
+            );
+            canvas.clipPath(mask);
+            // Adaptive layers are authored on a 108dp canvas whose visible
+            // area is the inner 72dp, so each layer bleeds a quarter past
+            // every edge of the icon.
+            int bleed = ICON_SIZE_PX / 4;
+            Rect bounds = new Rect(
+                -bleed,
+                -bleed,
+                ICON_SIZE_PX + bleed,
+                ICON_SIZE_PX + bleed
+            );
+            Drawable background = adaptive.getBackground();
+            if (background != null) {
+                background.setBounds(bounds);
+                background.draw(canvas);
+            }
+            Drawable foreground = adaptive.getForeground();
+            if (foreground != null) {
+                foreground.setBounds(bounds);
+                foreground.draw(canvas);
+            }
+        } else {
+            drawable.setBounds(0, 0, ICON_SIZE_PX, ICON_SIZE_PX);
+            drawable.draw(canvas);
+        }
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try {
             if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)) return null;

@@ -154,16 +154,6 @@ class DeskSettings extends StatelessWidget {
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _SwitchRow(
-                          title: 'Reduce Motion',
-                          detail:
-                              'Skips the entrance animations. Already on if '
-                              'your system asks for reduced motion.',
-                          colors: c,
-                          value: reduceMotion,
-                          onChanged: onReduceMotionChanged,
-                        ),
-                        const SizedBox(height: DexSpace.lg),
-                        _SwitchRow(
                           title: 'Frosted Panels',
                           detail:
                               'Blurs the desk behind panels. Turn off for a '
@@ -171,6 +161,16 @@ class DeskSettings extends StatelessWidget {
                           colors: c,
                           value: glassEnabled,
                           onChanged: onGlassChanged,
+                        ),
+                        const SizedBox(height: DexSpace.lg),
+                        _SwitchRow(
+                          title: 'Reduce Motion',
+                          detail:
+                              'Skips the entrance animations. Already on if '
+                              'your system asks for reduced motion.',
+                          colors: c,
+                          value: reduceMotion,
+                          onChanged: onReduceMotionChanged,
                         ),
                         const SizedBox(height: DexSpace.lg),
                         _WallpaperRow(

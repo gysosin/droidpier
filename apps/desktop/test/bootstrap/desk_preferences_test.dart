@@ -17,7 +17,7 @@ void main() {
   test('missing file loads defaults', () async {
     final DeskPreferences prefs = DeskPreferences(configDir: dir);
     final DeskPreferencesData data = await prefs.load();
-    expect(data.themeMode, ThemeMode.system);
+    expect(data.themeMode, ThemeMode.dark);
     expect(data.wallpaperIndex, 0);
     expect(data.accentIndex, 0);
     expect(data.glassEnabled, true);
@@ -175,12 +175,12 @@ void main() {
     File('${dir.path}/settings.json').writeAsStringSync('{ not json ]');
     final DeskPreferencesData data = await DeskPreferences(configDir: dir)
         .load();
-    expect(data.themeMode, ThemeMode.system);
+    expect(data.themeMode, ThemeMode.dark);
     expect(data.wallpaperIndex, 0);
     expect(data.snapEnabled, true);
   });
 
-  test('an unknown theme name degrades to system', () async {
+  test('an unknown theme name degrades to the default', () async {
     dir.createSync(recursive: true);
     File('${dir.path}/settings.json').writeAsStringSync(
       '{"themeMode":"neon","wallpaperIndex":-2,"accentIndex":-1,'
@@ -188,7 +188,7 @@ void main() {
     );
     final DeskPreferencesData data = await DeskPreferences(configDir: dir)
         .load();
-    expect(data.themeMode, ThemeMode.system);
+    expect(data.themeMode, ThemeMode.dark);
     // Negative index and non-bool snap fall back too.
     expect(data.wallpaperIndex, 0);
     expect(data.accentIndex, 0);

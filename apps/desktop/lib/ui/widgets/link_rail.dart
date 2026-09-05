@@ -235,7 +235,10 @@ class _StationNodeState extends State<_StationNode>
           shape: BoxShape.circle,
           color: widget.color,
           boxShadow: <BoxShadow>[
-            BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+            BoxShadow(
+              color: widget.color.withValues(alpha: 0.40),
+              blurRadius: 12,
+            ),
           ],
         ),
         child: Icon(DexIcons.check, size: 16, color: c.bg),
@@ -248,7 +251,10 @@ class _StationNodeState extends State<_StationNode>
           shape: BoxShape.circle,
           color: widget.color,
           boxShadow: <BoxShadow>[
-            BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+            BoxShadow(
+              color: widget.color.withValues(alpha: 0.40),
+              blurRadius: 12,
+            ),
           ],
         ),
         child: Icon(DexIcons.fault, size: 16, color: Colors.white),
@@ -269,7 +275,10 @@ class _StationNodeState extends State<_StationNode>
             shape: BoxShape.circle,
             color: widget.color,
             boxShadow: <BoxShadow>[
-              BoxShadow(color: widget.color.withValues(alpha: 0.40), blurRadius: 12),
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.40),
+                blurRadius: 12,
+              ),
             ],
           ),
         ),
@@ -494,12 +503,12 @@ class LinkRailChip extends StatelessWidget {
           ('TX', telemetry.throughput, c.trace),
           ('RATE', telemetry.framesPerSecond, c.text),
         ];
-    final List<(String, TelemetryMeasurement, Color)> shown =
-        <(String, TelemetryMeasurement, Color)>[
-          for (final (String label, TelemetryMeasurement? m, Color colour)
-              in all)
-            if (m != null) (label, m, colour),
-        ].take(readings.clamp(1, all.length)).toList();
+    // Every readout is present, always, as the reference draws the chip. A
+    // measurement the phone has not reported renders as an em dash: an idle
+    // link is a state the chip must show, not a reason to lose its shape.
+    final List<(String, TelemetryMeasurement?, Color)> shown = all
+        .take(readings.clamp(1, all.length))
+        .toList();
 
     return GlassPanel(
       radius: DexRadius.card,
@@ -531,7 +540,7 @@ class LinkRailChip extends StatelessWidget {
           ),
           const SizedBox(width: DexSpace.md),
           Container(width: 1, height: 12, color: glass.stroke),
-          for (final (String label, TelemetryMeasurement m, Color colour)
+          for (final (String label, TelemetryMeasurement? m, Color colour)
               in shown)
             Padding(
               padding: const EdgeInsets.only(left: DexSpace.md),
@@ -543,7 +552,7 @@ class LinkRailChip extends StatelessWidget {
                   // Tabular figures: these change constantly and the row must
                   // not jitter as they do.
                   SwapText(
-                    LinkRailTrace.format(m),
+                    m == null ? '\u2014' : LinkRailTrace.format(m),
                     style: DexTheme.data(c, size: 11, color: colour),
                   ),
                 ],

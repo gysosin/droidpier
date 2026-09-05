@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../theme/glass.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -38,6 +40,7 @@ class Desk extends StatefulWidget {
     required this.onFocusWindow,
     required this.onCloseWindow,
     required this.onOpenSettings,
+    this.onManagePhones,
     required this.onToggleFullscreen,
     required this.fullscreenActive,
     required this.onNavKey,
@@ -78,6 +81,9 @@ class Desk extends StatefulWidget {
   /// manage-phones and permissions all live behind it now — the reference tray
   /// carries no such buttons.
   final VoidCallback onOpenSettings;
+
+  /// Opens the phone chooser. Null leaves the control centre's link out.
+  final VoidCallback? onManagePhones;
 
   /// Enters/leaves edge-to-edge fullscreen for the focused window (tray button).
   final VoidCallback onToggleFullscreen;
@@ -210,105 +216,111 @@ class _DeskState extends State<Desk> {
               onMediaAction: widget.onMediaAction,
             ),
           ),
-        // App windows: over the desk's furniture, under its taskbar, and inset
-        // by the taskbar's height so one cannot be dragged out of reach.
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: _taskbarHeight,
-          child: widget.workspace,
-        ),
-        // The segmented bottom bar spans the full width so the nav pill sits
-        // left, the apps-grid button centres, and the tray sits right.
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Entrance(
-            order: 5,
-            rise: 18,
-            child: TaskbarBar(
-              windows: widget.windows,
-              currentWorkspace: widget.currentWorkspace,
-              onSelectWorkspace: widget.onSelectWorkspace,
-              minimised: widget.minimisedWindows,
-              onOpenLauncher: widget.onOpenLauncher,
-              onFocus: widget.onFocusWindow,
-              onClose: widget.onCloseWindow,
-              media: snapshot.media,
-              onMediaAction: widget.onMediaAction,
-              onNavKey: widget.onNavKey,
-              navEnabled: _focused,
-              trailing: SystemTray(
-                now: now,
-                telemetry: snapshot.telemetry,
-                onOpenControls: () => setState(() => _controlsOpen = true),
-                onOpenNotifications: () =>
-                    setState(() => _notificationsOpen = true),
-                notificationCount: snapshot.notifications.length,
-                onOpenSettings: widget.onOpenSettings,
-                onToggleFullscreen: widget.onToggleFullscreen,
-                fullscreenActive: widget.fullscreenActive,
+          // App windows: over the desk's furniture, under its taskbar, and inset
+          // by the taskbar's height so one cannot be dragged out of reach.
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: _taskbarHeight,
+            child: widget.workspace,
+          ),
+          // The segmented bottom bar spans the full width so the nav pill sits
+          // left, the apps-grid button centres, and the tray sits right.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Entrance(
+              order: 5,
+              rise: 18,
+              child: TaskbarBar(
+                windows: widget.windows,
+                currentWorkspace: widget.currentWorkspace,
+                onSelectWorkspace: widget.onSelectWorkspace,
+                minimised: widget.minimisedWindows,
+                onOpenLauncher: widget.onOpenLauncher,
+                onFocus: widget.onFocusWindow,
+                onClose: widget.onCloseWindow,
+                media: snapshot.media,
+                onMediaAction: widget.onMediaAction,
+                onNavKey: widget.onNavKey,
+                navEnabled: _focused,
+                trailing: SystemTray(
+                  now: now,
+                  telemetry: snapshot.telemetry,
+                  onOpenControls: () => setState(() => _controlsOpen = true),
+                  onOpenNotifications: () =>
+                      setState(() => _notificationsOpen = true),
+                  notificationCount: snapshot.notifications.length,
+                  onOpenSettings: widget.onOpenSettings,
+                  onToggleFullscreen: widget.onToggleFullscreen,
+                  fullscreenActive: widget.fullscreenActive,
+                ),
               ),
             ),
           ),
-        ),
-        if (_controlsOpen) ...<Widget>[
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _controlsOpen = false),
+          if (_controlsOpen) ...<Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _controlsOpen = false),
+              ),
             ),
-          ),
-          // Anchored above the tray, which is where it opens from.
-          Positioned(
-            bottom: _taskbarHeight + 6,
-            right: DexSpace.lg,
-            child: Entrance(
-              rise: 6,
-              child: ControlCenter(
-                telemetry: snapshot.telemetry,
-                clipboard: snapshot.clipboard,
-                connectionKind: snapshot.selectedDevice?.connectionKind,
-                agentStatus: snapshot.agentStatus,
-                onToggleControl: widget.onToggleControl,
-                onToggleClipboardSync: widget.onToggleClipboardSync,
-                onSetVolume: widget.onSetVolume,
-                onOpenSettings: () {
-                  setState(() => _controlsOpen = false);
-                  widget.onOpenSettings();
+            // Anchored above the tray, which is where it opens from.
+            Positioned(
+              bottom: _taskbarHeight + 6,
+              right: DexSpace.lg,
+              child: Entrance(
+                rise: 6,
+                child: ControlCenter(
+                  telemetry: snapshot.telemetry,
+                  clipboard: snapshot.clipboard,
+                  connectionKind: snapshot.selectedDevice?.connectionKind,
+                  agentStatus: snapshot.agentStatus,
+                  onToggleControl: widget.onToggleControl,
+                  onToggleClipboardSync: widget.onToggleClipboardSync,
+                  onSetVolume: widget.onSetVolume,
+                  onManagePhones: widget.onManagePhones == null
+                      ? null
+                      : () {
+                          setState(() => _controlsOpen = false);
+                          widget.onManagePhones!();
+                        },
+                  onOpenSettings: () {
+                    setState(() => _controlsOpen = false);
+                    widget.onOpenSettings();
+                  },
+                ),
+              ),
+            ),
+          ],
+          if (_notificationsOpen)
+            Focus(
+              autofocus: true,
+              onKeyEvent: (FocusNode _, KeyEvent event) {
+                if (event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.escape) {
+                  setState(() => _notificationsOpen = false);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: NotificationCenter(
+                notifications: snapshot.notifications,
+                status: snapshot.notificationStatus,
+                applications: snapshot.applications,
+                now: now,
+                onClose: () => setState(() => _notificationsOpen = false),
+                onDismiss: widget.onDismissNotification,
+                onActivate: widget.onActivateNotification,
+                onDismissAll: widget.onDismissAllNotifications,
+                onOpenPermissions: () {
+                  setState(() => _notificationsOpen = false);
+                  widget.onOpenPermissions();
                 },
               ),
             ),
-          ),
-        ],
-        if (_notificationsOpen)
-          Focus(
-            autofocus: true,
-            onKeyEvent: (FocusNode _, KeyEvent event) {
-              if (event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.escape) {
-                setState(() => _notificationsOpen = false);
-                return KeyEventResult.handled;
-              }
-              return KeyEventResult.ignored;
-            },
-            child: NotificationCenter(
-              notifications: snapshot.notifications,
-              status: snapshot.notificationStatus,
-              applications: snapshot.applications,
-              now: now,
-              onClose: () => setState(() => _notificationsOpen = false),
-              onDismiss: widget.onDismissNotification,
-              onActivate: widget.onActivateNotification,
-              onDismissAll: widget.onDismissAllNotifications,
-              onOpenPermissions: () {
-                setState(() => _notificationsOpen = false);
-                widget.onOpenPermissions();
-              },
-            ),
-          ),
         ],
       ),
     );
@@ -422,7 +434,8 @@ class _Furniture extends StatelessWidget {
                 order: 0,
                 child: LinkRailChip(
                   telemetry: snapshot.telemetry,
-                  live: snapshot.recovery.phase == RecoveryPhase.idle ||
+                  live:
+                      snapshot.recovery.phase == RecoveryPhase.idle ||
                       snapshot.recovery.phase == RecoveryPhase.recovered,
                   readings: w >= 900
                       ? 3
