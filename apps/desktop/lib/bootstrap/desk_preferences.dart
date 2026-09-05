@@ -92,7 +92,7 @@ class LaunchRecord {
 /// every field must round-trip through [toJson]/[fromJson].
 class DeskPreferencesData {
   const DeskPreferencesData({
-    this.themeMode = ThemeMode.system,
+    this.themeMode = ThemeMode.dark,
     this.wallpaperIndex = 0,
     this.accentIndex = 0,
     this.glassEnabled = true,
@@ -192,12 +192,12 @@ class DeskPreferencesData {
   /// key all fall back to the default for that field. A settings file is not
   /// worth crashing the desk over.
   factory DeskPreferencesData.fromJson(Map<String, Object?> json) {
-    ThemeMode mode = ThemeMode.system;
+    ThemeMode mode = ThemeMode.dark;
     final Object? raw = json['themeMode'];
     if (raw is String) {
       mode = ThemeMode.values.firstWhere(
         (ThemeMode m) => m.name == raw,
-        orElse: () => ThemeMode.system,
+        orElse: () => ThemeMode.dark,
       );
     }
     final Object? idx = json['wallpaperIndex'];

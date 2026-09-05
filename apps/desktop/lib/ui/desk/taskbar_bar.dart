@@ -493,6 +493,7 @@ class _AppsGridButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DexGlass glass = DexGlass.of(context);
     return Semantics(
       button: true,
       label: 'Your apps',
@@ -516,9 +517,16 @@ class _AppsGridButton extends StatelessWidget {
                   horizontal: labelled ? DexSpace.lg : DexSpace.md,
                 ),
                 alignment: Alignment.center,
+                // The reference's launcher key is glass — white at 10%
+                // with a hairline — not a filled signal button. The one
+                // filled thing on the desk is the workspace that is active.
                 decoration: BoxDecoration(
-                  color: colors.signal.withValues(alpha: hovered ? 1 : 0.9),
-                  borderRadius: BorderRadius.circular(DexRadius.panel),
+                  color: hovered ? glass.fillStrong : glass.fill,
+                  border: Border.all(
+                    color: glass.strokeStrong,
+                    width: DexStroke.hairline,
+                  ),
+                  borderRadius: BorderRadius.circular(DexRadius.card),
                   // The reference gives this button a plain elevation shadow,
                   // not a coloured halo. A glow behind a filled accent button
                   // reads as a highlight effect rather than as a control, and
@@ -541,17 +549,13 @@ class _AppsGridButton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    const Icon(
-                      DexIcons.appsGrid,
-                      size: 20,
-                      color: Colors.white,
-                    ),
+                    Icon(DexIcons.appsGrid, size: 18, color: colors.text),
                     if (labelled) ...<Widget>[
                       const SizedBox(width: DexSpace.sm),
                       Text(
-                        'Your apps',
+                        'Your Apps',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
+                          color: colors.text,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

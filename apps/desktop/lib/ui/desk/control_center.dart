@@ -141,9 +141,9 @@ class ControlCenter extends StatelessWidget {
     // A truncated label reads as a rendering fault; the shorter word is
     // unambiguous next to the aeroplane icon.
     DeviceControl.airplaneMode => ('Airplane', DexIcons.airplane),
-    DeviceControl.rotationLock => ('Rotation lock', DexIcons.rotationLock),
+    DeviceControl.rotationLock => ('Rotation', DexIcons.rotationLock),
     DeviceControl.torch => ('Torch', DexIcons.torch),
-    DeviceControl.mobileData => ('Mobile data', DexIcons.cellular),
+    DeviceControl.mobileData => ('Data', DexIcons.cellular),
     DeviceControl.location => ('Location', DexIcons.location),
   };
 
@@ -202,17 +202,19 @@ class ControlCenter extends StatelessWidget {
               ],
             ),
             const SizedBox(height: DexSpace.md),
-            Wrap(
-              spacing: DexSpace.md,
-              runSpacing: DexSpace.md,
+            // One row, five across, as the reference lays them: a Wrap put
+            // the fifth toggle on a line of its own.
+            Row(
               children: <Widget>[
                 for (final DeviceControl control in gridControls)
-                  _CircleToggle(
-                    control: control,
-                    value: _valueOf(control),
-                    lockedReason: _lockedReason(control),
-                    lockedDetail: _lockedDetail(control),
-                    onToggle: onToggleControl,
+                  Expanded(
+                    child: _CircleToggle(
+                      control: control,
+                      value: _valueOf(control),
+                      lockedReason: _lockedReason(control),
+                      lockedDetail: _lockedDetail(control),
+                      onToggle: onToggleControl,
+                    ),
                   ),
               ],
             ),
@@ -337,6 +339,7 @@ class _WidePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final DexGlass glass = DexGlass.of(context);
     final (String label, IconData icon) = ControlCenter._describe(control);
     final bool known = value != null;
     final bool on = value ?? false;
@@ -377,7 +380,10 @@ class _WidePill extends StatelessWidget {
               vertical: DexSpace.sm,
             ),
             decoration: BoxDecoration(
-              color: on ? c.signal.withValues(alpha: 0.9) : c.raised,
+              // A slate pill either way; the state lives in the icon's disc,
+              // as the reference draws it — trace for the radio that carries
+              // the link, signal for the rest.
+              color: on ? glass.fillStrong : glass.fill,
               borderRadius: BorderRadius.circular(DexRadius.panel),
             ),
             child: Row(
@@ -388,7 +394,9 @@ class _WidePill extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: on ? Colors.white : c.surface.withValues(alpha: 0.6),
+                    color: on
+                        ? (control == DeviceControl.wifi ? c.trace : c.signal)
+                        : c.surface.withValues(alpha: 0.6),
                   ),
                   child: Icon(
                     icon,
@@ -396,7 +404,7 @@ class _WidePill extends StatelessWidget {
                     color: !known
                         ? c.muted.withValues(alpha: 0.4)
                         : on
-                        ? c.signal
+                        ? c.bg
                         : c.muted,
                   ),
                 ),
@@ -411,29 +419,19 @@ class _WidePill extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelLarge
-                            ?.copyWith(color: on ? Colors.white : c.text),
+                            ?.copyWith(color: c.text),
                       ),
                       Text(
                         sub,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DexTheme.data(
-                          c,
-                          size: 10,
-                          color: on
-                              ? Colors.white.withValues(alpha: 0.8)
-                              : c.muted,
-                        ),
+                        style: DexTheme.data(c, size: 10),
                       ),
                     ],
                   ),
                 ),
                 if (locked != null)
-                  Icon(
-                    DexIcons.locked,
-                    size: 12,
-                    color: on ? Colors.white : c.muted,
-                  ),
+                  Icon(DexIcons.locked, size: 12, color: c.muted),
               ],
             ),
           ),
@@ -484,47 +482,48 @@ class _CircleToggle extends StatelessWidget {
           (true, final String _?) => lockedDetail ?? label,
           (true, null) => label,
         },
-        child: SizedBox(
-          width: 76,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              InkWell(
-                onTap: usable ? () => onToggle(control, !on) : null,
-                customBorder: const CircleBorder(),
-                child: AnimatedContainer(
-                  duration: DexDuration.micro,
-                  curve: DexMotion.arrive,
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: on ? Colors.white : c.raised,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: !usable
-                        ? c.muted.withValues(alpha: 0.4)
-                        : on
-                        ? const Color(0xFF14171C)
-                        : c.text,
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            InkWell(
+              onTap: usable ? () => onToggle(control, !on) : null,
+              customBorder: const CircleBorder(),
+              child: AnimatedContainer(
+                duration: DexDuration.micro,
+                curve: DexMotion.arrive,
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: on
+                      ? (control == DeviceControl.mobileData
+                            ? c.trace
+                            : c.signal)
+                      : c.raised,
+                ),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: !usable
+                      ? c.muted.withValues(alpha: 0.4)
+                      : on
+                      ? c.bg
+                      : c.text,
                 ),
               ),
-              const SizedBox(height: DexSpace.xs),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: usable ? c.text : c.muted.withValues(alpha: 0.6),
-                ),
+            ),
+            const SizedBox(height: DexSpace.xs),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: usable ? c.text : c.muted.withValues(alpha: 0.6),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

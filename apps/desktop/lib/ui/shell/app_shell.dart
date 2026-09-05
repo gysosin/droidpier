@@ -963,6 +963,7 @@ class _AppShellState extends State<AppShell> {
             onMediaAction: widget.facade.sendMediaAction,
             onFocusWindow: _wm.focusOrRestore,
             onCloseWindow: widget.facade.closeWindow,
+            onManagePhones: () => setState(() => _connectOpen = true),
             onOpenSettings: () => setState(() {
               _settingsOpen = true;
               _drawerOpen = false;

@@ -73,6 +73,17 @@ click by click, rather than against its source. What changed on screen:
   in the product, on purpose: a phone drawn on the desk is a picture of a
   phone.
 
+- **On a real phone**: the Link chip always shows `RTT · TX · RATE`, with an
+  em dash while the link is idle, instead of collapsing to `LINK |`; *Your
+  Apps* is the reference's glass pill, not a filled key; the control centre's
+  Wi-Fi and Bluetooth pills are slate with a coloured icon disc, the five
+  toggles sit on one row at 44 px, and *Manage Phones…* is wired in the
+  product; and the agent now draws adaptive app icons under the desk's
+  rounded-square mask rather than the launcher's (a circle on some phones),
+  so the desk shows tiles, not discs. Dark is the default theme — the design
+  is the dark glass desk, and following the platform put a light desk in
+  front of anyone on a light system.
+
 Not shipped, and why: the reference's Wi-Fi SSID subline (the facade does
 not carry an SSID, and a placeholder would be a lie); its two-way Dark/Light
 theme control (System is a real setting here); its `Skip tour` / `Step n of
