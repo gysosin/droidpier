@@ -11,6 +11,17 @@ import 'package:open_dex_platform/open_dex_platform.dart';
 
 import 'probe_support.dart';
 
+/// Writes one line and waits for it to leave.
+///
+/// To a file or a pipe Dart's stdout buffers ~64 KB, so a probe that stalls
+/// looks like a probe that printed nothing. The flush must be awaited: a
+/// second write while one is in flight throws "StreamSink is bound to a
+/// stream", which then reads exactly like the pipeline hanging.
+Future<void> log(Object? message) async {
+  stdout.writeln(message);
+  await stdout.flush();
+}
+
 Future<void> main(List<String> args) async {
   final adb = AdbClient(executable: args[0]);
   final url = args[3];
@@ -31,16 +42,22 @@ Future<void> main(List<String> args) async {
   );
   final watch = Stopwatch()..start();
   try {
-    final packageName = await gateway.resolveBrowser(device, url);
-    stdout.writeln('browser: ${packageName ?? 'none'}');
+    // A bare package name launches the app the ordinary way instead, which
+    // is how this tool tells a fault in the address path from a fault in the
+    // window pipeline underneath it.
+    final bool isUrl = url.contains('://');
+    final packageName = isUrl ? await gateway.resolveBrowser(device, url) : url;
+    await log('${isUrl ? 'browser' : 'app'}: ${packageName ?? 'none'}');
     if (packageName == null) return;
-    final session = await gateway.launchUrl(
-      device,
-      AndroidApplication(packageName: packageName, label: packageName),
-      url,
+    final application = AndroidApplication(
+      packageName: packageName,
+      label: packageName,
     );
+    final session = isUrl
+        ? await gateway.launchUrl(device, application, url)
+        : await gateway.launch(device, application);
     final surface = session.surface!;
-    stdout.writeln(
+    await log(
       'window on display ${session.displayId}: '
       '${surface.pixelSize.width}x${surface.pixelSize.height}, first frame '
       'after ${watch.elapsedMilliseconds} ms',
@@ -50,16 +67,16 @@ Future<void> main(List<String> args) async {
     await Future<void>.delayed(Duration(seconds: seconds));
     final after = host.framesFor(surface.textureId);
     final dt = (watch.elapsedMilliseconds - t0) / 1000;
-    stdout.writeln(
+    await log(
       'frames ${after - before} in ${dt.toStringAsFixed(1)} s = '
       '${((after - before) / dt).toStringAsFixed(1)} fps',
     );
     final tasks = await adb.shell(device.id, const ['am', 'stack', 'list']);
-    stdout.writeln('browser task: ${taskLine(tasks, packageName)}');
+    await log('browser task: ${taskLine(tasks, packageName)}');
     await gateway.close(session.id);
-    stdout.writeln('closed cleanly');
+    await log('closed cleanly');
   } on BackendFailure catch (f) {
-    stdout.writeln('FAILED ${f.error.message} | ${f.error.technicalDetails}');
+    await log('FAILED ${f.error.message} | ${f.error.technicalDetails}');
   } finally {
     await gateway.dispose();
   }

@@ -138,3 +138,24 @@ dart run tool/catalog_probe.dart ~/.local/opt/droidpier/<version>/resources/scrc
 ```
 
 Stop the desktop app first: two agents on one phone fight over the port.
+
+## Device check for opening an address on the phone
+
+`plugins/open_dex_platform/tool/url_probe.dart` resolves the phone's browser,
+opens an address on a fresh display through the real window gateway, counts
+the frames that arrive, and closes:
+
+```bash
+cd plugins/open_dex_platform
+R=~/.local/opt/droidpier/<version>/resources
+dart run tool/url_probe.dart "$R/scrcpy/adb" "$R/scrcpy/scrcpy-server" "$R/ffmpeg/ffmpeg" "https://www.google.com/search?q=droidpier&hl=en" 4
+```
+
+Pass a bare package name instead of an address to launch that app the ordinary
+way — the same probe over the untouched window path, which is how a fault in
+the address path is told apart from one in the pipeline underneath it.
+
+Stop the desktop app first. A probe killed mid-session leaves a scrcpy server
+and a virtual display on the phone; a few of those and the phone's encoder has
+nothing left for a new session, which reads as "no frames" rather than as an
+error. `adb shell ps -A | grep app_process` shows them.

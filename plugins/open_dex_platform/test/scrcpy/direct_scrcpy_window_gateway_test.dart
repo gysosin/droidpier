@@ -314,10 +314,13 @@ void main() {
       expect(
         await gateway.resolveBrowser(
           _device,
-          'https://www.google.com/search?q=a',
+          'https://www.google.com/search?q=a&hl=en',
         ),
         'com.android.chrome',
       );
+      // adb joins these into one line for the phone's shell, so an unquoted
+      // `&` would end the command there and resolve a truncated address —
+      // silently, and with a plausible answer. Every address is quoted.
       expect(adb.commands.last, [
         'cmd',
         'package',
@@ -326,7 +329,7 @@ void main() {
         '-a',
         'android.intent.action.VIEW',
         '-d',
-        'https://www.google.com/search?q=a',
+        "'https://www.google.com/search?q=a&hl=en'",
       ]);
       const browser = AndroidApplication(
         packageName: 'com.android.chrome',
@@ -335,7 +338,7 @@ void main() {
       final session = await gateway.launchUrl(
         _device,
         browser,
-        'https://www.google.com/search?q=a',
+        'https://www.google.com/search?q=a&hl=en',
         sessionId: 'direct-url-1',
       );
       expect(session.id, 'direct-url-1');
@@ -352,11 +355,17 @@ void main() {
             '-a',
             'android.intent.action.VIEW',
             '-d',
-            'https://www.google.com/search?q=a',
+            "'https://www.google.com/search?q=a&hl=en'",
             '-p',
             'com.android.chrome',
-            '--activity-new-task',
-            '--activity-multiple-task',
+            // Android names its activity flags and there is no
+            // `--activity-new-task` among them: the phone answers an unknown
+            // option with a stack trace. The numeric form carries both
+            // FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_MULTIPLE_TASK, which is
+            // what a second browser task needs — multiple-task is ignored
+            // without new-task.
+            '-f',
+            '0x18000000',
           ]),
         ),
       );
@@ -398,6 +407,24 @@ void main() {
       );
     },
   );
+
+  test('an address cannot close its own quoting', () async {
+    final adb = _RecordingAdb(stackList: '');
+    final gateway = DirectScrcpyWindowGateway(
+      serverStarter: _FakeServerStarter(),
+      decoderStarter: FakeDecoderStarter(),
+      serverJarPath: '/runtime/scrcpy-server',
+      ffmpegExecutable: '/runtime/ffmpeg',
+      textureHost: FakeTextureHost(),
+      processExecutor: const FakeExecutor(),
+      adb: adb,
+    );
+    addTearDown(gateway.dispose);
+    await gateway.resolveBrowser(_device, "https://e.example/?q='; id #");
+    // Each quote in the address is closed, escaped and reopened, so the
+    // phone's shell reads one argument and no command of its own.
+    expect(adb.commands.last.last, r"""'https://e.example/?q='\''; id #'""");
+  });
 
   test('no handler for web addresses resolves to null', () async {
     final adb = _RecordingAdb(

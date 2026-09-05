@@ -123,7 +123,7 @@ class DirectScrcpyWindowGateway
       '-a',
       'android.intent.action.VIEW',
       '-d',
-      url,
+      _shellQuote(url),
     ]);
     // --brief prints the match flags, then `package/activity` on the last
     // line; without a handler it prints "No activity found".
@@ -163,14 +163,18 @@ class DirectScrcpyWindowGateway
           '-a',
           'android.intent.action.VIEW',
           '-d',
-          url,
+          _shellQuote(url),
           '-p',
           browser.packageName,
-          // A new task, and a new one even if the browser already has one:
-          // a single-task browser would otherwise resume on the phone's own
-          // display and leave this window empty.
-          '--activity-new-task',
-          '--activity-multiple-task',
+          // FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK: a new task,
+          // and a new one even if the browser already has one, because a
+          // single-task browser would otherwise resume on the phone's own
+          // display and leave this window empty. Set numerically because
+          // Android names its activity flags and has no `--activity-new-task`
+          // among them — it answers an unknown option with a stack trace —
+          // while `--activity-multiple-task` alone is ignored without it.
+          '-f',
+          '0x18000000',
         ]);
         if (output.contains('Error') || output.contains('Exception')) {
           throw _failure('The phone could not open the address.', output);
@@ -998,6 +1002,17 @@ class DirectScrcpyWindowGateway
       throw _failure('The Android device identifier is invalid.');
     }
   }
+
+  /// One argument for the phone's shell.
+  ///
+  /// `adb shell` joins its arguments into a single line and hands that to the
+  /// device's shell, so an address carrying `&`, `?` or a quote would be read
+  /// as shell syntax rather than as data — and an address truncated at its
+  /// first `&` still resolves to a plausible browser, which is the worst
+  /// version of this bug. Single quotes make the whole address literal; the
+  /// quotes inside it are closed, escaped and reopened.
+  static String _shellQuote(String value) =>
+      "'${value.replaceAll("'", r"'\''")}'";
 
   static const int _androidBack = 4;
 
