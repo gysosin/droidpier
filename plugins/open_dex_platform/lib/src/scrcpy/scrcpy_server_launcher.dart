@@ -48,7 +48,7 @@ abstract interface class ScrcpyMirrorStarter {
     required String serverJarPath,
     required int hostPort,
     required String scid,
-    int maxSize = 540,
+    int maxSize = 1080,
     int maxFps = 30,
   });
 }
@@ -119,7 +119,7 @@ class ScrcpyServerLauncher implements ScrcpyServerStarter, ScrcpyMirrorStarter {
     required String serverJarPath,
     required int hostPort,
     required String scid,
-    int maxSize = 540,
+    int maxSize = 1080,
     int maxFps = 30,
   }) => _launch(
     device: device,

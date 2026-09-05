@@ -56,7 +56,7 @@ void main() {
       expect(session.surface.textureId, 91);
       expect(session.surface.pixelSize.width, 540);
       expect(session.surface.pixelSize.height, 1170);
-      expect(starter.maxSize, 540);
+      expect(starter.maxSize, 1080);
       expect(starter.maxFps, 30);
       expect(starter.connections, 1, reason: 'one socket: video only');
       expect(decoders.decoder.initialConfig?.isConfig, isTrue);
@@ -208,7 +208,7 @@ class _FakeMirrorStarter implements ScrcpyMirrorStarter {
     required String serverJarPath,
     required int hostPort,
     required String scid,
-    int maxSize = 540,
+    int maxSize = 1080,
     int maxFps = 30,
   }) async {
     starts++;

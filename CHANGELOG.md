@@ -6,8 +6,9 @@
 
 The *Phone Mirror* door used to open a frame that said a live screen was not
 available. It now streams the phone's own display into that frame, view
-only: scrcpy-server mirrors display 0 scaled to 540 px at 30 fps over a
-single video socket, decoded through the same pipeline the app windows use.
+only: scrcpy-server mirrors display 0, its long side capped at 1080 px
+(about 500 px wide for a portrait phone) at 30 fps, over a single video
+socket, decoded through the same pipeline the app windows use.
 The frame follows the phone when it rotates, letterboxing to the new
 aspect, and says plainly what it is doing when it cannot show frames:
 *Connecting…* while the stream comes up, the reason and a *Retry* when it

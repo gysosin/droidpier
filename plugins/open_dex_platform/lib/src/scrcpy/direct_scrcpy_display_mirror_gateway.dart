@@ -33,7 +33,7 @@ class DirectScrcpyDisplayMirrorGateway implements DisplayMirrorGateway {
     this.startTimeout = const Duration(seconds: 15),
     this.firstFrameTimeout = const Duration(seconds: 10),
     this.surfaceRetireDelay = const Duration(milliseconds: 250),
-    this.maxSize = 540,
+    this.maxSize = 1080,
     this.maxFps = 30,
   }) {
     if (startTimeout <= Duration.zero || firstFrameTimeout <= Duration.zero) {
@@ -54,10 +54,12 @@ class DirectScrcpyDisplayMirrorGateway implements DisplayMirrorGateway {
   final Duration firstFrameTimeout;
   final Duration surfaceRetireDelay;
 
-  /// The longer side of the mirrored frame in pixels; scrcpy scales the
-  /// display down to it. The desk draws the mirror small, so the default is
-  /// half the phone's width, which keeps the phone's encoder free for the
-  /// app windows streaming beside it.
+  /// scrcpy caps the display's *longer* side at this many pixels. 1080 gives
+  /// a portrait phone about 500 px of width: enough for the 240-logical-px
+  /// frame on a 2× desk, and a quarter of the pixels the phone's encoder
+  /// would spend on its full 1080×2340, which the app windows share. A cap
+  /// of 540 was tried first and gave a 248 px wide stream — the plan had read
+  /// the option as a width.
   final int maxSize;
   final int maxFps;
 

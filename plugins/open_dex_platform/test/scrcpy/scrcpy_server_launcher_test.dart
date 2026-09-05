@@ -142,7 +142,7 @@ void main() {
       'video_codec=h264',
       'video_bit_rate=4000000',
       'max_fps=30',
-      'max_size=540',
+      'max_size=1080',
       'send_device_meta=true',
       'send_frame_meta=true',
       'send_stream_meta=true',

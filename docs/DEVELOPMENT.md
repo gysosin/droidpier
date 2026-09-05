@@ -105,3 +105,22 @@ and shell-agent JAR across every desktop package.
 builds the restricted FFmpeg configuration. `tool/build_linux.sh` creates Linux
 packages. Windows and macOS code is experimental until their native builds and
 real-device checks pass; build script availability does not imply support.
+
+## Device check for the phone mirror
+
+`plugins/open_dex_platform/tool/mirror_probe.dart` runs the real
+`DirectScrcpyDisplayMirrorGateway` against the attached phone with a texture
+host that reads the RGBA pipe and counts frames, no UI involved:
+
+```bash
+cd plugins/open_dex_platform
+R=~/.local/opt/droidpier/<version>/resources
+dart run tool/mirror_probe.dart "$R/scrcpy/adb" "$R/scrcpy/scrcpy-server" "$R/ffmpeg/ffmpeg" 6 1080 stir
+```
+
+It prints the stream size, the time to the first frame and the frame rate;
+`stir` swipes the launcher during the window so the encoder has something to
+send, and a trailing `count` counts packets at the socket instead of decoding
+them, which separates "the phone sends few frames" from "the decoder loses
+them". A locked phone mirrors its lock screen and sends a frame only when
+that changes, so unlock it before reading a frame rate.
