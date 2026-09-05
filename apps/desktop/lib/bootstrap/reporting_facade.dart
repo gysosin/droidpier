@@ -101,6 +101,10 @@ class ReportingOpenDexFacade implements OpenDexFacade {
   Future<VoidResult> openUrl(String url) => _report(delegate.openUrl(url));
 
   @override
+  Future<CommandResult<String>> openUrlOnPhone(String url) =>
+      _report(delegate.openUrlOnPhone(url));
+
+  @override
   Future<VoidResult> startDisplayMirror() => _report(
     delegate.startDisplayMirror(),
     // The mirror frame shows its own state; a banner would say it twice.

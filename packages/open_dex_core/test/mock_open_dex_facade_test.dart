@@ -209,4 +209,22 @@ void main() {
     expect(await facade.stopDisplayMirror(), isA<CommandSuccess<void>>());
     expect(facade.snapshot.displayMirror.status, DisplayMirrorStatus.idle);
   });
+
+  test(
+    'a web address opens the demo browser as a window on the phone',
+    () async {
+      final facade = MockOpenDexFacade();
+      final result = await facade.openUrlOnPhone('https://example.com/a?b=c');
+      expect(result, isA<CommandSuccess<String>>());
+      expect(facade.phoneUrls, ['https://example.com/a?b=c']);
+      final window = facade.snapshot.windows.single;
+      expect(window.application.packageName, 'com.android.chrome');
+      expect(window.id, (result as CommandSuccess<String>).value);
+      expect(
+        await facade.openUrlOnPhone('javascript:alert(1)'),
+        isA<CommandFailure<String>>(),
+      );
+      expect(facade.phoneUrls, hasLength(1));
+    },
+  );
 }

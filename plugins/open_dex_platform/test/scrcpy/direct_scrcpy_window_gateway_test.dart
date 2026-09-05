@@ -289,6 +289,134 @@ void main() {
     ]);
   });
 
+  test(
+    'a web address starts the browser on the new display through am',
+    () async {
+      final server = _FakeServerStarter();
+      final decoders = FakeDecoderStarter();
+      final textures = FakeTextureHost();
+      final adb = _RecordingAdb(
+        stackList:
+            '  RootTask id=7 bounds=[0,0][832,1280] displayId=44 userId=0\n'
+            '    taskId=7: com.android.chrome/com.google.android.apps.chrome.Main\n',
+      );
+      final gateway = DirectScrcpyWindowGateway(
+        serverStarter: server,
+        decoderStarter: decoders,
+        serverJarPath: '/runtime/scrcpy-server',
+        ffmpegExecutable: '/runtime/ffmpeg',
+        textureHost: textures,
+        processExecutor: const FakeExecutor(),
+        surfaceRetireDelay: Duration.zero,
+        adb: adb,
+      );
+      addTearDown(gateway.dispose);
+      expect(
+        await gateway.resolveBrowser(
+          _device,
+          'https://www.google.com/search?q=a',
+        ),
+        'com.android.chrome',
+      );
+      expect(adb.commands.last, [
+        'cmd',
+        'package',
+        'resolve-activity',
+        '--brief',
+        '-a',
+        'android.intent.action.VIEW',
+        '-d',
+        'https://www.google.com/search?q=a',
+      ]);
+      const browser = AndroidApplication(
+        packageName: 'com.android.chrome',
+        label: 'Chrome',
+      );
+      final session = await gateway.launchUrl(
+        _device,
+        browser,
+        'https://www.google.com/search?q=a',
+        sessionId: 'direct-url-1',
+      );
+      expect(session.id, 'direct-url-1');
+      expect(session.displayId, 44);
+      expect(session.surface?.pixelSize.width, 832);
+      expect(
+        adb.commands,
+        anyElement(
+          equals([
+            'am',
+            'start',
+            '--display',
+            '44',
+            '-a',
+            'android.intent.action.VIEW',
+            '-d',
+            'https://www.google.com/search?q=a',
+            '-p',
+            'com.android.chrome',
+            '--activity-new-task',
+            '--activity-multiple-task',
+          ]),
+        ),
+      );
+      // The control socket carried nothing: no TYPE_START_APP for the browser.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(server.controlBytes, isEmpty);
+      expect(adb.commands.any((c) => c.contains('move-stack')), isFalse);
+    },
+  );
+
+  test(
+    'a browser that lands on the phone display is moved to the window',
+    () async {
+      final server = _FakeServerStarter();
+      final adb = _RecordingAdb(
+        stackList:
+            '  RootTask id=3 bounds=[0,0][1080,2340] displayId=0 userId=0\n'
+            '    taskId=3: com.android.chrome/com.google.android.apps.chrome.Main\n',
+      );
+      final gateway = DirectScrcpyWindowGateway(
+        serverStarter: server,
+        decoderStarter: FakeDecoderStarter(),
+        serverJarPath: '/runtime/scrcpy-server',
+        ffmpegExecutable: '/runtime/ffmpeg',
+        textureHost: FakeTextureHost(),
+        processExecutor: const FakeExecutor(),
+        surfaceRetireDelay: Duration.zero,
+        adb: adb,
+      );
+      addTearDown(gateway.dispose);
+      await gateway.launchUrl(
+        _device,
+        const AndroidApplication(packageName: 'com.android.chrome', label: 'C'),
+        'https://a.example',
+      );
+      expect(
+        adb.commands,
+        anyElement(equals(['am', 'display', 'move-stack', '3', '44'])),
+      );
+    },
+  );
+
+  test('no handler for web addresses resolves to null', () async {
+    final adb = _RecordingAdb(
+      stackList: '',
+      resolveOutput: 'No activity found',
+    );
+    final gateway = DirectScrcpyWindowGateway(
+      serverStarter: _FakeServerStarter(),
+      decoderStarter: FakeDecoderStarter(),
+      serverJarPath: '/runtime/scrcpy-server',
+      ffmpegExecutable: '/runtime/ffmpeg',
+      textureHost: FakeTextureHost(),
+      processExecutor: const FakeExecutor(),
+      adb: adb,
+    );
+    addTearDown(gateway.dispose);
+    expect(await gateway.resolveBrowser(_device, 'https://a.example'), isNull);
+  });
+
   test('close stops decoder, texture, sockets, and server handle', () async {
     final server = _FakeServerStarter();
     final decoders = FakeDecoderStarter();
@@ -595,6 +723,32 @@ void main() {
 }
 
 /// An [AdbClient] whose `shell` always returns [_output], for `wm size`.
+/// Answers the shell commands the URL path issues, and records them all.
+class _RecordingAdb extends AdbClient {
+  _RecordingAdb({
+    required this.stackList,
+    this.resolveOutput =
+        'priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 '
+        'isDefault=true\n'
+        'com.android.chrome/com.google.android.apps.chrome.Main',
+  }) : super(executable: '/tools/adb');
+  final String stackList;
+  final String resolveOutput;
+  final List<List<String>> commands = <List<String>>[];
+  @override
+  Future<String> shell(String deviceId, List<String> command) async {
+    commands.add(List<String>.from(command));
+    return switch (command) {
+      ['cmd', 'package', 'resolve-activity', ...] => resolveOutput,
+      ['am', 'start', ...] =>
+        'Starting: Intent { act=android.intent.action.VIEW }',
+      ['am', 'stack', 'list'] => stackList,
+      ['wm', 'size'] => 'Physical size: 1080x2340',
+      _ => '',
+    };
+  }
+}
+
 class _FakeAdb extends AdbClient {
   _FakeAdb(this._output);
 

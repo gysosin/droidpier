@@ -229,6 +229,21 @@ abstract interface class WindowSurfaceUpdateGateway {
   Stream<WindowBackendSession> get surfaceUpdates;
 }
 
+/// Optional capability for gateways that can open a web address in the
+/// phone's browser inside a new window, rather than only start an app by name.
+abstract interface class UrlWindowGateway {
+  /// The package the phone would hand [url] to, or null when nothing on the
+  /// phone can open a web address.
+  Future<String?> resolveBrowser(DeviceSummary device, String url);
+
+  Future<WindowBackendSession> launchUrl(
+    DeviceSummary device,
+    AndroidApplication browser,
+    String url, {
+    String? sessionId,
+  });
+}
+
 /// Optional capability for gateways that can inject Android navigation keys
 /// (Home/Back/Recents/Menu/Search) into a window's display.
 abstract interface class NavKeyWindowGateway {

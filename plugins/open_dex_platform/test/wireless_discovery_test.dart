@@ -89,8 +89,7 @@ void main() {
 }
 
 class _Interface implements NetworkInterface {
-  _Interface(this.index, String address)
-    : addresses = [_Address(address)];
+  _Interface(this.index, String address) : addresses = [_Address(address)];
   @override
   final int index;
   @override
