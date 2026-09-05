@@ -39,6 +39,7 @@ import '../workspace/window_switcher.dart';
 import '../workspace/window_geometry_store.dart';
 import '../workspace/window_model.dart';
 import '../workspace/workspace.dart';
+import '../companion/companion_view.dart';
 
 /// The whole product, composed.
 ///
@@ -113,6 +114,7 @@ class AppShell extends StatefulWidget {
   /// The chosen desk wallpaper — 0 is the theme default, 1..N select
   /// [kWallpaperChoices] — and its setter. Persisted alongside the theme.
   final int wallpaperIndex;
+
   final ValueChanged<int> onWallpaperChanged;
 
   /// Launch counts and recency per package, and its setter. Lifted out of the
@@ -385,6 +387,12 @@ class _AppShellState extends State<AppShell> {
   /// drifted is easiest to see beside the ones it should match.
   bool _tokensOpen = false;
 
+  /// The companion app, rendered in a phone frame over the desk.
+  bool _companionOpen = false;
+
+  /// The boot screen, shown over a running desk from the header's door.
+  bool _bootViewOpen = false;
+
   /// The command palette. Ctrl+Shift+P.
   bool _paletteOpen = false;
 
@@ -540,12 +548,19 @@ class _AppShellState extends State<AppShell> {
     isSwitcherOpen: () => _switcherOpen,
     cancelSwitch: () => setState(() => _switcherOpen = false),
     isDeskSurfaceOpen: () =>
-        _drawerOpen || _permissionsOpen || _settingsOpen || _tokensOpen,
+        _drawerOpen ||
+        _permissionsOpen ||
+        _settingsOpen ||
+        _tokensOpen ||
+        _companionOpen ||
+        _bootViewOpen,
     closeDeskSurfaces: () => setState(() {
       _drawerOpen = false;
       _permissionsOpen = false;
       _settingsOpen = false;
       _tokensOpen = false;
+      _companionOpen = false;
+      _bootViewOpen = false;
     }),
     isConnectOpen: () => _connectOpen,
     closeConnect: () => setState(() => _connectOpen = false),
@@ -964,6 +979,12 @@ class _AppShellState extends State<AppShell> {
             onFocusWindow: _wm.focusOrRestore,
             onCloseWindow: widget.facade.closeWindow,
             onManagePhones: () => setState(() => _connectOpen = true),
+            onOpenTokens: () => setState(() => _tokensOpen = true),
+            onOpenCompanion: () => setState(() => _companionOpen = true),
+            onToggleMirror: () =>
+                setState(() => _phoneMirrorOpen = !_phoneMirrorOpen),
+            onOpenBoot: () => setState(() => _bootViewOpen = true),
+            launcherOpen: _drawerOpen,
             onOpenSettings: () => setState(() {
               _settingsOpen = true;
               _drawerOpen = false;
@@ -1078,8 +1099,39 @@ class _AppShellState extends State<AppShell> {
         ),
       );
     }
+    if (_bootViewOpen) {
+      // The boot screen over a running desk: the rail with every station lit,
+      // and Open Workspace to come back. The masthead's Select Device opens
+      // the chooser, as it does before the desk exists.
+      return Positioned.fill(
+        child: BootScreen(
+          boot: _s.boot,
+          device: _s.selectedDevice,
+          deviceCount: _s.devices.length,
+          onConnect: () => setState(() {
+            _bootViewOpen = false;
+            _connectOpen = true;
+          }),
+          onOpenWorkspace: () => setState(() => _bootViewOpen = false),
+          onRetry: widget.facade.retryBoot,
+        ),
+      );
+    }
+    if (_companionOpen) {
+      return _Overlay(
+        maxWidth: 420,
+        onDismiss: () => setState(() => _companionOpen = false),
+        child: Center(
+          child: CompanionView(
+            snapshot: _s,
+            onClose: () => setState(() => _companionOpen = false),
+          ),
+        ),
+      );
+    }
     if (_tokensOpen) {
       return _Overlay(
+        maxWidth: 1024,
         onDismiss: () => setState(() => _tokensOpen = false),
         child: TokenSheet(onClose: () => setState(() => _tokensOpen = false)),
       );
@@ -1179,7 +1231,6 @@ class _Overlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final Widget body = Stack(
       children: <Widget>[
         // Scrim: blurs and darkens the desk behind, dismisses on tap, and drops
@@ -1217,7 +1268,12 @@ class _Overlay extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(DexSpace.xxl),
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 620),
+              // 85% of the viewport, as the reference sizes every modal:
+              // a fixed 620 clipped settings mid-row on a tall screen.
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+              ),
               // GlassPanel, like every other surface. This card used to
               // hand-roll its own fill, its own hairline and its own blur — at
               // 28 rather than the committed 24 — which made the one place

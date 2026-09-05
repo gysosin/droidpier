@@ -62,49 +62,75 @@ class _TokenSheetState extends State<TokenSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
+          // The title block and the toggle group wrap as a pair: side by side
+          // when the sheet is wide, the toggles under the title when it is not.
+          // Neither can run past the edge.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: DexSpace.sm,
             children: <Widget>[
-              Container(
-                width: DexHit.comfortable,
-                height: DexHit.comfortable,
-                decoration: BoxDecoration(
-                  color: DexGlass.of(context).fill,
-                  borderRadius: BorderRadius.circular(DexRadius.control),
-                ),
-                child: Icon(DexIcons.palette, size: 18, color: c.signal),
-              ),
-              const SizedBox(width: DexSpace.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      'DroidPier Token & Specimen Explorer',
-                      style: t.titleLarge,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    width: DexHit.comfortable,
+                    height: DexHit.comfortable,
+                    decoration: BoxDecoration(
+                      color: DexGlass.of(context).fill,
+                      borderRadius: BorderRadius.circular(DexRadius.control),
                     ),
-                    Text(
-                      'Every token, in both modes and both finishes',
-                      style: t.bodySmall?.copyWith(color: c.muted),
+                    child: Icon(DexIcons.palette, size: 18, color: c.signal),
+                  ),
+                  const SizedBox(width: DexSpace.md),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          'DroidPier Token & Specimen Explorer',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: t.titleLarge,
+                        ),
+                        Text(
+                          '\u00a74 Design Tokens \u00b7 Glass Desk & Flat Matte '
+                          'Modes \u00b7 Strict Semantic System',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: t.bodySmall?.copyWith(color: c.muted),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              DexSegmented(
-                options: const <String>['Dark', 'Light'],
-                selected: _dark ? 0 : 1,
-                colors: c,
-                onSelect: (int i) => setState(() => _dark = i == 0),
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: DexSpace.sm,
+                runSpacing: DexSpace.xs,
+                children: <Widget>[
+                  DexSegmented(
+                    options: const <String>['Dark', 'Light'],
+                    selected: _dark ? 0 : 1,
+                    colors: c,
+                    onSelect: (int i) => setState(() => _dark = i == 0),
+                  ),
+                  DexSegmented(
+                    options: const <String>[
+                      'Glass (24px blur)',
+                      'Matte (Stream-safe)',
+                    ],
+                    selected: _glass ? 0 : 1,
+                    colors: c,
+                    onSelect: (int i) => setState(() => _glass = i == 0),
+                  ),
+                  Text('Esc to close', style: DexTheme.data(c, size: 10)),
+                ],
               ),
-              const SizedBox(width: DexSpace.sm),
-              DexSegmented(
-                options: const <String>['Glass', 'Matte'],
-                selected: _glass ? 0 : 1,
-                colors: c,
-                onSelect: (int i) => setState(() => _glass = i == 0),
-              ),
-              const SizedBox(width: DexSpace.md),
-              Text('Esc to close', style: DexTheme.data(c, size: 10)),
             ],
           ),
           const SizedBox(height: DexSpace.lg),

@@ -5,6 +5,7 @@ import '../widgets/segmented.dart';
 
 import '../util/app_version.dart';
 import '../theme/dex_colors.dart';
+import '../widgets/toggle.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -252,47 +253,7 @@ class DeskSettings extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: DexSpace.lg),
-                    _Group(
-                      title: 'About',
-                      colors: c,
-                      children: <Widget>[
-                        _NoteRow(
-                          title: 'DroidPier',
-                          detail: 'Desktop workspace for Android.',
-                          mono: versionLabel(),
-                          colors: c,
-                        ),
-                        Divider(
-                          height: 1,
-                          thickness: DexStroke.hairline,
-                          color: c.line,
-                        ),
-                        _NoteRow(
-                          title: 'Licenses',
-                          detail:
-                              'Original code is Apache-2.0. Bundled components '
-                              'keep their own terms: FFmpeg '
-                              '(LGPL-2.1-or-later), scrcpy (Apache-2.0), '
-                              'bundled fonts (OFL-1.1). Full texts and '
-                              'third-party notices ship with the app in',
-                          mono: 'resources/licenses',
-                          colors: c,
-                        ),
-                        Divider(
-                          height: 1,
-                          thickness: DexStroke.hairline,
-                          color: c.line,
-                        ),
-                        _CautionRow(
-                          title: 'Scope',
-                          detail:
-                              'Desktop audio forwarding is not implemented; '
-                              'sound stays on the phone. Windows and macOS '
-                              'builds are in development.',
-                          colors: c,
-                        ),
-                      ],
-                    ),
+                    _AboutCard(colors: c),
                   ],
                 ),
               ),
@@ -378,20 +339,12 @@ class _Group extends StatelessWidget {
           ],
         ),
         const SizedBox(height: DexSpace.sm),
-        Container(
-          decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(DexRadius.card),
-            border: Border.all(color: colors.line, width: DexStroke.hairline),
-          ),
-          // Stretch, not the default centre. Every row here is meant to be
-          // left-aligned and full width; the wide ones only looked that way by
-          // accident, and the first narrow row added — the accent swatches —
-          // rendered visibly centred.
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
+        // Stretch, not the default centre: every row is left-aligned and full
+        // width, and the narrow ones — the accent cards — once rendered
+        // centred by accident.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
         ),
       ],
     );
@@ -440,69 +393,6 @@ class _RowShell extends StatelessWidget {
   }
 }
 
-/// A row that only states something. No control, because there is nothing here
-/// the desk can act on — the same reason the permission buttons were removed.
-///
-/// [mono] is appended to [detail] as a final span in the data face, for a path
-/// or other literal that should not read as prose.
-class _NoteRow extends StatelessWidget {
-  const _NoteRow({
-    required this.title,
-    required this.detail,
-    required this.colors,
-    this.mono,
-  });
-
-  final String title;
-  final String detail;
-  final String? mono;
-  final DexColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme t = Theme.of(context).textTheme;
-    final TextStyle? body = t.bodyMedium?.copyWith(color: colors.muted);
-    return Padding(
-      padding: const EdgeInsets.all(DexSpace.md),
-      // Expanded, as in _RowShell: a bare Column shrink-wraps and _Group's
-      // Column then centres it, which reads as a different surface entirely.
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: t.bodyLarge),
-                const SizedBox(height: 2),
-                if (mono == null)
-                  Text(detail, style: body)
-                else
-                  Text.rich(
-                    TextSpan(
-                      style: body,
-                      children: <InlineSpan>[
-                        TextSpan(text: '$detail '),
-                        TextSpan(
-                          text: mono,
-                          style: DexTheme.data(
-                            colors,
-                            size: 12,
-                            color: colors.text,
-                          ),
-                        ),
-                        const TextSpan(text: '.'),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SwitchRow extends StatelessWidget {
   const _SwitchRow({
     required this.title,
@@ -524,14 +414,10 @@ class _SwitchRow extends StatelessWidget {
       title: title,
       detail: detail,
       colors: colors,
-      trailing: Semantics(
-        toggled: value,
-        label: title,
-        child: Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: colors.signal,
-        ),
+      trailing: DexToggle(
+        value: value,
+        onChanged: onChanged,
+        semanticLabel: title,
       ),
     );
   }
@@ -603,9 +489,7 @@ class _WallpaperRow extends StatelessWidget {
         const SizedBox(height: 2),
         Text(detail, style: t.bodySmall?.copyWith(color: colors.muted)),
         const SizedBox(height: DexSpace.md),
-        Wrap(
-          spacing: DexSpace.md,
-          runSpacing: DexSpace.md,
+        _FourUp(
           children: <Widget>[
             // Index 0 is the theme's own wallpaper; its swatch previews the
             // current theme colours so it reads right in light and dark.
@@ -674,7 +558,6 @@ class _Swatch extends StatelessWidget {
               ),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Container(
                   width: 20,
@@ -689,10 +572,14 @@ class _Swatch extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: DexSpace.sm),
-                Text(
-                  choice.name,
-                  style: t.bodySmall?.copyWith(
-                    color: selected ? colors.text : colors.muted,
+                Flexible(
+                  child: Text(
+                    choice.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.bodySmall?.copyWith(
+                      color: selected ? colors.text : colors.muted,
+                    ),
                   ),
                 ),
               ],
@@ -734,18 +621,20 @@ class _AccentRow extends StatelessWidget {
           style: t.bodySmall?.copyWith(color: colors.muted),
         ),
         const SizedBox(height: DexSpace.md),
-        Wrap(
-          spacing: DexSpace.md,
-          runSpacing: DexSpace.md,
+        Row(
           children: <Widget>[
-            for (int i = 0; i < kAccents.length; i++)
-              _AccentSwatch(
-                accent: kAccents[i],
-                colour: accentFor(i, brightness),
-                selected: i == selected || (selected < 0 && i == 0),
-                colors: colors,
-                onTap: () => onSelected(i),
+            for (int i = 0; i < kAccents.length; i++) ...<Widget>[
+              if (i > 0) const SizedBox(width: DexSpace.sm),
+              Expanded(
+                child: _AccentSwatch(
+                  accent: kAccents[i],
+                  colour: accentFor(i, brightness),
+                  selected: i == selected || (selected < 0 && i == 0),
+                  colors: colors,
+                  onTap: () => onSelected(i),
+                ),
               ),
+            ],
           ],
         ),
       ],
@@ -779,7 +668,7 @@ class _AccentSwatch extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(DexRadius.card),
         child: SizedBox(
-          width: 84,
+          width: double.infinity,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: selected
@@ -834,55 +723,6 @@ class _AccentSwatch extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// A note set as a caution: amber tint, a warning mark, the same shape as the
-/// rows around it. The reference uses this for the one limitation people hit
-/// most — sound stays on the phone.
-class _CautionRow extends StatelessWidget {
-  const _CautionRow({
-    required this.title,
-    required this.detail,
-    required this.colors,
-  });
-
-  final String title;
-  final String detail;
-  final DexColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme t = Theme.of(context).textTheme;
-    return Container(
-      margin: const EdgeInsets.all(DexSpace.sm),
-      padding: const EdgeInsets.all(DexSpace.md),
-      decoration: BoxDecoration(
-        color: colors.warn.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(DexRadius.control),
-        border: Border.all(
-          color: colors.warn.withValues(alpha: 0.35),
-          width: DexStroke.hairline,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(DexIcons.triangleAlert, size: 16, color: colors.warn),
-          const SizedBox(width: DexSpace.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: t.labelLarge?.copyWith(color: colors.warn)),
-                const SizedBox(height: 2),
-                Text(detail, style: t.bodySmall?.copyWith(color: colors.text)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -950,6 +790,107 @@ class _LinkTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Four to a row, however many there are: the reference's wallpaper grid.
+class _FourUp extends StatelessWidget {
+  const _FourUp({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> rows = <Widget>[];
+    for (int i = 0; i < children.length; i += 4) {
+      final List<Widget> cells = <Widget>[];
+      for (int j = 0; j < 4; j++) {
+        if (j > 0) cells.add(const SizedBox(width: DexSpace.sm));
+        cells.add(
+          Expanded(
+            child: i + j < children.length
+                ? children[i + j]
+                : const SizedBox.shrink(),
+          ),
+        );
+      }
+      if (i > 0) rows.add(const SizedBox(height: DexSpace.sm));
+      rows.add(Row(children: cells));
+    }
+    return Column(children: rows);
+  }
+}
+
+/// About, as the reference sets it: one mono card with the name, the build,
+/// the licence in a sentence, and the audio limitation in amber.
+class _AboutCard extends StatelessWidget {
+  const _AboutCard({required this.colors});
+
+  final DexColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexGlass glass = DexGlass.of(context);
+    return Container(
+      padding: const EdgeInsets.all(DexSpace.lg),
+      decoration: BoxDecoration(
+        color: glass.fillSubtle,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(color: glass.stroke, width: DexStroke.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'DroidPier Desktop',
+                  style: DexTheme.data(
+                    colors,
+                    size: 11,
+                    color: colors.text,
+                  ).copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              Text(
+                versionLabel(),
+                style: DexTheme.data(
+                  colors,
+                  size: 11,
+                  color: colors.signal,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: DexSpace.sm),
+          Text(
+            'Your Android. A bigger workspace. Apache-2.0 open source licence. '
+            'Bundled components keep their own licences \u2014 FFmpeg '
+            '(LGPL-2.1-or-later), scrcpy (Apache-2.0), the fonts (OFL-1.1); '
+            'full texts and notices ship in resources/licenses.',
+            style: DexTheme.data(colors, size: 11),
+          ),
+          const SizedBox(height: DexSpace.sm),
+          Container(
+            padding: const EdgeInsets.all(DexSpace.sm),
+            decoration: BoxDecoration(
+              color: colors.warn.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(DexRadius.control),
+              border: Border.all(
+                color: colors.warn.withValues(alpha: 0.20),
+                width: DexStroke.hairline,
+              ),
+            ),
+            child: Text(
+              'Known limitation: desktop audio forwarding is not implemented; '
+              'audio output continues through the physical phone.',
+              style: DexTheme.data(colors, size: 10, color: colors.warn),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -18,6 +18,9 @@ import 'desk_widgets.dart';
 import 'desk_search.dart';
 import 'notification_center.dart';
 import 'taskbar_bar.dart';
+import '../theme/dex_glass.dart';
+import '../theme/dex_icons.dart';
+import '../theme/dex_colors.dart';
 
 /// The desk — the product's home screen.
 ///
@@ -41,6 +44,11 @@ class Desk extends StatefulWidget {
     required this.onCloseWindow,
     required this.onOpenSettings,
     this.onManagePhones,
+    this.onOpenTokens,
+    this.onOpenCompanion,
+    this.onToggleMirror,
+    this.onOpenBoot,
+    this.launcherOpen = false,
     required this.onToggleFullscreen,
     required this.fullscreenActive,
     required this.onNavKey,
@@ -84,6 +92,17 @@ class Desk extends StatefulWidget {
 
   /// Opens the phone chooser. Null leaves the control centre's link out.
   final VoidCallback? onManagePhones;
+
+  /// The header's four doors, as the reference sets them top-right: the token
+  /// explorer, the companion app, the phone mirror and the boot screen. Each
+  /// is optional; a missing one leaves its pill out rather than dead.
+  final VoidCallback? onOpenTokens;
+  final VoidCallback? onOpenCompanion;
+  final VoidCallback? onToggleMirror;
+  final VoidCallback? onOpenBoot;
+
+  /// Whether the launcher is up, so its key can show it.
+  final bool launcherOpen;
 
   /// Enters/leaves edge-to-edge fullscreen for the focused window (tray button).
   final VoidCallback onToggleFullscreen;
@@ -207,6 +226,10 @@ class _DeskState extends State<Desk> {
               onOpenNotifications: () =>
                   setState(() => _notificationsOpen = true),
               now: now,
+              onOpenTokens: widget.onOpenTokens,
+              onOpenCompanion: widget.onOpenCompanion,
+              onToggleMirror: widget.onToggleMirror,
+              onOpenBoot: widget.onOpenBoot,
               recessive: _focused,
               applications: snapshot.applications,
               onLaunch: widget.onLaunchApplication,
@@ -240,6 +263,7 @@ class _DeskState extends State<Desk> {
                 onSelectWorkspace: widget.onSelectWorkspace,
                 minimised: widget.minimisedWindows,
                 onOpenLauncher: widget.onOpenLauncher,
+                launcherOpen: widget.launcherOpen,
                 onFocus: widget.onFocusWindow,
                 onClose: widget.onCloseWindow,
                 media: snapshot.media,
@@ -342,11 +366,19 @@ class _Furniture extends StatelessWidget {
     required this.onMediaAction,
     required this.onOpenControls,
     required this.onOpenNotifications,
+    this.onOpenTokens,
+    this.onOpenCompanion,
+    this.onToggleMirror,
+    this.onOpenBoot,
   });
 
   /// The widget column's doors: a card that previews a surface opens it.
   final VoidCallback onOpenControls;
   final VoidCallback onOpenNotifications;
+  final VoidCallback? onOpenTokens;
+  final VoidCallback? onOpenCompanion;
+  final VoidCallback? onToggleMirror;
+  final VoidCallback? onOpenBoot;
 
   /// Everything the right-hand column reads. All of it is already on the
   /// snapshot the desk is given, so the column costs no new plumbing.
@@ -367,6 +399,11 @@ class _Furniture extends StatelessWidget {
   /// The bare clock's diameter, and the width below which it is dropped so it
   /// cannot collide with the search bars.
   static const double _clockSize = 280;
+
+  /// The reference's placement: the clock 56 from the top, under the header
+  /// row, and both it and the column 40 in from the right.
+  static const double _clockTop = DexSpace.xxxl + DexSpace.sm;
+  static const double _rightInset = DexSpace.xl + DexSpace.lg;
   static const double _clockMinWidth = 860;
 
   /// The right-hand column's width, and the desk width below which it is
@@ -423,6 +460,24 @@ class _Furniture extends StatelessWidget {
                 ),
               ),
             ),
+            // The header's right-hand pills: four doors, outside the furniture
+            // fade because a door must stay legible while a stream has focus.
+            Positioned(
+              top: DexSpace.lg,
+              right: DexSpace.xl,
+              child: Entrance(
+                order: 1,
+                child: _HeaderPills(
+                  // Labelled at the reference's own widget-column breakpoint;
+                  // glyphs alone below it, so the row never meets the chip.
+                  compact: w < 1180,
+                  onOpenTokens: onOpenTokens,
+                  onOpenCompanion: onOpenCompanion,
+                  onToggleMirror: onToggleMirror,
+                  onOpenBoot: onOpenBoot,
+                ),
+              ),
+            ),
             // The Link Rail, collapsed. First thing on the desk, and the only
             // furniture that does not recede behind a stream: whether the link
             // is healthy is exactly what a user wants to read while something
@@ -461,8 +516,8 @@ class _Furniture extends StatelessWidget {
             // wallpaper by a soft shadow.
             if (showClock)
               Positioned(
-                top: DexSpace.xl,
-                right: DexSpace.xl,
+                top: _clockTop,
+                right: _rightInset,
                 child: Entrance(
                   order: 2,
                   child: AnimatedOpacity(
@@ -499,8 +554,8 @@ class _Furniture extends StatelessWidget {
             // and a second carded one beside it is not composition.
             if (showColumn)
               Positioned(
-                top: DexSpace.xl + _clockSize + DexSpace.xl,
-                right: DexSpace.xl,
+                top: _clockTop + _clockSize + DexSpace.xl + DexSpace.xs,
+                right: _rightInset,
                 bottom: DexSpace.xl,
                 width: _columnWidth,
                 child: AnimatedOpacity(
@@ -548,6 +603,151 @@ class _Furniture extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// The reference's header row: glass pills with a coloured 14px glyph and a
+/// 12px label, each opening one of the surfaces that otherwise only the
+/// palette reaches.
+class _HeaderPills extends StatelessWidget {
+  const _HeaderPills({
+    this.onOpenTokens,
+    this.onOpenCompanion,
+    this.onToggleMirror,
+    this.onOpenBoot,
+    this.compact = false,
+  });
+
+  /// Glyphs only, with the label as a tooltip.
+  final bool compact;
+
+  final VoidCallback? onOpenTokens;
+  final VoidCallback? onOpenCompanion;
+  final VoidCallback? onToggleMirror;
+  final VoidCallback? onOpenBoot;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexColors c = Theme.of(context).extension<DexColors>()!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        if (onOpenTokens case final VoidCallback open) ...<Widget>[
+          _HeaderPill(
+            icon: DexIcons.palette,
+            iconColor: c.signal,
+            label: 'Tokens & Specs',
+            compact: compact,
+            bold: true,
+            onTap: open,
+          ),
+          const SizedBox(width: DexSpace.sm),
+        ],
+        if (onOpenCompanion case final VoidCallback open) ...<Widget>[
+          _HeaderPill(
+            icon: DexIcons.smartphone,
+            iconColor: c.trace,
+            label: 'Companion App',
+            compact: compact,
+            onTap: open,
+          ),
+          const SizedBox(width: DexSpace.sm),
+        ],
+        if (onToggleMirror case final VoidCallback toggle) ...<Widget>[
+          _HeaderPill(
+            icon: DexIcons.smartphone,
+            iconColor: c.text,
+            label: 'Phone Mirror',
+            compact: compact,
+            onTap: toggle,
+          ),
+          const SizedBox(width: DexSpace.sm),
+        ],
+        if (onOpenBoot case final VoidCallback open)
+          _HeaderPill(
+            // The reference's cable glyph; the bundled face has no cable, and
+            // a plug is the same idea.
+            icon: DexIcons.plug,
+            iconColor: c.text,
+            label: 'Boot Screen',
+            compact: compact,
+            onTap: open,
+          ),
+      ],
+    );
+  }
+}
+
+class _HeaderPill extends StatelessWidget {
+  const _HeaderPill({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.onTap,
+    this.bold = false,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final VoidCallback onTap;
+  final bool bold;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final DexGlass glass = DexGlass.of(context);
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: HoverLift(
+          builder: (BuildContext context, bool hovered) => InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(DexRadius.control),
+            child: AnimatedContainer(
+              duration: DexDuration.micro,
+              curve: DexMotion.arrive,
+              constraints: const BoxConstraints(
+                minHeight: DexHit.minimum,
+                minWidth: DexHit.minimum,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 6 : 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: hovered ? glass.fillStrong : glass.fill,
+                borderRadius: BorderRadius.circular(DexRadius.control),
+                border: Border.all(
+                  color: glass.stroke,
+                  width: DexStroke.hairline,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(icon, size: 14, color: iconColor),
+                  if (!compact) ...<Widget>[
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: c.text,
+                        fontWeight: bold ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

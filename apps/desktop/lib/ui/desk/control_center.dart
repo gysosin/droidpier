@@ -6,6 +6,7 @@ import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
+import '../widgets/toggle.dart';
 import '../theme/dex_theme.dart';
 import 'volume_labels.dart';
 import '../theme/dex_glass.dart';
@@ -134,6 +135,14 @@ class ControlCenter extends StatelessWidget {
       agentStatus == AgentConnectionStatus.connected &&
       clipboard.availability == ClipboardAvailability.available;
 
+  /// The reference's on-colour per toggle.
+  static Color _onColour(DeviceControl control, DexColors c) =>
+      switch (control) {
+        DeviceControl.airplaneMode || DeviceControl.torch => c.warn,
+        DeviceControl.mobileData || DeviceControl.wifi => c.trace,
+        _ => c.signal,
+      };
+
   static (String, IconData) _describe(DeviceControl c) => switch (c) {
     DeviceControl.wifi => ('Wi-Fi', DexIcons.wifi),
     DeviceControl.bluetooth => ('Bluetooth', DexIcons.bluetooth),
@@ -171,9 +180,9 @@ class ControlCenter extends StatelessWidget {
         .toList();
 
     return SizedBox(
-      width: 372,
+      width: 360,
       child: GlassPanel(
-        radius: DexRadius.dialog,
+        radius: DexRadius.modal,
         fill: DexGlass.of(context).substrate,
         padding: const EdgeInsets.all(DexSpace.md),
         child: Column(
@@ -461,6 +470,7 @@ class _CircleToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
+    final DexGlass glass = DexGlass.of(context);
     final (String label, IconData icon) = ControlCenter._describe(control);
     final bool known = value != null;
     final bool on = value ?? false;
@@ -491,20 +501,16 @@ class _CircleToggle extends StatelessWidget {
               child: AnimatedContainer(
                 duration: DexDuration.micro,
                 curve: DexMotion.arrive,
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: on
-                      ? (control == DeviceControl.mobileData
-                            ? c.trace
-                            : c.signal)
-                      : c.raised,
+                  color: on ? ControlCenter._onColour(control, c) : glass.fill,
                 ),
                 child: Icon(
                   icon,
-                  size: 18,
+                  size: 20,
                   color: !usable
                       ? c.muted.withValues(alpha: 0.4)
                       : on
@@ -545,6 +551,7 @@ class _Volume extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DexGlass glass = DexGlass.of(context);
     final double max = level.maximum <= 0 ? 1 : level.maximum.toDouble();
     return Padding(
       padding: const EdgeInsets.only(bottom: DexSpace.xs),
@@ -555,7 +562,7 @@ class _Volume extends StatelessWidget {
             // raw keys. "Notifications" is the longest real label and needs
             // the room, and a fixed width keeps every slider starting on the
             // same line rather than stepping in and out with the text.
-            width: 92,
+            width: 96,
             child: Text(
               volumeStreamLabel(stream),
               style: DexTheme.data(colors, size: 11),
@@ -566,13 +573,31 @@ class _Volume extends StatelessWidget {
           Expanded(
             child: Semantics(
               label: '${volumeStreamLabel(stream)} volume',
-              child: Slider(
-                value: level.current.clamp(0, level.maximum).toDouble(),
-                max: max,
-                divisions: level.maximum > 0 ? level.maximum : null,
-                activeColor: colors.signal,
-                inactiveColor: colors.line,
-                onChanged: (double v) => onChanged(v.round()),
+              child: SliderTheme(
+                // The reference uses the platform's range input: a 4px track,
+                // a round thumb, and nothing else. Material's tick marks read
+                // as a dotted line and are gone.
+                data: SliderThemeData(
+                  trackHeight: 4,
+                  activeTrackColor: colors.signal,
+                  inactiveTrackColor: glass.fillStrong,
+                  thumbColor: colors.signal,
+                  overlayColor: colors.signal.withValues(alpha: 0.16),
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 7,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 14,
+                  ),
+                  tickMarkShape: SliderTickMarkShape.noTickMark,
+                  trackShape: const RoundedRectSliderTrackShape(),
+                ),
+                child: Slider(
+                  value: level.current.clamp(0, level.maximum).toDouble(),
+                  max: max,
+                  divisions: level.maximum > 0 ? level.maximum : null,
+                  onChanged: (double v) => onChanged(v.round()),
+                ),
               ),
             ),
           ),
@@ -580,11 +605,11 @@ class _Volume extends StatelessWidget {
           // A slider says roughly; a person setting a phone's volume from a
           // desk wants to know it is the same 68 it was yesterday.
           SizedBox(
-            width: 34,
+            width: 32,
             child: Text(
               '${(level.current / max * 100).round()}%',
               textAlign: TextAlign.right,
-              style: DexTheme.data(colors, size: 11, color: colors.text),
+              style: DexTheme.data(colors, size: 11),
             ),
           ),
         ],
@@ -709,86 +734,92 @@ class _Clipboard extends StatelessWidget {
       },
     };
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text('Shared clipboard', style: t.labelLarge),
-                  Text(
-                    state,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DexTheme.data(colors, size: 11),
-                  ),
-                ],
+    final DexGlass glass = DexGlass.of(context);
+    return Container(
+      padding: const EdgeInsets.all(DexSpace.md),
+      decoration: BoxDecoration(
+        color: glass.fillSubtle,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(color: glass.stroke, width: DexStroke.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(DexIcons.copy, size: 16, color: colors.signal),
+              const SizedBox(width: DexSpace.sm),
+              Expanded(
+                child: Text(
+                  'Shared Clipboard',
+                  style: t.labelLarge?.copyWith(color: colors.text),
+                ),
               ),
-            ),
-            Semantics(
-              toggled: clipboard.syncEnabled,
-              enabled: usable,
-              label: 'Share clipboard between phone and desk',
-              child: Switch(
+              DexToggle(
                 value: clipboard.syncEnabled,
                 onChanged: usable ? onToggle : null,
-                activeThumbColor: colors.signal,
+                semanticLabel: 'Share clipboard between phone and desk',
+              ),
+            ],
+          ),
+          const SizedBox(height: DexSpace.xs),
+          Text(
+            state,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: colors.muted),
+          ),
+          // What is actually on the clipboard, in machine type, in its own well.
+          // A person checking the bridge works wants to see the thing that
+          // crossed it.
+          if (clipboard.availability == ClipboardAvailability.available &&
+              clipboard.syncEnabled &&
+              clipboard.kind == ClipboardKind.text &&
+              (clipboard.text?.isNotEmpty ?? false)) ...<Widget>[
+            const SizedBox(height: DexSpace.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: DexSpace.md,
+                vertical: DexSpace.sm,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.40),
+                borderRadius: BorderRadius.circular(DexRadius.control),
+              ),
+              child: Text(
+                clipboard.text!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DexTheme.data(colors, size: 10, color: colors.text),
               ),
             ),
           ],
-        ),
-        // What is actually on the clipboard, in machine type, in its own well.
-        // A person checking the bridge works wants to see the thing that
-        // crossed it.
-        if (clipboard.availability == ClipboardAvailability.available &&
-            clipboard.syncEnabled &&
-            clipboard.kind == ClipboardKind.text &&
-            (clipboard.text?.isNotEmpty ?? false)) ...<Widget>[
-          const SizedBox(height: DexSpace.sm),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: DexSpace.md,
-              vertical: DexSpace.sm,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.40),
-              borderRadius: BorderRadius.circular(DexRadius.control),
-            ),
-            child: Text(
-              clipboard.text!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DexTheme.data(colors, size: 10, color: colors.text),
-            ),
-          ),
-        ],
-        if (_notice case final String notice) ...<Widget>[
-          const SizedBox(height: DexSpace.sm),
-          _Banner(
-            text: notice,
-            colors: colors,
-            calm: clipboard.availability != ClipboardAvailability.unavailable,
-            action: _paused && usable
-                ? TextButton(
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, DexHit.minimum),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: DexSpace.sm,
+          if (_notice case final String notice) ...<Widget>[
+            const SizedBox(height: DexSpace.sm),
+            _Banner(
+              text: notice,
+              colors: colors,
+              calm: clipboard.availability != ClipboardAvailability.unavailable,
+              action: _paused && usable
+                  ? TextButton(
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(0, DexHit.minimum),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DexSpace.sm,
+                        ),
                       ),
-                    ),
-                    // Turning it on again is the retry: there is no separate
-                    // command, and inventing one would be a button that lies.
-                    onPressed: () => onToggle(true),
-                    child: const Text('Retry'),
-                  )
-                : null,
-          ),
+                      // Turning it on again is the retry: there is no separate
+                      // command, and inventing one would be a button that lies.
+                      onPressed: () => onToggle(true),
+                      child: const Text('Retry'),
+                    )
+                  : null,
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 

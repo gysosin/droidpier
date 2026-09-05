@@ -458,7 +458,8 @@ class _Body extends StatelessWidget {
         return _Dimmed(
           window: window,
           colors: c,
-          label: 'Reconnecting to ${window.session.application.label}',
+          label: 'Reconnecting to phone\u2026',
+          detail: 'Re-establishing socket pipe on :3698',
           spinning: true,
         );
       case WindowSessionStatus.closed:
@@ -499,11 +500,14 @@ class _Skeleton extends StatelessWidget {
             ),
             const SizedBox(height: DexSpace.md),
             Text(
-              'Starting ${app.label}',
+              'Opening ${app.label}\u2026',
               style: t.labelLarge?.copyWith(color: colors.text),
             ),
             const SizedBox(height: DexSpace.xs),
-            Text(app.packageName, style: DexTheme.data(colors, size: 10)),
+            Text(
+              'Allocating hardware video surface on device',
+              style: DexTheme.data(colors, size: 10),
+            ),
           ],
         ),
       ),
@@ -519,6 +523,7 @@ class _Dimmed extends StatelessWidget {
     required this.colors,
     required this.label,
     this.spinning = false,
+    this.detail,
   });
 
   final WorkspaceWindow window;
@@ -528,6 +533,10 @@ class _Dimmed extends StatelessWidget {
   /// A ring while the link is being re-established. Only then: a ring on a
   /// paused window would claim work that is not happening.
   final bool spinning;
+
+  /// A mono line under the label, where the reference names what is being
+  /// re-established.
+  final String? detail;
 
   @override
   Widget build(BuildContext context) {
@@ -558,8 +567,13 @@ class _Dimmed extends StatelessWidget {
               ],
               Text(
                 label,
-                style: DexTheme.data(colors, size: 11, color: colors.text),
+                style: Theme.of(context).textTheme.labelLarge
+                    ?.copyWith(color: colors.text),
               ),
+              if (detail case final String line) ...<Widget>[
+                const SizedBox(height: DexSpace.xs),
+                Text(line, style: DexTheme.data(colors, size: 10)),
+              ],
             ],
           ),
         ),

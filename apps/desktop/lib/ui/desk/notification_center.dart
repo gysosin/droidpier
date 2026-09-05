@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../apps/app_glyph.dart';
@@ -117,16 +118,19 @@ class _NotificationCenterState extends State<NotificationCenter> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   0,
-                  DexSpace.lg,
+                  DexSpace.xxxl + DexSpace.lg,
                   DexSpace.lg,
                   56 + DexSpace.md,
                 ),
                 child: Entrance(
                   rise: 0,
-                  child: SizedBox(
-                    width: 380,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 380,
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+                    ),
                     child: GlassPanel(
-                      radius: DexRadius.dialog,
+                      radius: DexRadius.modal,
                       fill: glass.substrate,
                       padding: const EdgeInsets.all(DexSpace.lg),
                       child: Column(
@@ -146,7 +150,7 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                     // attention rather than report a state.
                                     Icon(
                                       DexIcons.notifications,
-                                      size: 18,
+                                      size: 16,
                                       color: c.warn,
                                     ),
                                     const SizedBox(width: DexSpace.sm),
@@ -155,14 +159,28 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                         'Notification Centre',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: t.titleLarge,
+                                        style: t.titleSmall?.copyWith(
+                                          color: c.text,
+                                        ),
                                       ),
                                     ),
                                     if (ordered.isNotEmpty) ...<Widget>[
                                       const SizedBox(width: DexSpace.sm),
-                                      Text(
-                                        '${ordered.length}',
-                                        style: DexTheme.data(c, size: 12),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: glass.fill,
+                                          borderRadius: BorderRadius.circular(
+                                            DexRadius.pill,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${ordered.length}',
+                                          style: DexTheme.data(c, size: 10),
+                                        ),
                                       ),
                                     ],
                                   ],
@@ -173,6 +191,7 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                   // Clearing a backlog one at a time is the
                                   // main reason people stop opening these.
                                   style: TextButton.styleFrom(
+                                    foregroundColor: c.muted,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: DexSpace.sm,
                                     ),
@@ -223,21 +242,6 @@ class _NotificationCenterState extends State<NotificationCenter> {
                             child: Text(
                               'The physical phone remains the authoritative '
                               'source of truth',
-                              textAlign: TextAlign.center,
-                              style: DexTheme.data(c, size: 10),
-                            ),
-                          ),
-                          // What this panel is and is not. Dismissing here
-                          // asks the phone to dismiss; the phone decides, and
-                          // anything it does on its own arrives here without
-                          // the desk being told first. Saying so is cheaper
-                          // than a person discovering it.
-                          const SizedBox(height: DexSpace.md),
-                          Divider(color: c.line, height: DexStroke.hairline),
-                          const SizedBox(height: DexSpace.md),
-                          Center(
-                            child: Text(
-                              'The phone remains the source of truth',
                               textAlign: TextAlign.center,
                               style: DexTheme.data(c, size: 10),
                             ),
@@ -359,57 +363,86 @@ class _GroupState extends State<_Group> {
         ? displayNameFor(app.packageName)
         : app.label;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: DexSpace.lg),
+    final DexGlass glass = DexGlass.of(context);
+
+    // A card per sender, as the reference groups them: a strip with the name
+    // and the count, then the rows inside it.
+    return Container(
+      margin: const EdgeInsets.only(bottom: DexSpace.md),
+      decoration: BoxDecoration(
+        color: glass.fillSubtle,
+        borderRadius: BorderRadius.circular(DexRadius.card),
+        border: Border.all(color: glass.stroke, width: DexStroke.hairline),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              AppGlyph(app: app, size: 20),
-              const SizedBox(width: DexSpace.sm),
-              Expanded(
-                child: Text(
-                  sender,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: t.labelLarge?.copyWith(color: c.muted),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: DexSpace.sm,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: glass.stroke,
+                  width: DexStroke.hairline,
                 ),
               ),
-              // A badge reading "1" says nothing the row does not already say.
-              if (items.length > 1)
-                _CountBadge(count: items.length, colors: c),
-            ],
+            ),
+            child: Row(
+              children: <Widget>[
+                AppGlyph(app: app, size: 16),
+                const SizedBox(width: DexSpace.sm),
+                Expanded(
+                  child: Text(
+                    sender,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.labelMedium?.copyWith(
+                      color: c.text,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (items.length > 1)
+                  _CountBadge(count: items.length, colors: c),
+              ],
+            ),
           ),
-          const SizedBox(height: DexSpace.sm),
-          for (final NotificationItem n in visible)
-            _Item(
-              item: n,
-              now: widget.now,
-              colors: c,
-              dismissing: widget.pending.contains(n.id),
-              onDismiss: () => widget.onDismiss(n.id),
-              onActivate: () => widget.onActivate(n.id),
-            ),
-          if (foldable)
-            Padding(
-              padding: const EdgeInsets.only(top: DexSpace.xs),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() => _expanded = !_expanded),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(0, DexHit.comfortable),
+          Padding(
+            padding: const EdgeInsets.all(DexSpace.sm),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                for (final NotificationItem n in visible)
+                  _Item(
+                    item: n,
+                    now: widget.now,
+                    colors: c,
+                    dismissing: widget.pending.contains(n.id),
+                    onDismiss: () => widget.onDismiss(n.id),
+                    onActivate: () => widget.onActivate(n.id),
                   ),
-                  child: Semantics(
-                    label: _expanded
-                        ? 'Collapse $sender'
-                        : 'Show $hidden more from $sender',
-                    child: Text(_expanded ? 'Show less' : 'Show $hidden more'),
+                if (foldable)
+                  TextButton(
+                    onPressed: () => setState(() => _expanded = !_expanded),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, DexHit.comfortable),
+                    ),
+                    child: Semantics(
+                      label: _expanded
+                          ? 'Show fewer from $sender'
+                          : 'Show $hidden more from $sender',
+                      child: Text(
+                        _expanded ? 'Show less' : 'Show $hidden more',
+                        style: DexTheme.data(c, size: 11, color: c.signal),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -426,17 +459,14 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DexSpace.sm,
-        vertical: 2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: DexSpace.sm, vertical: 2),
       decoration: BoxDecoration(
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.pill),
         border: Border.all(color: colors.line, width: DexStroke.hairline),
       ),
       // Tabular, so a group going from 9 to 10 does not shift the badge.
-      child: Text('$count items', style: DexTheme.data(colors, size: 11)),
+      child: Text('$count items', style: DexTheme.data(colors, size: 10)),
     );
   }
 }
@@ -481,16 +511,10 @@ class _Item extends StatelessWidget {
                 duration: DexDuration.micro,
                 curve: DexMotion.arrive,
                 width: double.infinity,
-                padding: const EdgeInsets.all(DexSpace.md),
+                padding: const EdgeInsets.all(DexSpace.sm),
                 decoration: BoxDecoration(
                   color: hovered && !dismissing ? glass.fill : glass.fillSubtle,
-                  borderRadius: BorderRadius.circular(DexRadius.card),
-                  border: Border.all(
-                    color: hovered && !dismissing
-                        ? glass.strokeStrong
-                        : glass.stroke,
-                    width: DexStroke.hairline,
-                  ),
+                  borderRadius: BorderRadius.circular(DexRadius.control),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +525,9 @@ class _Item extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.title,
-                            style: t.labelLarge?.copyWith(color: colors.text),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: t.labelMedium?.copyWith(color: colors.text),
                           ),
                         ),
                         const SizedBox(width: DexSpace.sm),
@@ -512,10 +538,19 @@ class _Item extends StatelessWidget {
                           style: DexTheme.data(colors, size: 10),
                         ),
                         const SizedBox(width: DexSpace.xs),
-                        _DismissButton(
-                          title: item.title,
-                          enabled: !dismissing,
-                          onDismiss: onDismiss,
+                        // Revealed on hover, as the reference reveals it: a
+                        // row of close marks is noise until one is wanted.
+                        AnimatedOpacity(
+                          duration: DexDuration.micro,
+                          opacity: hovered || dismissing ? 1 : 0,
+                          // Hidden until hover, never absent: a screen reader
+                          // and the keyboard still reach it.
+                          alwaysIncludeSemantics: true,
+                          child: _DismissButton(
+                            title: item.title,
+                            enabled: !dismissing,
+                            onDismiss: onDismiss,
+                          ),
                         ),
                       ],
                     ),
@@ -523,7 +558,7 @@ class _Item extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         item.body,
-                        style: t.bodyMedium?.copyWith(color: colors.muted),
+                        style: t.bodySmall?.copyWith(color: colors.muted),
                       ),
                     ],
                   ],
@@ -581,16 +616,27 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text('Nothing new', style: t.bodyLarge?.copyWith(color: colors.text)),
-        const SizedBox(height: DexSpace.xs),
-        Text(
-          "Notifications from the phone appear here while it's connected.",
-          style: t.bodyMedium?.copyWith(color: colors.muted),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: DexSpace.xxl),
+      child: Column(
+        children: <Widget>[
+          Icon(
+            DexIcons.circleCheck,
+            size: 32,
+            color: colors.trace.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: DexSpace.sm),
+          Text(
+            'Nothing new',
+            style: t.labelLarge?.copyWith(color: colors.text),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'All notifications cleared on phone',
+            style: t.bodySmall?.copyWith(color: colors.muted),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -636,9 +682,9 @@ class _CloseButton extends StatelessWidget {
 String _ago(DateTime now, DateTime then) {
   final Duration d = now.difference(then);
   if (d.inMinutes < 1) return 'now';
-  if (d.inMinutes < 60) return '${d.inMinutes} min';
-  if (d.inHours < 24) return '${d.inHours} h';
-  return '${d.inDays} d';
+  if (d.inMinutes < 60) return '${d.inMinutes}m ago';
+  if (d.inHours < 24) return '${d.inHours}h ago';
+  return '${d.inDays}d ago';
 }
 
 /// Dismisses one notification on the phone.

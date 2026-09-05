@@ -22,6 +22,7 @@ class TaskbarBar extends StatelessWidget {
     required this.windows,
     required this.minimised,
     required this.onOpenLauncher,
+    this.launcherOpen = false,
     required this.onFocus,
     required this.onClose,
     required this.trailing,
@@ -39,6 +40,9 @@ class TaskbarBar extends StatelessWidget {
 
   /// The centre apps-grid button.
   final VoidCallback onOpenLauncher;
+
+  /// Whether the launcher is up: its key presses in while it is.
+  final bool launcherOpen;
   final ValueChanged<String> onFocus;
   final ValueChanged<String> onClose;
 
@@ -256,6 +260,7 @@ class TaskbarBar extends StatelessWidget {
               // CENTRE: the apps-grid button.
               _AppsGridButton(
                 onPressed: onOpenLauncher,
+                active: launcherOpen,
                 colors: c,
                 labelled: labelLauncher,
               ),
@@ -485,11 +490,16 @@ class _AppsGridButton extends StatelessWidget {
     required this.onPressed,
     required this.colors,
     this.labelled = true,
+    this.active = false,
   });
 
   final VoidCallback onPressed;
   final DexColors colors;
   final bool labelled;
+
+  /// The launcher is open: pressed in and brighter, as the reference draws
+  /// it, so the key reads as the thing that is up.
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +516,7 @@ class _AppsGridButton extends StatelessWidget {
             child: AnimatedScale(
               // The reference lifts the launcher a touch on hover: 1.02, enough
               // to answer the pointer, not enough to move its neighbours.
-              scale: hovered ? 1.02 : 1,
+              scale: active ? 0.98 : (hovered ? 1.02 : 1),
               duration: DexDuration.micro,
               curve: DexMotion.arrive,
               child: AnimatedContainer(
@@ -521,12 +531,12 @@ class _AppsGridButton extends StatelessWidget {
                 // with a hairline — not a filled signal button. The one
                 // filled thing on the desk is the workspace that is active.
                 decoration: BoxDecoration(
-                  color: hovered ? glass.fillStrong : glass.fill,
+                  color: active || hovered ? glass.fillStrong : glass.fill,
                   border: Border.all(
-                    color: glass.strokeStrong,
+                    color: active ? glass.strokeStrong : glass.stroke,
                     width: DexStroke.hairline,
                   ),
-                  borderRadius: BorderRadius.circular(DexRadius.card),
+                  borderRadius: BorderRadius.circular(DexRadius.panel),
                   // The reference gives this button a plain elevation shadow,
                   // not a coloured halo. A glow behind a filled accent button
                   // reads as a highlight effect rather than as a control, and

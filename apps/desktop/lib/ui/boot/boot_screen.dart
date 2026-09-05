@@ -25,6 +25,7 @@ class BootScreen extends StatelessWidget {
   const BootScreen({
     required this.boot,
     required this.onConnect,
+    this.onOpenWorkspace,
     required this.onRetry,
     this.device,
     this.deviceCount = 0,
@@ -33,6 +34,10 @@ class BootScreen extends StatelessWidget {
 
   final BootState boot;
   final VoidCallback onConnect;
+
+  /// The ready action. Shown over a running desk it dismisses the screen;
+  /// before the desk exists it falls back to [onConnect].
+  final VoidCallback? onOpenWorkspace;
   final VoidCallback onRetry;
 
   /// The phone the desk is coming up on, once one has been chosen.
@@ -217,9 +222,8 @@ class _Masthead extends StatelessWidget {
               icon: Icon(DexIcons.portrait, size: 14, color: c.signal),
               label: Text(
                 'Select Device',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: c.text,
-                ),
+                style: Theme.of(context).textTheme.labelMedium
+                    ?.copyWith(color: c.text),
               ),
               style: TextButton.styleFrom(
                 backgroundColor: DexGlass.of(context).fill,
@@ -384,7 +388,7 @@ class _Intent extends StatelessWidget {
               ),
             ] else if (screen._isReady)
               FilledButton.icon(
-                onPressed: screen.onConnect,
+                onPressed: screen.onOpenWorkspace ?? screen.onConnect,
                 icon: const Icon(DexIcons.forward, size: 16),
                 iconAlignment: IconAlignment.end,
                 label: const Text('Open Workspace'),

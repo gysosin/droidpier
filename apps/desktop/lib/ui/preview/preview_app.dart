@@ -26,7 +26,7 @@ import '../permissions/permission_panel.dart';
 import '../recovery/recovery_overlay.dart';
 import '../shell/app_shell.dart';
 import '../widgets/link_rail.dart';
-import 'companion_view.dart';
+import '../companion/companion_view.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
@@ -264,9 +264,9 @@ class _PreviewAppState extends State<PreviewApp> {
         return _centred(TokenSheet(onClose: () {}));
       case _Surface.companion:
         return _centred(
-          CompanionPreview(
+          CompanionView(
             snapshot: state,
-            onDisconnect: () => _select(MockScenario.disconnected),
+            onClose: () => setState(() => _surface = _Surface.desktop),
           ),
         );
     }
