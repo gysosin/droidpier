@@ -38,6 +38,15 @@ application. Omit the runtime override if the release is installed at the script
 default user-local location. Do not run the release and debug application against
 the same phone simultaneously, or restart a shared ADB server to switch builds.
 
+Do not launch a bare `flutter build linux --release` bundle against a phone. That
+bundle carries no `resources/android/companion.apk`, so the application falls back
+to the debug-signed development APK, and a phone holding the release-signed
+companion refuses the upgrade — boot stops at *Companion :3699* with a
+"signed with a different key" failure whose remedy (uninstalling on the phone) is
+the wrong one for this case. Either package the build (`tool/package_linux.py`
+with `DROIDPIER_ANDROID_PAYLOAD_DIR` pointing at the signed payload) and install
+that, or use `tool/run_debug.sh`, which borrows the installed release's companion.
+
 A mock UI preview is available through
 `flutter run -d linux -t lib/ui/preview/preview_app.dart`; it cannot test devices.
 Test a debug-signed companion on an emulator. Physical upgrades must use a locally
