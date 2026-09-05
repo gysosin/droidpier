@@ -351,8 +351,10 @@ what each item became. Approved as a plan first; delivered in steps.
 - [x] **Real app tiles from the phone.** The agent resolves each app's icon
   from the app's own resources at xxhdpi (`loadIcon`) before falling back to
   the launcher-themed drawable MIUI hands out; the rounded-square mask then
-  shapes real artwork. Verified on the desk, not by a JVM test: Drawables
-  do not render off-device.
+  shapes real artwork. Verified against the phone with
+  `tool/catalog_probe.dart` — 42 of 42 apps returned an icon, and Claude,
+  Dashlane, Chrome and ChatGPT came back as their own artwork rather than as
+  white discs — not by a JVM test, since Drawables do not render off-device.
 - [x] **Desks that do something.** *Move to desk n* in the window menu
   (`WorkspaceIntents.moveToWorkspace`), Ctrl+Alt+←/→ in the shortcut
   registry, and `DeskSwitchLabel` naming the desk after a switch, gone
