@@ -81,6 +81,13 @@ Arrow **Up** and **Down** move the selection, **Enter** opens it.
 **Pinning.** Right-click any app and choose *Pin to top* to give it a row of its
 own above the rest.
 
+## Searching from the desk
+
+The Google bar on the desk searches on the phone: the phone's own browser
+opens as a desk window on the results page, and you can keep using it
+there. It needs a browser on the phone that is in the app list; if there is
+none, the desk says so instead of opening anything on the computer.
+
 ## Desks
 
 The taskbar's four keys are four desks. Each window lives on one of them:

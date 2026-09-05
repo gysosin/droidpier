@@ -6,14 +6,14 @@ import 'package:open_android_dex/bootstrap/reporting_facade.dart';
 import 'package:open_android_dex/ui/shell/app_shell.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
 
-/// The desk search must reach the browser through the facade.
+/// The desk search opens on the phone, through the facade.
 ///
 /// It used to call `Process.start('xdg-open', …)` straight from `lib/ui`, which
-/// is the one thing the layering rule forbids: a widget that talks to the host
-/// directly cannot be rendered in the preview harness, and cannot be covered by
-/// a test without actually launching a browser.
+/// is the one thing the layering rule forbids, and then it opened the desktop's
+/// browser, which the operator did not want: a search made on the phone's desk
+/// belongs in the phone's browser, streamed as a window.
 void main() {
-  testWidgets('submitting the desk search opens a URL through the facade', (
+  testWidgets('submitting the desk search opens the address on the phone', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
@@ -48,9 +48,10 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pump();
 
-    expect(facade.openedUrls, <String>[
+    expect(facade.phoneUrls, <String>[
       'https://www.google.com/search?q=link+rail',
     ]);
+    expect(facade.openedUrls, isEmpty, reason: 'not the desktop browser');
   });
 }
 
@@ -65,10 +66,17 @@ class _RecordingFacade extends ReportingOpenDexFacade {
   static void _ignoreError(OpenDexError error) {}
 
   final List<String> openedUrls = <String>[];
+  final List<String> phoneUrls = <String>[];
 
   @override
   Future<VoidResult> openUrl(String url) {
     openedUrls.add(url);
     return super.openUrl(url);
+  }
+
+  @override
+  Future<CommandResult<String>> openUrlOnPhone(String url) {
+    phoneUrls.add(url);
+    return super.openUrlOnPhone(url);
   }
 }

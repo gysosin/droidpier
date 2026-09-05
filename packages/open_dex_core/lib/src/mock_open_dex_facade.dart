@@ -332,6 +332,17 @@ class MockOpenDexFacade implements OpenDexFacade {
   Future<VoidResult> openUrl(String url) async =>
       isWebUrl(url) ? const CommandSuccess(null) : _invalidUrl;
 
+  /// Every address the desk asked the phone to open, in order.
+  final List<String> phoneUrls = <String>[];
+
+  @override
+  Future<CommandResult<String>> openUrlOnPhone(String url) async {
+    if (!isWebUrl(url)) return CommandFailure<String>(_invalidUrl.error);
+    phoneUrls.add(url);
+    // The demo phone's browser is Chrome; it opens as any other window.
+    return launchApplication('com.android.chrome');
+  }
+
   @override
   Future<VoidResult> startDisplayMirror() async {
     _emit(

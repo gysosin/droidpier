@@ -363,4 +363,9 @@ what each item became. Approved as a plan first; delivered in steps.
   1080 px, 30 fps, no control socket) through the shared decoder surface. The frame
   draws the texture flat, follows rotation, and reports connecting, failed
   with retry, and unavailable states honestly. View only, by decision.
-- [ ] Desk search opens on the phone (backend capability).
+- [x] **Desk search opens on the phone.** `openUrlOnPhone` on the facade;
+  `UrlWindowGateway` (`resolveBrowser` via `cmd package resolve-activity`,
+  `launchUrl` via `am start --display … -a VIEW -d … --activity-new-task
+  --activity-multiple-task`, with `am display move-stack` when the browser
+  lands on display 0); the fallback gateway routes it without demoting.
+  `tool/url_probe.dart` is the device check.

@@ -7,6 +7,7 @@ import 'package:open_dex_core/open_dex_core.dart';
 
 import '../process_executor.dart';
 import '../adb_client.dart';
+import '../android_tasks.dart';
 import 'decoder_surface.dart';
 import 'display_orientation.dart';
 import 'h264_decoder_process.dart';
@@ -21,7 +22,8 @@ class DirectScrcpyWindowGateway
         WindowGateway,
         ResizableWindowGateway,
         WindowSurfaceUpdateGateway,
-        NavKeyWindowGateway {
+        NavKeyWindowGateway,
+        UrlWindowGateway {
   DirectScrcpyWindowGateway({
     required this.serverStarter,
     required this.decoderStarter,
@@ -102,6 +104,151 @@ class DirectScrcpyWindowGateway
     DeviceSummary device,
     AndroidApplication application, {
     String? sessionId,
+  }) => _start(
+    device,
+    application,
+    sessionId: sessionId,
+    // scrcpy starts the app on the display it just created.
+    begin: (control, displayId) => control.startApp(application.packageName),
+  );
+
+  @override
+  Future<String?> resolveBrowser(DeviceSummary device, String url) async {
+    final client = _adbForUrls(device);
+    final output = await client.shell(device.id, [
+      'cmd',
+      'package',
+      'resolve-activity',
+      '--brief',
+      '-a',
+      'android.intent.action.VIEW',
+      '-d',
+      _shellQuote(url),
+    ]);
+    // --brief prints the match flags, then `package/activity` on the last
+    // line; without a handler it prints "No activity found".
+    final lines = output
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) return null;
+    final last = lines.last;
+    final slash = last.indexOf('/');
+    if (slash <= 0 || last.contains(' ')) return null;
+    final packageName = last.substring(0, slash);
+    return _packageName.hasMatch(packageName) ? packageName : null;
+  }
+
+  @override
+  Future<WindowBackendSession> launchUrl(
+    DeviceSummary device,
+    AndroidApplication browser,
+    String url, {
+    String? sessionId,
+  }) {
+    final client = _adbForUrls(device);
+    return _start(
+      device,
+      browser,
+      sessionId: sessionId,
+      begin: (control, displayId) async {
+        // The display must exist before am can be pointed at it.
+        final id = await displayId.timeout(startTimeout);
+        final output = await client.shell(device.id, [
+          'am',
+          'start',
+          '--display',
+          '$id',
+          '-a',
+          'android.intent.action.VIEW',
+          '-d',
+          _shellQuote(url),
+          '-p',
+          browser.packageName,
+          // FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK: a new task,
+          // and a new one even if the browser already has one, because a
+          // single-task browser would otherwise resume on the phone's own
+          // display and leave this window empty. Set numerically because
+          // Android names its activity flags and has no `--activity-new-task`
+          // among them — it answers an unknown option with a stack trace —
+          // while `--activity-multiple-task` alone is ignored without it.
+          '-f',
+          '0x18000000',
+        ]);
+        if (output.contains('Error') || output.contains('Exception')) {
+          throw _failure('The phone could not open the address.', output);
+        }
+        await _bringToDisplay(client, device.id, browser.packageName, id);
+      },
+    );
+  }
+
+  /// Where the browser's task actually went. A browser that refuses a second
+  /// task lands on display 0; its task is moved here before the window waits
+  /// for frames, because an empty display never sends any.
+  Future<void> _bringToDisplay(
+    AdbClient client,
+    String deviceId,
+    String packageName,
+    int displayId,
+  ) async {
+    for (var attempt = 0; attempt < 4; attempt += 1) {
+      final AndroidTask? task;
+      try {
+        final output = await client.shell(deviceId, const [
+          'am',
+          'stack',
+          'list',
+        ]);
+        task = taskForPackage(output, packageName);
+      } on Object {
+        return;
+      }
+      if (task != null) {
+        if (task.displayId == displayId) return;
+        final AndroidTask found = task;
+        await _bestEffort(
+          () => client.shell(deviceId, [
+            'am',
+            'display',
+            'move-stack',
+            '${found.taskId}',
+            '$displayId',
+          ]),
+        );
+        return;
+      }
+      if (attempt < 3) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+    }
+  }
+
+  AdbClient _adbForUrls(DeviceSummary device) {
+    final client = adb;
+    if (client == null) {
+      throw BackendFailure(
+        OpenDexError(
+          code: OpenDexErrorCode.capabilityUnavailable,
+          message: 'This build cannot open web addresses on the phone.',
+          capability: 'phone-browser',
+        ),
+      );
+    }
+    _validateDevice(device);
+    return client;
+  }
+
+  Future<WindowBackendSession> _start(
+    DeviceSummary device,
+    AndroidApplication application, {
+    required String? sessionId,
+    required Future<void> Function(
+      ScrcpyControlChannel control,
+      Future<int> displayId,
+    )
+    begin,
   }) async {
     _validate(device, application);
     final resolvedId =
@@ -159,7 +306,7 @@ class DirectScrcpyWindowGateway
         );
       }
       final meta = await _nextSessionMeta(events).timeout(startTimeout);
-      await control.startApp(application.packageName);
+      await begin(control, server.displayId);
       final displayId = await server.displayId.timeout(startTimeout);
       await onDisplayCreated?.call(device, displayId);
       final configured = await _nextConfiguredSession(
@@ -843,15 +990,30 @@ class DirectScrcpyWindowGateway
   );
 
   void _validate(DeviceSummary device, AndroidApplication application) {
-    if (device.id.isEmpty || device.id.contains(RegExp(r'[\x00-\x20]'))) {
-      throw _failure('The Android device identifier is invalid.');
-    }
+    _validateDevice(device);
     if (!_packageName.hasMatch(application.packageName)) {
       throw _failure('The Android application identifier is invalid.');
     }
   }
 
   /// AKEYCODE_BACK — the Android Back key, sent for a right-click.
+  void _validateDevice(DeviceSummary device) {
+    if (device.id.isEmpty || device.id.contains(RegExp(r'[\x00-\x20]'))) {
+      throw _failure('The Android device identifier is invalid.');
+    }
+  }
+
+  /// One argument for the phone's shell.
+  ///
+  /// `adb shell` joins its arguments into a single line and hands that to the
+  /// device's shell, so an address carrying `&`, `?` or a quote would be read
+  /// as shell syntax rather than as data — and an address truncated at its
+  /// first `&` still resolves to a plausible browser, which is the worst
+  /// version of this bug. Single quotes make the whole address literal; the
+  /// quotes inside it are closed, escaped and reopened.
+  static String _shellQuote(String value) =>
+      "'${value.replaceAll("'", r"'\''")}'";
+
   static const int _androidBack = 4;
 
   static int? _androidKeyCode(int physicalKeyId) {

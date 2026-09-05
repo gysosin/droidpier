@@ -392,18 +392,84 @@ class OpenDexController implements OpenDexFacade {
     if (gateway == null || device == null || !_snapshot.boot.isReady) {
       return _unsupported('application-streaming');
     }
-    final matches = _snapshot.applications.where(
-      (application) => application.packageName == packageName,
+    final application = _catalogEntry(packageName);
+    if (application == null) return _unlistedApplication();
+    return _openWindow(
+      application,
+      (sessionId) => gateway.launch(device, application, sessionId: sessionId),
     );
-    if (matches.isEmpty) {
-      return const CommandFailure(
-        OpenDexError(
-          code: OpenDexErrorCode.capabilityUnavailable,
-          message: 'The selected application is unavailable.',
-        ),
-      );
+  }
+
+  @override
+  Future<CommandResult<String>> openUrlOnPhone(String url) async {
+    if (!isWebUrl(url)) return _invalidUrl();
+    final gateway = _windowGateway;
+    final device = _snapshot.selectedDevice;
+    if (gateway == null || device == null || !_snapshot.boot.isReady) {
+      return _unsupported('application-streaming');
     }
-    final application = matches.single;
+    if (gateway is! UrlWindowGateway) return _unsupported('phone-browser');
+    // Not a subtype of WindowGateway, so the check above cannot promote.
+    final UrlWindowGateway urls = gateway as UrlWindowGateway;
+    try {
+      final packageName = await urls.resolveBrowser(device, url);
+      if (packageName == null) {
+        return const CommandFailure(
+          OpenDexError(
+            code: OpenDexErrorCode.capabilityUnavailable,
+            message: 'Nothing on the phone can open a web address.',
+            capability: 'phone-browser',
+          ),
+        );
+      }
+      final browser = _catalogEntry(packageName);
+      if (browser == null) {
+        return CommandFailure(
+          OpenDexError(
+            code: OpenDexErrorCode.capabilityUnavailable,
+            message:
+                "The phone's browser is not in the application list, so it "
+                'cannot be streamed.',
+            capability: 'phone-browser',
+            technicalDetails: packageName,
+          ),
+        );
+      }
+      return await _openWindow(
+        browser,
+        (sessionId) =>
+            urls.launchUrl(device, browser, url, sessionId: sessionId),
+      );
+    } on BackendFailure catch (failure) {
+      return CommandFailure(failure.error);
+    } on Object catch (error) {
+      return CommandFailure(_unexpected(error));
+    }
+  }
+
+  AndroidApplication? _catalogEntry(String packageName) {
+    for (final application in _snapshot.applications) {
+      if (application.packageName == packageName) return application;
+    }
+    return null;
+  }
+
+  static CommandFailure<String> _unlistedApplication() => const CommandFailure(
+    OpenDexError(
+      code: OpenDexErrorCode.capabilityUnavailable,
+      message: 'The selected application is unavailable.',
+    ),
+  );
+
+  /// Opens a window for [application]: a starting placeholder at the next
+  /// cascade position, then the backend session [start] returns, streaming.
+  /// Shared by launching by name and by web address, which differ only in
+  /// how the backend is asked to start.
+  Future<CommandResult<String>> _openWindow(
+    AndroidApplication application,
+    Future<WindowBackendSession> Function(String sessionId) start,
+  ) async {
+    final gateway = _windowGateway!;
     final sessionId =
         'window-${DateTime.now().toUtc().microsecondsSinceEpoch.toRadixString(36)}-${++_windowSequence}';
     final cascade = _snapshot.windows.length % 6;
@@ -437,11 +503,7 @@ class OpenDexController implements OpenDexFacade {
       ),
     );
     try {
-      final launched = await gateway.launch(
-        device,
-        application,
-        sessionId: sessionId,
-      );
+      final launched = await start(sessionId);
       final current = _window(sessionId);
       if (current == null) {
         await gateway.close(launched.id);
@@ -912,7 +974,7 @@ class OpenDexController implements OpenDexFacade {
     ),
   );
 
-  static CommandFailure<void> _invalidUrl() => const CommandFailure(
+  static CommandFailure<T> _invalidUrl<T>() => const CommandFailure(
     OpenDexError(
       code: OpenDexErrorCode.capabilityUnavailable,
       message: 'That is not a web address the desk can open.',

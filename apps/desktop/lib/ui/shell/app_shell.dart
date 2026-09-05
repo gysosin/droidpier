@@ -732,7 +732,10 @@ class _AppShellState extends State<AppShell> {
   /// a real browser, and it put scheme validation in a widget. The facade
   /// refuses anything that is not `http`/`https`; a failure surfaces through
   /// the usual reporting path rather than crashing the desk.
-  Future<void> _openUrl(String url) => widget.facade.openUrl(url);
+  /// The desk search: the phone's own browser, streamed as a window. The
+  /// facade resolves which app that is and refuses anything but a web
+  /// address; a failure comes back through the reporting facade's banner.
+  Future<void> _openUrlOnPhone(String url) => widget.facade.openUrlOnPhone(url);
 
   /// Enters or leaves edge-to-edge fullscreen for the focused streaming window.
   ///
@@ -1024,7 +1027,7 @@ class _AppShellState extends State<AppShell> {
             snapshot: _s,
             now: _now,
             onOpenLauncher: _toggleDrawer,
-            onWebSearch: _openUrl,
+            onWebSearch: _openUrlOnPhone,
             onMediaAction: widget.facade.sendMediaAction,
             onFocusWindow: _wm.focusOrRestore,
             onCloseWindow: widget.facade.closeWindow,

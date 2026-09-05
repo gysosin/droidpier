@@ -16,7 +16,7 @@ import 'package:open_dex_core/open_dex_core.dart';
 ///
 /// Until it is, an app that will not open is a worse outcome than an app opened
 /// by the older path. This is a bridge, not a resolution, and it says so.
-class FallbackWindowGateway implements WindowGateway {
+class FallbackWindowGateway implements WindowGateway, UrlWindowGateway {
   FallbackWindowGateway({required this.preferred, required this.fallback});
 
   final WindowGateway preferred;
@@ -108,6 +108,52 @@ class FallbackWindowGateway implements WindowGateway {
     return _useFallback(device, application, sessionId: sessionId);
   }
 
+  /// The path that can open web addresses for this phone: the preferred one
+  /// unless it has been demoted, else the older one, else none.
+  ///
+  /// An address failing to open never demotes: it says the browser refused,
+  /// not that the video pipeline cannot start on this phone.
+  UrlWindowGateway _urlPath(DeviceSummary device) {
+    final WindowGateway first = _demoted.contains(device.id)
+        ? fallback
+        : preferred;
+    final WindowGateway second = identical(first, preferred)
+        ? fallback
+        : preferred;
+    for (final WindowGateway candidate in <WindowGateway>[first, second]) {
+      if (candidate is UrlWindowGateway) return candidate as UrlWindowGateway;
+    }
+    throw const BackendFailure(
+      OpenDexError(
+        code: OpenDexErrorCode.capabilityUnavailable,
+        message: 'This build cannot open web addresses on the phone.',
+        capability: 'phone-browser',
+      ),
+    );
+  }
+
+  @override
+  Future<String?> resolveBrowser(DeviceSummary device, String url) async =>
+      _urlPath(device).resolveBrowser(device, url);
+
+  @override
+  Future<WindowBackendSession> launchUrl(
+    DeviceSummary device,
+    AndroidApplication browser,
+    String url, {
+    String? sessionId,
+  }) async {
+    final UrlWindowGateway path = _urlPath(device);
+    final WindowBackendSession session = await path.launchUrl(
+      device,
+      browser,
+      url,
+      sessionId: sessionId,
+    );
+    _owners[session.id] = path as WindowGateway;
+    return session;
+  }
+
   Future<WindowBackendSession> _useFallback(
     DeviceSummary device,
     AndroidApplication application, {
@@ -136,8 +182,7 @@ class FallbackWindowGateway implements WindowGateway {
     }
   }
 
-  WindowGateway _ownerOf(String sessionId) =>
-      _owners[sessionId] ?? preferred;
+  WindowGateway _ownerOf(String sessionId) => _owners[sessionId] ?? preferred;
 
   @override
   Future<void> close(String sessionId) async {

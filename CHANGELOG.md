@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### The desk search opens on the phone
+
+Searching from the desk's Google bar used to open the desktop's own browser,
+which is not where a search made on the phone's desk belongs. It now opens
+in the phone's browser as a desk window: the phone is asked which app
+handles the address, that app is started on a fresh display with the
+address, and the window streams it like any other. A browser that insists
+on a single task and lands on the phone's own screen is moved into the
+window before the desk waits for its first frame. The desktop-browser
+path stays on the facade for anything that genuinely belongs on the
+computer, but nothing on the desk calls it any more.
+
+Refused rather than guessed: an address that is not `http` or `https`, a
+phone with nothing that opens web addresses, and a browser the app list
+does not carry (only listed apps can be streamed). Each comes back as a
+named failure, not a silent no-op.
+
+Two things the phone taught us and the unit tests could not, because a
+fake accepts any command: Android names its activity flags and has no
+`--activity-new-task` among them, answering an unknown option with a
+stack trace, so the intent flags are set numerically; and `adb shell`
+hands its arguments to the phone's shell as one line, so an address
+carrying `&` was silently truncated there and still resolved to a
+plausible browser. Addresses are quoted now, and a device probe
+(`tool/url_probe.dart`) is what found both.
+
 ### Desks that do something, and tiles from the phone
 
 The four desk keys in the taskbar switched desks, but nothing could put a

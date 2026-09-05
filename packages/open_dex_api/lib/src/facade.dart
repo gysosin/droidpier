@@ -103,6 +103,14 @@ abstract interface class OpenDexFacade {
   /// reaches a process directly, and so the scheme is validated in one place.
   Future<VoidResult> openUrl(String url);
 
+  /// Opens a web address in the phone's own browser, as a desk window.
+  ///
+  /// The phone decides which app handles the address; that app must be in
+  /// [OpenDexSnapshot.applications], because only listed apps can be streamed.
+  /// The window then behaves like one from [launchApplication], and the
+  /// result is its session id. [openUrl] is the desktop's browser instead.
+  Future<CommandResult<String>> openUrlOnPhone(String url);
+
   /// Streams the phone's own screen to the desk, view only.
   ///
   /// Progress lands on [OpenDexSnapshot.displayMirror] rather than only in

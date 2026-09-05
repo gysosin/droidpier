@@ -759,6 +759,101 @@ void main() {
       expect(clipboard.writes, 1);
     },
   );
+  group('open a web address on the phone', () {
+    Future<(OpenDexController, FakeWindowGateway)> connected({
+      String? browser = 'com.example.demo',
+    }) async {
+      final windows = FakeWindowGateway()..browser = browser;
+      final controller = OpenDexController(
+        deviceGateway: FakeDeviceGateway(),
+        components: [
+          FakeBootComponent('agent'),
+          FakeBootComponent('companion'),
+          FakeCatalogComponent(),
+        ],
+        windowGateway: windows,
+        surfaceResizeDebounce: Duration.zero,
+      );
+      addTearDown(controller.dispose);
+      await controller.discoverDevices();
+      await controller.connectSelectedDevice();
+      return (controller, windows);
+    }
+
+    test(
+      'opens the phone browser on the address, as a streaming window',
+      () async {
+        final (controller, windows) = await connected();
+        final result = await controller.openUrlOnPhone(
+          'https://www.google.com/search?q=link+rail',
+        );
+        expect(result, isA<CommandSuccess<String>>());
+        final window = controller.snapshot.windows.single;
+        expect(window.id, (result as CommandSuccess<String>).value);
+        expect(window.status, WindowSessionStatus.streaming);
+        expect(window.application.packageName, 'com.example.demo');
+        expect(window.surface, isNotNull);
+        expect(windows.urls, [
+          ('com.example.demo', 'https://www.google.com/search?q=link+rail'),
+        ]);
+        expect(windows.resolved, ['https://www.google.com/search?q=link+rail']);
+      },
+    );
+
+    test(
+      'a phone with no browser gets a capability failure, no window',
+      () async {
+        final (controller, windows) = await connected(browser: null);
+        final result = await controller.openUrlOnPhone('https://example.com');
+        expect(result, isA<CommandFailure<String>>());
+        expect(
+          (result as CommandFailure<String>).error.code,
+          OpenDexErrorCode.capabilityUnavailable,
+        );
+        expect(controller.snapshot.windows, isEmpty);
+        expect(windows.urls, isEmpty);
+      },
+    );
+
+    test('a browser the catalog does not list cannot be streamed', () async {
+      final (controller, windows) = await connected(browser: 'com.unknown');
+      final result = await controller.openUrlOnPhone('https://example.com');
+      expect(result, isA<CommandFailure<String>>());
+      expect(controller.snapshot.windows, isEmpty);
+      expect(windows.urls, isEmpty);
+    });
+
+    test('refuses anything but a web address', () async {
+      final (controller, windows) = await connected();
+      expect(
+        await controller.openUrlOnPhone('file:///etc/passwd'),
+        isA<CommandFailure<String>>(),
+      );
+      expect(windows.resolved, isEmpty);
+    });
+
+    test('a gateway that cannot open addresses says so', () async {
+      final controller = OpenDexController(
+        deviceGateway: FakeDeviceGateway(),
+        components: [
+          FakeBootComponent('agent'),
+          FakeBootComponent('companion'),
+          FakeCatalogComponent(),
+        ],
+        windowGateway: PlainWindowGateway(),
+      );
+      addTearDown(controller.dispose);
+      await controller.discoverDevices();
+      await controller.connectSelectedDevice();
+      final result = await controller.openUrlOnPhone('https://example.com');
+      expect(result, isA<CommandFailure<String>>());
+      expect(
+        (result as CommandFailure<String>).error.capability,
+        'phone-browser',
+      );
+    });
+  });
+
   group('display mirror', () {
     Future<OpenDexController> connected(FakeDisplayMirrorGateway mirror) async {
       final controller = OpenDexController(
@@ -1065,7 +1160,30 @@ class FakeWindowGateway
     implements
         WindowGateway,
         ResizableWindowGateway,
-        WindowSurfaceUpdateGateway {
+        WindowSurfaceUpdateGateway,
+        UrlWindowGateway {
+  /// What resolveBrowser answers; null means the phone has no browser.
+  String? browser = 'com.example.demo';
+  final resolved = <String>[];
+  final urls = <(String, String)>[];
+
+  @override
+  Future<String?> resolveBrowser(DeviceSummary device, String url) async {
+    resolved.add(url);
+    return browser;
+  }
+
+  @override
+  Future<WindowBackendSession> launchUrl(
+    DeviceSummary device,
+    AndroidApplication browser,
+    String url, {
+    String? sessionId,
+  }) async {
+    urls.add((browser.packageName, url));
+    return launch(device, browser, sessionId: sessionId);
+  }
+
   final _exits = StreamController<WindowBackendExit>.broadcast();
   final _telemetry = StreamController<WindowBackendTelemetry>.broadcast(
     sync: true,
@@ -1323,4 +1441,29 @@ class FakeDisplayMirrorGateway implements DisplayMirrorGateway {
     await _exits.close();
     await _surfaces.close();
   }
+}
+
+/// A window gateway with no notion of web addresses.
+class PlainWindowGateway implements WindowGateway {
+  final FakeWindowGateway _inner = FakeWindowGateway();
+  @override
+  Stream<WindowBackendExit> get exits => _inner.exits;
+  @override
+  Stream<WindowBackendTelemetry> get telemetry => _inner.telemetry;
+  @override
+  Future<WindowBackendSession> launch(
+    DeviceSummary device,
+    AndroidApplication application, {
+    String? sessionId,
+  }) => _inner.launch(device, application, sessionId: sessionId);
+  @override
+  Future<void> close(String sessionId) => _inner.close(sessionId);
+  @override
+  Future<void> sendPointer(String sessionId, WindowPointerSample sample) =>
+      _inner.sendPointer(sessionId, sample);
+  @override
+  Future<void> sendKey(String sessionId, WindowKeySample sample) =>
+      _inner.sendKey(sessionId, sample);
+  @override
+  Future<void> dispose() => _inner.dispose();
 }

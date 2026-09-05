@@ -5,12 +5,12 @@
 // dart run tool/mirror_probe.dart <adb> <scrcpy-server> <ffmpeg> [seconds]
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:typed_data';
 
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_dex_core/open_dex_core.dart';
 import 'package:open_dex_platform/open_dex_platform.dart';
+
+import 'probe_support.dart';
 
 Future<void> main(List<String> args) async {
   final adbPath = args[0];
@@ -30,10 +30,10 @@ Future<void> main(List<String> args) async {
   final counting = _CountingDecoderStarter();
   final host = countPackets
       ? _PacketTextureHost(counting)
-      : _CountingTextureHost();
+      : CountingTextureHost();
   int framesNow(int id) => countPackets
       ? counting.decoders.last.packets
-      : (host as _CountingTextureHost).framesFor(id);
+      : (host as CountingTextureHost).framesFor(id);
   final gateway = DirectScrcpyDisplayMirrorGateway(
     mirrorStarter: ScrcpyServerLauncher(adb: adb),
     decoderStarter: countPackets ? counting : const SystemH264DecoderStarter(),
@@ -97,95 +97,6 @@ Future<void> main(List<String> args) async {
     await gateway.dispose();
   }
   exit(0);
-}
-
-class _CountingTextureHost implements WindowTextureHost {
-  final Map<int, _Reader> _readers = {};
-  int _next = 1;
-
-  int framesFor(int id) => _readers[id]?.frames ?? 0;
-
-  @override
-  Future<int> createRawRgbaTexture({
-    required String fifoPath,
-    required WindowPixelSize pixelSize,
-  }) async {
-    final id = _next++;
-    _readers[id] = _Reader(fifoPath, pixelSize.width * pixelSize.height * 4);
-    return id;
-  }
-
-  @override
-  Future<void> waitForFirstFrame(int textureId, {required Duration timeout}) =>
-      _readers[textureId]!.first.future.timeout(timeout);
-
-  @override
-  Future<WindowTextureStats> stats(int textureId) async {
-    final r = _readers[textureId]!;
-    return WindowTextureStats(
-      frames: r.frames,
-      presentedFrames: r.frames,
-      lastFrameMonotonicUs: 0,
-      centerLuma: 0,
-      probeLuma: 0,
-      droppedFrames: 0,
-    );
-  }
-
-  @override
-  Future<void> closeTexture(int textureId) async =>
-      _readers.remove(textureId)?.close();
-}
-
-/// Reads the RGBA pipe on its own isolate with large synchronous reads, so
-/// the measurement is of the pipeline, not of the probe's own event loop.
-class _Reader {
-  _Reader(String path, this.frameBytes) {
-    final port = ReceivePort();
-    port.listen((Object? message) {
-      if (message is int) {
-        frames = message;
-        if (!first.isCompleted) first.complete();
-      } else {
-        stdout.writeln('pipe: $message');
-      }
-    });
-    _port = port;
-    Isolate.spawn(_pump, (
-      path,
-      frameBytes,
-      port.sendPort,
-    )).then((i) => _isolate = i);
-  }
-
-  static void _pump((String, int, SendPort) args) {
-    final (path, frameBytes, out) = args;
-    final file = File(path).openSync();
-    final buffer = Uint8List(4 << 20);
-    var bytes = 0;
-    var frames = 0;
-    while (true) {
-      final n = file.readIntoSync(buffer);
-      if (n <= 0) break;
-      bytes += n;
-      final f = bytes ~/ frameBytes;
-      if (f > frames) {
-        frames = f;
-        out.send(frames);
-      }
-    }
-    out.send('closed after $bytes bytes');
-  }
-
-  final int frameBytes;
-  final Completer<void> first = Completer<void>();
-  int frames = 0;
-  ReceivePort? _port;
-  Isolate? _isolate;
-  void close() {
-    _isolate?.kill(priority: Isolate.immediate);
-    _port?.close();
-  }
 }
 
 /// Counts packets at the socket boundary instead of decoding them: tells
