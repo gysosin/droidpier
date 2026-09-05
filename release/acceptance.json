@@ -1,106 +1,106 @@
 {
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "publicationChannel": "experimental-preview",
   "checks": {
     "source_privacy_audit": {
-      "status": "passed",
-      "evidence": "Audited the beta.2 public file set and fresh public branch clone. No private instruction files, development transcripts, local paths, device identifiers, secrets, SDKs, captures or backup/reference trees are included. User-facing names are DroidPier; compatibility package/protocol identifiers remain unchanged. Source/link checks and whitespace validation pass."
+      "status": "pending",
+      "evidence": "Not re-run for beta.3. The public file set changed in this version (new platform sources, device probe tools under plugins/open_dex_platform/tool and regenerated site assets) and must be audited again before publication: no private instruction files, transcripts, local paths, device identifiers, secrets or capture trees."
     },
     "fresh_checkout_build": {
-      "status": "passed",
-      "evidence": "GitHub CI run 33432229401 built commit 5758253510b36c25aca3e5f6697caee7f1e2bfac from a fresh Ubuntu 22.04 checkout, including ADB, Android and the release desktop. Subsequent release-evidence changes are documentation only; the final PR must also pass the required source-and-linux check before merge, followed by rebuilding packages from merged main."
+      "status": "pending",
+      "evidence": "Every pull request in this version passed the required source-and-linux check, but no run yet exists for the release commit itself. Build the tag commit from a fresh Ubuntu 22.04 checkout and record that run here."
     },
     "analysis_and_tests": {
       "status": "passed",
-      "evidence": "Required source-and-linux CI run 33432229401 passed source checks, tool tests, analysis/tests for all shared packages, Android build/lint/tests and Flutter analysis/tests/release build. Locally, 248 desktop tests, 78 platform tests and 32 core tests passed; Android release lint/tests and production manifest/signature verification passed. Shell syntax and git diff --check pass."
+      "evidence": "Merged main verified as a whole on 2026-09-05: flutter analyze clean and 545 desktop tests passed; dart analyze clean and 99 platform tests, 53 core tests and 7 API contract tests passed. Every pull request in this version also passed the required source-and-linux check before merge."
     },
     "android_release_manifest": {
       "status": "passed",
-      "evidence": "Signed beta.2 APK verified with apksigner/aapt: permanent certificate matches beta.1 and the checked-in fingerprint; application ID unchanged, versionCode 2, versionName 0.1.0-beta.2, minimum SDK 26, not debuggable and no StreamProbeActivity in the production manifest."
+      "evidence": "Signed beta.3 companion built from this checkout and verified with apksigner and aapt2 on 2026-09-05: certificate SHA-256 c7398c50671e0919461b38433a9bec4440817246d9e447b81c49a901d74b0a22 matches release/android-certificate-sha256.txt and the published beta.2 certificate; application ID io.github.shrey113.openandroiddex.companion unchanged, versionCode 3, versionName 0.1.0-beta.3, minSdkVersion 26, targetSdkVersion 35, no debuggable flag and no StreamProbeActivity in the production manifest. Android release lint and unit tests passed in the same build."
     },
     "android_screen_visual_review": {
-      "status": "passed",
-      "evidence": "Inspected the actual signed beta.2 companion on a clean Android 15/API 35 emulator. Version, setup, QR/manual instructions, optional notification access, listener-connected state, restricted-settings help and app-info shortcut render correctly. Safe emulator screenshots are included in docs/images."
+      "status": "pending",
+      "evidence": "Not performed for beta.3. Inspect the signed companion on a clean Android emulator and include safe screenshots."
     },
     "desktop_screen_visual_review": {
-      "status": "passed",
-      "evidence": "Inspected actual main.dart debug desktop with USB device integration and the unified connection UI; reviewed rendered connection and settings controls. Direct-pipeline Settings/Calculator windows, input and resizing were exercised on the physical Android 13 test phone. Golden regression coverage uses synthetic data and does not replace this actual-screen review."
+      "status": "pending",
+      "evidence": "Not performed for beta.3. The preparing environment denies screen capture and synthetic input, so the running desktop was never inspected on screen; golden regression coverage uses synthetic data and does not replace this review. The desk, mirror and phone-browser windows must be inspected on an actual display before publication."
     },
     "license_and_corresponding_source_audit": {
-      "status": "passed",
-      "evidence": "Reviewed matching source and recipes for the pinned ADB/scrcpy/AppImage dependencies and the rebuilt FFmpeg 8.1.2 decoder. The decoder disables autodetected external libraries, GPL and nonfree components and enables x86 assembly. Its actual configure arguments and binary match the packaged payload. Verified inner source checksums for 29 source archives, required notices, Flutter notices and new multicast_dns/qr/qr_flutter licenses and component SBOM entries. Source archives contain no private development instruction files."
+      "status": "pending",
+      "evidence": "Runtime dependency pins (ADB, scrcpy, FFmpeg, AppImage runtime) are unchanged from beta.2, but Dart/Flutter dependencies and the component SBOM must be re-inventoried for this version and the source archives re-verified."
     },
     "off_device_signing_key_recovery": {
-      "status": "passed",
-      "evidence": "Protected GitHub release-environment secrets hold an encrypted off-device copy of the permanent keystore and password. Release run 33408161306 reconstructed the keystore on an independent Ubuntu runner and signed the APK successfully; downloaded APK certificate matches release/android-certificate-sha256.txt. This exercises recovery from the remote copy. Local private key and additional local backup remain available. Retain account recovery access and preferably another encrypted offline copy."
+      "status": "pending",
+      "evidence": "Re-exercise recovery for this version: reconstruct the keystore from the protected release-environment secret on an independent runner, sign, and confirm the downloaded certificate matches release/android-certificate-sha256.txt."
     },
     "ubuntu_22_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Clean Ubuntu 22.04 container passed DEB install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch, bundled ADB startup, AppImage extraction/run fallback and uninstall without development SDKs. Full compositor/USB/physical-device acceptance remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "ubuntu_24_04_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Clean Ubuntu 24.04 container passed DEB install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch, bundled ADB startup, AppImage extraction/run fallback and uninstall without development SDKs. Full compositor/USB/physical-device acceptance remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "debian_12_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "debian_13_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "mint_22_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "fedora_supported_releases_install_upgrade_uninstall": {
       "status": "pending",
-      "evidence": "Clean Fedora 44 container passed RPM install, official beta.1-to-beta.2 upgrade, synthetic settings preservation, non-root Xvfb launch and uninstall without development SDKs. Other Fedora versions and full compositor/USB/physical-device acceptance remain pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "arch_appimage_archive": {
       "status": "pending",
-      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "opensuse_appimage_archive": {
       "status": "pending",
-      "evidence": "Not tested for beta.2; no compatibility claim is made for this configuration."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "usb_authorization_and_denial": {
       "status": "pending",
-      "evidence": "Authorized USB startup and authenticated companion handshake exercised on Redmi Note 7 Pro / Android 13. Fresh authorization denial coverage remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "wireless_pairing": {
       "status": "pending",
-      "evidence": "Discovery parsing, expiry, socket lifecycle, operation cancellation, QR payload/session handling and pairing response regression tests pass. Physical manual-code/QR pairing, multicast-blocked networks and the full IPv4/IPv6 device matrix remain unverified."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "disconnect_reconnect_device_removal": {
       "status": "pending",
-      "evidence": "Physical USB reconnect and session relaunch exercised with the direct backend. Full device-removal, Wi-Fi and multi-device race acceptance remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "apps_input_resize_orientation": {
       "status": "pending",
-      "evidence": "Two simultaneous embedded direct-stream apps (Settings and Calculator), keyboard/pointer input, portrait/landscape resize, close and relaunch exercised on Redmi Note 7 Pro / Android 13. Broader application/device matrix remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "clipboard_notifications_permissions": {
       "status": "pending",
-      "evidence": "Regression tests cover opt-in, disconnected/unsupported clipboard states and stale-work cancellation. Android 15 emulator tests cover connection-notification grant, listener grant/connected state, revocation and refresh. Physical synthetic bidirectional clipboard and restricted/managed-device cases remain pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "owned_process_display_cleanup": {
       "status": "pending",
-      "evidence": "Direct-stream USB window close/relaunch and owned-process/display cleanup exercised on the Android 13 test phone. Full failure-path and cross-platform matrix remains pending."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "android_signed_upgrade_and_debug_conflict": {
-      "status": "passed",
-      "evidence": "On a dedicated Android 15 emulator, installed the official beta.1 release APK, granted connection notifications through Android UI, then upgraded with adb install -r to the signed beta.2 APK. First installation time and granted notification permission were preserved. Installing a separately built versionCode-2 debug APK was rejected with INSTALL_FAILED_UPDATE_INCOMPATIBLE and left the signed installation intact. Notification-listener grant/connected state, revocation/status refresh and app-info settings were also tested through Android UI."
+      "status": "pending",
+      "evidence": "Confirm the versionCode 3 companion upgrades the official beta.2 APK in place under the same certificate, and that a debug signature is still rejected rather than silently uninstalled."
     },
     "restricted_apps_unsupported_android": {
       "status": "pending",
-      "evidence": "Restricted/DRM application and unsupported/manufacturer Android behavior remain unverified; no compatibility claim is made."
+      "evidence": "Pending for beta.3. Not inherited from beta.2: this version changes window creation, adds a display mirror and starts the phone browser on a new display, all of which touch this area."
     },
     "assets_checksums_notices_links": {
-      "status": "passed",
-      "evidence": "All nine required candidate release assets are present and pass SHA-256 verification. Extracted DEB, RPM, AppImage and portable archive companion APKs match the standalone signed beta.2 APK byte-for-byte. File/component SBOMs, notices, exact dependency sources and public document links are checked. Publication additionally requires rebuilding/rechecking assets against the final merged commit and verifying the hosted draft; downloaded public assets are checked again before local installation."
+      "status": "pending",
+      "evidence": "Pending package build. Verify every published asset, SHA256SUMS, notices, SBOMs and download links after DEB, RPM, AppImage and archive are produced from one payload."
     }
   }
 }

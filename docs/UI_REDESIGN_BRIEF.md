@@ -41,7 +41,7 @@ control surface for a **physical link between two machines**.
 - **Connection:** USB (via ADB) or Wi-Fi (Android 11+ wireless debugging pairing).
 - **Privacy:** no account, no cloud relay, no analytics, no advertising. Everything is local.
 - **Licence:** Apache-2.0, open source, public repository.
-- **Status:** `0.1.0-beta.2`, experimental Linux/Android preview. Windows and macOS in development.
+- **Status:** `0.1.0-beta.3`, experimental Linux/Android preview. Windows and macOS in development.
 - **Platform:** Flutter desktop. Linux (GTK) today; Windows and macOS next.
 
 ### The transport chain — the product's identity

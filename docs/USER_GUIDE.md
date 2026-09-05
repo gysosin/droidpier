@@ -3,7 +3,7 @@
 ## Download status
 
 The Linux/Android experimental preview is available from
-[GitHub Releases](https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.2).
+[GitHub Releases](https://github.com/gysosin/droidpier/releases/tag/v0.1.0-beta.3).
 USB/direct-stream workflows have been exercised on one Android 13 phone; the full
 physical-device and distribution matrix is still unverified.
 Check the release notes before installing. Windows and macOS remain in development

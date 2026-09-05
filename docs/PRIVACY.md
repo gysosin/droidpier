@@ -4,7 +4,7 @@ DroidPier does not require an account and contains no advertising, analytics, or
 cloud relay. Its device integration runs locally through an authorized ADB
 connection. The phone still uses its own network connection for its own apps.
 
-In beta.2, clipboard sharing starts off for every connection and neither device
+Since beta.2, clipboard sharing starts off for every connection and neither device
 clipboard is accessed until the authenticated connection and explicit opt-in.
 When enabled, clipboard synchronization transfers clipboard text between the
 phone and computer. Notification access lets the companion send notification

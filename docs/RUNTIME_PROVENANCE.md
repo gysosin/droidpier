@@ -18,7 +18,7 @@ is not a Play Protect endorsement and does not guarantee warning-free installs.
 
 
 
-This record covers the Linux x86-64 packages for 0.1.0-beta.2. Source collection
+This record covers the Linux x86-64 packages for 0.1.0-beta.3. Source collection
 is separate from device compatibility validation. The release acceptance record
 remains the authority for whether a candidate may be published.
 
