@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -57,7 +58,9 @@ class QrBody extends StatelessWidget {
       children: <Widget>[
         Center(child: _QrPlate(payload: pairing.qrPayload!)),
         const SizedBox(height: DexSpace.md),
-        Center(child: _Expiry(expiresAt: pairing.expiresAt, clock: clock)),
+        Center(
+          child: _Expiry(expiresAt: pairing.expiresAt, clock: clock),
+        ),
         const SizedBox(height: DexSpace.md),
         const ConnectHint(
           icon: DexIcons.qrScan,

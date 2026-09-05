@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -22,10 +25,23 @@ class CompanionView extends StatefulWidget {
   const CompanionView({
     required this.snapshot,
     required this.onClose,
+    this.hostName,
+    this.linkSince,
+    this.now,
     super.key,
   });
 
   final OpenDexSnapshot snapshot;
+
+  /// This computer's name, as the phone's dashboard names its peer.
+  final String? hostName;
+
+  /// When the current link came up; the dashboard counts from it.
+  final DateTime? linkSince;
+
+  /// A fixed clock for tests and goldens. Null ticks once a second while the
+  /// view is open — it is a modal, not the idle desk.
+  final DateTime? now;
 
   /// Closes the view. The reference's "Disconnect Desktop Session" button does
   /// exactly this too, so it is labelled for what it does here: Close.
@@ -46,6 +62,30 @@ const Color _m3Bezel = Color(0xFF1E293B);
 
 class _CompanionViewState extends State<CompanionView> {
   _Tab _tab = _Tab.dashboard;
+  Timer? _ticker;
+  late DateTime _now = widget.now ?? DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.now == null) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _now = DateTime.now());
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(CompanionView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.now != null) _now = widget.now!;
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +99,8 @@ class _CompanionViewState extends State<CompanionView> {
       label: 'Companion app preview',
       child: SizedBox(
         width: 384,
-        height: 640,
+        // The reference's 640, or what the window allows.
+        height: math.min(640, MediaQuery.sizeOf(context).height * 0.85),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: _m3Background,
@@ -143,7 +184,10 @@ class _CompanionViewState extends State<CompanionView> {
                       ),
                       IconButton(
                         onPressed: widget.onClose,
-                        icon: const Icon(DexIcons.close, size: 16),
+                        icon: const Icon(
+                          DexIcons.close,
+                          size: DexIconSize.tray,
+                        ),
                         color: c.muted,
                         tooltip: 'Close',
                         constraints: const BoxConstraints(
@@ -167,6 +211,10 @@ class _CompanionViewState extends State<CompanionView> {
                         snapshot: s,
                         device: device,
                         colors: c,
+                        hostName: widget.hostName,
+                        uptime: widget.linkSince == null
+                            ? null
+                            : _now.difference(widget.linkSince!),
                         onClose: widget.onClose,
                       ),
                       _Tab.permissions => _Permissions(
@@ -291,19 +339,22 @@ class _Dashboard extends StatelessWidget {
     required this.device,
     required this.colors,
     required this.onClose,
+    this.hostName,
+    this.uptime,
   });
 
   final OpenDexSnapshot snapshot;
   final DeviceSummary? device;
   final DexColors colors;
   final VoidCallback onClose;
+  final String? hostName;
+  final Duration? uptime;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
     final bool linked = device != null;
     final TelemetryMeasurement? tx = snapshot.telemetry.throughput;
-    final TelemetryMeasurement? rtt = snapshot.telemetry.linkLatency;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +368,7 @@ class _Dashboard extends StatelessWidget {
                 children: <Widget>[
                   Icon(
                     linked ? DexIcons.circleCheck : DexIcons.circleX,
-                    size: 16,
+                    size: DexIconSize.tray,
                     color: linked ? colors.trace : colors.muted,
                   ),
                   const SizedBox(width: DexSpace.sm),
@@ -331,7 +382,7 @@ class _Dashboard extends StatelessWidget {
               ),
               const SizedBox(height: DexSpace.sm),
               Text(
-                linked ? 'This computer' : 'Waiting for a link',
+                linked ? (hostName ?? 'This computer') : 'Waiting for a link',
                 style: t.titleMedium?.copyWith(color: colors.text),
               ),
               Divider(color: colors.line, height: DexSpace.xl),
@@ -339,15 +390,15 @@ class _Dashboard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: _Readout(
-                      label: 'ROUND TRIP',
-                      value: rtt == null ? '—' : '${rtt.value.round()} ms',
+                      label: 'DURATION',
+                      value: uptime == null ? '\u2014' : _clock(uptime!),
                       colors: colors,
                     ),
                   ),
                   Expanded(
                     child: _Readout(
-                      label: 'DATA TX',
-                      value: tx == null ? '—' : _bytes(tx.value),
+                      label: 'LINK RATE',
+                      value: tx == null ? '\u2014' : _bytes(tx.value),
                       colors: colors,
                     ),
                   ),
@@ -428,12 +479,18 @@ class _Dashboard extends StatelessWidget {
                 minimumSize: const Size(0, DexHit.primary),
                 shape: const StadiumBorder(),
               ),
-              icon: const Icon(DexIcons.close, size: 16),
+              icon: const Icon(DexIcons.close, size: DexIconSize.tray),
               label: const Text('Close Companion View'),
             ),
           ),
       ],
     );
+  }
+
+  /// `01h 42m 18s`, as the phone's dashboard formats it.
+  static String _clock(Duration d) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(d.inHours)}h ${two(d.inMinutes % 60)}m ${two(d.inSeconds % 60)}s';
   }
 
   static String _bytes(double perSecond) {
@@ -553,7 +610,7 @@ class _Pairing extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(DexIcons.qrCode, size: 40, color: colors.signal),
+          Icon(DexIcons.qrCode, size: DexIconSize.hero, color: colors.signal),
           const SizedBox(height: DexSpace.md),
           Text(
             'Pair over Wi-Fi',

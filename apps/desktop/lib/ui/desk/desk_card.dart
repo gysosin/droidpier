@@ -62,7 +62,11 @@ class DeskCard extends StatelessWidget {
           Row(
             children: <Widget>[
               if (icon != null) ...<Widget>[
-                Icon(icon, size: 14, color: iconColor ?? c.signal),
+                Icon(
+                  icon,
+                  size: DexIconSize.chrome,
+                  color: iconColor ?? c.signal,
+                ),
                 const SizedBox(width: 6),
               ],
               Flexible(

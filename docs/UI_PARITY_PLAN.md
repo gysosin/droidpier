@@ -330,3 +330,26 @@ What the source held that the captures could not show:
 - [ ] `animate-fade-in` / `animate-scale-up` are undefined in the reference: its
   overlays appear instantly. Ours keep their entrance; nothing to port.
 - [ ] Wi-Fi SSID subline: still no SSID in the facade.
+
+## Third pass — behaviour on a real phone (2026-09-05)
+
+What the operator saw running the second pass on the Redmi Note 7 Pro, and
+what each item became. Approved as a plan first; delivered in steps.
+
+- [x] **Overlays open smoothly.** `OverlayEntrance` (scrim fade 180 ms; card
+  fade + 0.96→1 scale 260 ms; transform/opacity only; instant close; reduced
+  motion skips) on the launcher, every `_Overlay` modal, the control centre,
+  the notification centre, the mirror and the companion.
+- [x] **No package names in the launcher**; system apps keep *System*.
+- [x] **The tray clock is a readout**; the status cluster is the one door to
+  the control centre and rings while it is open, as does the bell.
+- [x] **Settings fill a 672 card** (`p-5`, no inner 620 column).
+- [x] **Companion view is its own frame** on the scrim; height clamps to the
+  window; shows the host name and link uptime, `LINK RATE` from telemetry.
+- [x] **One glyph scale** — `DexIconSize` — across every surface;
+  `AppGlyph`'s radius cliff moved to the drawer's tile size.
+- [ ] Real app tiles from the phone (the agent resolves icons from each app's
+  own resources; MIUI hands out themed discs today).
+- [ ] Workspaces: move-to-desk in the window menu, Ctrl+Alt+←/→, desk label.
+- [ ] Live phone mirror (backend capability).
+- [ ] Desk search opens on the phone (backend capability).

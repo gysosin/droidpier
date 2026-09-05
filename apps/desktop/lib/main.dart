@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:open_dex_api/open_dex_api.dart';
@@ -121,6 +122,7 @@ class _OpenDexApplicationState extends State<OpenDexApplication> {
             body: AppShell(
               snapshot: snapshot,
               facade: _facade,
+              hostName: Platform.localHostname,
               themeMode: _prefs.themeMode,
               onThemeChanged: (ThemeMode m) =>
                   _updatePreferences(_prefs.copyWith(themeMode: m)),

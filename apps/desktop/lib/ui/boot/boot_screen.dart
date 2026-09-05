@@ -219,7 +219,11 @@ class _Masthead extends StatelessWidget {
           if (onSelectDevice case final VoidCallback select)
             TextButton.icon(
               onPressed: select,
-              icon: Icon(DexIcons.portrait, size: 14, color: c.signal),
+              icon: Icon(
+                DexIcons.portrait,
+                size: DexIconSize.chrome,
+                color: c.signal,
+              ),
               label: Text(
                 'Select Device',
                 style: Theme.of(context).textTheme.labelMedium
@@ -310,7 +314,7 @@ class _Intent extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(DexIcons.portrait, size: 18, color: c.trace),
+                Icon(DexIcons.portrait, size: DexIconSize.tray, color: c.trace),
                 const SizedBox(width: DexSpace.md),
                 // Flexible, not fixed: the device line carries a name, a
                 // transport and an Android version, and a narrow boot column
@@ -389,7 +393,7 @@ class _Intent extends StatelessWidget {
             ] else if (screen._isReady)
               FilledButton.icon(
                 onPressed: screen.onOpenWorkspace ?? screen.onConnect,
-                icon: const Icon(DexIcons.forward, size: 16),
+                icon: const Icon(DexIcons.forward, size: DexIconSize.tray),
                 iconAlignment: IconAlignment.end,
                 label: const Text('Open Workspace'),
               )
@@ -428,7 +432,7 @@ class _DeviceLine extends StatelessWidget {
           device.connectionKind == DeviceConnectionKind.usb
               ? DexIcons.usb
               : DexIcons.wifi,
-          size: 14,
+          size: DexIconSize.chrome,
           color: colors.muted,
         ),
         const SizedBox(width: DexSpace.sm),
@@ -725,7 +729,7 @@ class _ErrorNote extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, DexHit.comfortable),
                 ),
-                icon: const Icon(DexIcons.copy, size: 14),
+                icon: const Icon(DexIcons.copy, size: DexIconSize.chrome),
                 label: const Text('Copy technical details'),
               ),
             ),

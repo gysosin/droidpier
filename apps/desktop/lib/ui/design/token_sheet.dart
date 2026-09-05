@@ -80,7 +80,11 @@ class _TokenSheetState extends State<TokenSheet> {
                       color: DexGlass.of(context).fill,
                       borderRadius: BorderRadius.circular(DexRadius.control),
                     ),
-                    child: Icon(DexIcons.palette, size: 18, color: c.signal),
+                    child: Icon(
+                      DexIcons.palette,
+                      size: DexIconSize.tray,
+                      color: c.signal,
+                    ),
                   ),
                   const SizedBox(width: DexSpace.md),
                   ConstrainedBox(

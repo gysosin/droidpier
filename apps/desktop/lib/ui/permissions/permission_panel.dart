@@ -88,7 +88,11 @@ class PermissionPanel extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Icon(DexIcons.shieldCheck, size: 22, color: c.trace),
+                        Icon(
+                          DexIcons.shieldCheck,
+                          size: DexIconSize.control,
+                          color: c.trace,
+                        ),
                         const SizedBox(width: DexSpace.md),
                         Expanded(
                           child: Column(
@@ -216,7 +220,7 @@ class _PermissionRow extends StatelessWidget {
               ),
               child: Icon(
                 _iconFor(id),
-                size: 18,
+                size: DexIconSize.tray,
                 color: grant == PermissionGrant.granted
                     ? colors.trace
                     : colors.muted,
@@ -282,7 +286,11 @@ class _PermissionRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(DexIcons.check, size: 12, color: colors.trace),
+                Icon(
+                  DexIcons.check,
+                  size: DexIconSize.inline,
+                  color: colors.trace,
+                ),
                 const SizedBox(width: DexSpace.xs),
                 Text(
                   'On',

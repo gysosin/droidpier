@@ -32,8 +32,9 @@ Map<String, RememberedWindow> rememberWindow(
   WindowGeometry geometry, {
   required bool maximised,
 }) {
-  final Map<String, RememberedWindow> next =
-      Map<String, RememberedWindow>.of(current)..remove(packageName);
+  final Map<String, RememberedWindow> next = Map<String, RememberedWindow>.of(
+    current,
+  )..remove(packageName);
 
   next[packageName] = RememberedWindow(
     geometry: geometry,

@@ -96,7 +96,7 @@ class PhoneList extends StatelessWidget {
             children: <Widget>[
               OutlinedButton.icon(
                 onPressed: onRefresh,
-                icon: const Icon(DexIcons.refresh, size: 14),
+                icon: const Icon(DexIcons.refresh, size: DexIconSize.chrome),
                 label: const Text('Look again'),
               ),
               const Spacer(),
@@ -246,7 +246,7 @@ class _DeviceRow extends StatelessWidget {
                     device.connectionKind == DeviceConnectionKind.usb
                         ? DexIcons.usb
                         : DexIcons.wifi,
-                    size: 18,
+                    size: DexIconSize.tray,
                     color: enabled ? colors.signal : colors.muted,
                   ),
                 ),

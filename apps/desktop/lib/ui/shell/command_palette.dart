@@ -115,7 +115,11 @@ class _CommandPaletteState extends State<CommandPalette> {
             decoration: InputDecoration(
               hintText: 'Type a command or search actions (Ctrl+Shift+P)…',
               hintStyle: t.bodyLarge?.copyWith(color: c.muted),
-              prefixIcon: Icon(DexIcons.search, size: 18, color: c.signal),
+              prefixIcon: Icon(
+                DexIcons.search,
+                size: DexIconSize.tray,
+                color: c.signal,
+              ),
               // The way out, printed on the field as the reference prints it.
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: DexSpace.sm),
@@ -313,7 +317,7 @@ class _Results extends StatelessWidget {
                           ),
                           child: Icon(
                             _iconFor(command.group),
-                            size: 16,
+                            size: DexIconSize.tray,
                             color: colors.muted,
                           ),
                         ),

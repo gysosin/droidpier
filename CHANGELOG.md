@@ -106,6 +106,21 @@ click by click, rather than against its source. What changed on screen:
   labelled *Close Companion View* rather than the reference's *Disconnect
   Desktop Session*, because that is what it does there too.
 
+- **Third pass — behaviour on a real phone.** Everything that opens now
+  *opens*: the launcher, every modal, the control centre, the notification
+  centre, the mirror and the companion arrive with a short fade (the
+  scrim) and a fade-and-scale (the card), on opacity and transform only,
+  once; closing stays instant, and reduced motion skips it. The launcher
+  no longer prints package names under user apps (system apps keep their
+  small *System* tag). The tray's clock is a readout again — it opened the
+  control centre, the same as the cluster beside it — and the cluster and
+  bell wear a signal ring while their panel is open. Settings fill their
+  672 card instead of a 620 column inside an 880 one. The companion view is
+  its own phone frame on the scrim, fits short windows, and shows this
+  computer's name and how long the link has been up. Every glyph sits on
+  one scale (`DexIconSize`: 12 / 14 / 16 / 20 / 32 / 48) instead of the
+  nine sizes that had crept in.
+
 Not shipped, and why: the reference's Wi-Fi SSID subline (the facade does
 not carry an SSID, and a placeholder would be a lie); its two-way Dark/Light
 theme control (System is a real setting here); its `Skip tour` / `Step n of

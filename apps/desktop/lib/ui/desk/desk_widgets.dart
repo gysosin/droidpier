@@ -150,7 +150,7 @@ class NowPlayingWidget extends StatelessWidget {
                           ),
                           child: Icon(
                             _playing ? DexIcons.pause : DexIcons.play,
-                            size: 16,
+                            size: DexIconSize.tray,
                             color: c.text,
                           ),
                         ),
@@ -217,7 +217,11 @@ class _Artwork extends StatelessWidget {
         color: colors.raised,
         borderRadius: BorderRadius.circular(DexRadius.control),
       ),
-      child: Icon(DexIcons.music, size: 20, color: colors.muted),
+      child: Icon(
+        DexIcons.music,
+        size: DexIconSize.control,
+        color: colors.muted,
+      ),
     );
     final List<int>? art = media.artwork;
     if (art == null || art.isEmpty) {
@@ -267,7 +271,7 @@ class _Transport extends StatelessWidget {
             height: DexHit.comfortable,
             child: Icon(
               icon,
-              size: 17,
+              size: DexIconSize.tray,
               color: enabled
                   ? colors.muted
                   : colors.muted.withValues(alpha: 0.5),
@@ -354,7 +358,7 @@ class PhoneWidget extends StatelessWidget {
                 telemetry.charging
                     ? DexIcons.batteryCharging
                     : DexIcons.battery,
-                size: 14,
+                size: DexIconSize.chrome,
                 color: gauge,
               ),
               const SizedBox(width: 6),
@@ -480,7 +484,7 @@ class _Tile extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(icon, size: 14, color: tint),
+          Icon(icon, size: DexIconSize.chrome, color: tint),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
@@ -523,7 +527,7 @@ class _Door extends StatelessWidget {
       children: <Widget>[
         Text(text, style: DexTheme.data(colors, size: 10)),
         const SizedBox(width: 2),
-        Icon(DexIcons.forward, size: 12, color: colors.muted),
+        Icon(DexIcons.forward, size: DexIconSize.inline, color: colors.muted),
       ],
     );
   }

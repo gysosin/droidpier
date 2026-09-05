@@ -129,4 +129,3 @@ class HealthHud extends StatelessWidget {
     return '${perSecond.round()} B/s';
   }
 }
-

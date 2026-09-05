@@ -1,7 +1,9 @@
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -57,7 +59,6 @@ class AppDrawer extends StatefulWidget {
 
   static void _ignorePins(List<String> _) {}
 
-
   /// Which phone these apps came from, named in the footer.
   final String? deviceName;
   @override
@@ -93,19 +94,14 @@ class _AppDrawerState extends State<AppDrawer> {
   ///
   /// Ordering is the product now, not the alphabet: match quality first, then
   /// the person's own launch habits. See `app_ranking.dart`.
-  List<AndroidApplication> get _results => rankApps(
-    widget.applications,
-    _query.text,
-    history: widget.launchHistory,
-  );
+  List<AndroidApplication> get _results =>
+      rankApps(widget.applications, _query.text, history: widget.launchHistory);
 
-  List<AndroidApplication> get _systemApps => _results
-      .where((AndroidApplication a) => a.isSystemApp)
-      .toList();
+  List<AndroidApplication> get _systemApps =>
+      _results.where((AndroidApplication a) => a.isSystemApp).toList();
 
-  List<AndroidApplication> get _userApps => _results
-      .where((AndroidApplication a) => !a.isSystemApp)
-      .toList();
+  List<AndroidApplication> get _userApps =>
+      _results.where((AndroidApplication a) => !a.isSystemApp).toList();
 
   /// The pinned apps that are actually installed, in pin order.
   ///
@@ -195,11 +191,13 @@ class _AppDrawerState extends State<AppDrawer> {
             // launcher — the most-used surface — still frosting the desk.
             child: _MaybeBlur(
               sigma: 18,
-              child: ColoredBox(
-                color: Colors.black.withValues(
-                  alpha: Theme.of(context).brightness == Brightness.dark
-                      ? 0.42
-                      : 0.24,
+              child: OverlayEntrance.scrim(
+                child: ColoredBox(
+                  color: Colors.black.withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark
+                        ? 0.42
+                        : 0.24,
+                  ),
                 ),
               ),
             ),
@@ -225,47 +223,49 @@ class _AppDrawerState extends State<AppDrawer> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 672),
-                child: GlassPanel(
-                  radius: DexRadius.modal,
-                  blur: 32,
-                  fill: DexGlass.of(context).substrate,
-                  // Each band pads itself; the header and footer carry rules.
-                  padding: EdgeInsets.zero,
-                  // The tap-to-dismiss is the scrim behind; taps inside the
-                  // panel must not fall through to it.
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {},
-                    child: Column(
-                      // Hug the content. Flexible rather than Expanded, so the
-                      // card is as tall as what it holds until it runs out of
-                      // screen, and scrolls after that.
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        // Search heads the card. What you typed belongs above
-                        // what it found, which is the shape every launcher
-                        // search has and the only one where the results read
-                        // downward from the query.
-                        _SearchField(
-                          controller: _query,
-                          focusNode: _searchFocus,
-                          colors: c,
-                          onChanged: (_) => setState(() => _selected = 0),
-                          onSubmitted: (_) => _launchSelected(),
-                          onClear: () {
-                            _query.clear();
-                            setState(() => _selected = 0);
-                            _searchFocus.requestFocus();
-                          },
-                        ),
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.all(DexSpace.lg),
-                            child: _body(context, c, t),
+                child: OverlayEntrance.card(
+                  child: GlassPanel(
+                    radius: DexRadius.modal,
+                    blur: 32,
+                    fill: DexGlass.of(context).substrate,
+                    // Each band pads itself; the header and footer carry rules.
+                    padding: EdgeInsets.zero,
+                    // The tap-to-dismiss is the scrim behind; taps inside the
+                    // panel must not fall through to it.
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {},
+                      child: Column(
+                        // Hug the content. Flexible rather than Expanded, so the
+                        // card is as tall as what it holds until it runs out of
+                        // screen, and scrolls after that.
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          // Search heads the card. What you typed belongs above
+                          // what it found, which is the shape every launcher
+                          // search has and the only one where the results read
+                          // downward from the query.
+                          _SearchField(
+                            controller: _query,
+                            focusNode: _searchFocus,
+                            colors: c,
+                            onChanged: (_) => setState(() => _selected = 0),
+                            onSubmitted: (_) => _launchSelected(),
+                            onClear: () {
+                              _query.clear();
+                              setState(() => _selected = 0);
+                              _searchFocus.requestFocus();
+                            },
                           ),
-                        ),
-                        _Footer(colors: c, deviceName: widget.deviceName),
-                      ],
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.all(DexSpace.lg),
+                              child: _body(context, c, t),
+                            ),
+                          ),
+                          _Footer(colors: c, deviceName: widget.deviceName),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -364,8 +364,7 @@ class _AppDrawerState extends State<AppDrawer> {
               onContextMenu: _showTileMenu,
             ),
           ],
-          if (system.isNotEmpty && user.isNotEmpty)
-            const SizedBox(height: 20),
+          if (system.isNotEmpty && user.isNotEmpty) const SizedBox(height: 20),
           if (user.isNotEmpty) ...<Widget>[
             _SectionHeader(
               label: 'User applications (${user.length})',
@@ -387,11 +386,7 @@ class _AppDrawerState extends State<AppDrawer> {
 /// An uppercase, letter-spaced section label, as the reference sets above each
 /// block of apps.
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.label,
-    required this.colors,
-    this.icon,
-  });
+  const _SectionHeader({required this.label, required this.colors, this.icon});
 
   final String label;
   final DexColors colors;
@@ -404,7 +399,7 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         children: <Widget>[
           if (icon != null) ...<Widget>[
-            Icon(icon, size: 14, color: colors.signal),
+            Icon(icon, size: DexIconSize.chrome, color: colors.signal),
             const SizedBox(width: 6),
           ],
           Text(
@@ -495,7 +490,7 @@ class _SearchField extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Icon(DexIcons.search, size: 20, color: colors.muted),
+          Icon(DexIcons.search, size: DexIconSize.control, color: colors.muted),
           const SizedBox(width: DexSpace.md),
           Expanded(
             child: TextField(
@@ -510,9 +505,8 @@ class _SearchField extends StatelessWidget {
                 border: InputBorder.none,
                 hintText:
                     "Search phone apps (e.g. 'wa' for WhatsApp, or app name)…",
-                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colors.muted,
-                ),
+                hintStyle: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: colors.muted),
               ),
             ),
           ),
@@ -522,7 +516,11 @@ class _SearchField extends StatelessWidget {
               if (v.text.isEmpty) return const SizedBox.shrink();
               return IconButton(
                 onPressed: onClear,
-                icon: Icon(DexIcons.close, size: 16, color: colors.muted),
+                icon: Icon(
+                  DexIcons.close,
+                  size: DexIconSize.tray,
+                  color: colors.muted,
+                ),
                 tooltip: 'Clear search',
                 constraints: const BoxConstraints(
                   minWidth: DexHit.minimum,
@@ -575,9 +573,8 @@ class _Footer extends StatelessWidget {
           Expanded(
             child: Text(
               'Up and Down to navigate \u00b7 Enter to launch',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: colors.muted,
-              ),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: colors.muted),
             ),
           ),
           const SizedBox(width: DexSpace.md),
@@ -630,9 +627,9 @@ class _AppTile extends StatelessWidget {
         : app.label;
     // The subline carries the package for a real label, and for a guessed one
     // it is the only truth on the row, so it is never dropped.
-    final String subline = app.isSystemApp && !placeholder
-        ? 'System'
-        : app.packageName;
+    // A system app says so; a user app is just its name. The package name
+    // used to sit under every user app, and nobody reaches for an app by it.
+    final String? subline = app.isSystemApp && !placeholder ? 'System' : null;
 
     return Semantics(
       button: true,
@@ -680,12 +677,17 @@ class _AppTile extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        subline,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: DexTheme.data(colors, size: 10),
-                      ),
+                      // The slot is kept so rows with and without a subline
+                      // stay one height in the grid.
+                      if (subline != null)
+                        Text(
+                          subline,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DexTheme.data(colors, size: 10),
+                        )
+                      else
+                        const SizedBox(height: 14),
                     ],
                   ),
                 ),
@@ -813,9 +815,7 @@ class _ResultsList extends StatelessWidget {
                   horizontal: DexSpace.md,
                   vertical: DexSpace.sm,
                 ),
-                constraints: const BoxConstraints(
-                  minHeight: DexHit.primary,
-                ),
+                constraints: const BoxConstraints(minHeight: DexHit.primary),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? colors.signal.withValues(alpha: 0.16)
@@ -839,9 +839,7 @@ class _ResultsList extends StatelessWidget {
                             shown,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: t.bodyMedium?.copyWith(
-                              color: colors.text,
-                            ),
+                            style: t.bodyMedium?.copyWith(color: colors.text),
                           ),
                           // A derived name is a guess; the package it came
                           // from stays visible beneath it.

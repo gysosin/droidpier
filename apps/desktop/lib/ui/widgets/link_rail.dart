@@ -241,7 +241,7 @@ class _StationNodeState extends State<_StationNode>
             ),
           ],
         ),
-        child: Icon(DexIcons.check, size: 16, color: c.bg),
+        child: Icon(DexIcons.check, size: DexIconSize.tray, color: c.bg),
       ),
       StageStatus.failed => Container(
         width: 28,
@@ -257,7 +257,11 @@ class _StationNodeState extends State<_StationNode>
             ),
           ],
         ),
-        child: Icon(DexIcons.fault, size: 16, color: Colors.white),
+        child: Icon(
+          DexIcons.fault,
+          size: DexIconSize.tray,
+          color: Colors.white,
+        ),
       ),
       StageStatus.active => Container(
         width: 28,

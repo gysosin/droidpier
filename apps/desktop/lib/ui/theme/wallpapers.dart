@@ -57,10 +57,10 @@ class WallpaperScope extends InheritedWidget {
   /// The gradient to paint, or null to use the theme default.
   final List<Color>? colors;
 
-  static List<Color>? of(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<WallpaperScope>()
-      ?.colors;
+  static List<Color>? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<WallpaperScope>()?.colors;
 
   @override
-  bool updateShouldNotify(WallpaperScope oldWidget) => colors != oldWidget.colors;
+  bool updateShouldNotify(WallpaperScope oldWidget) =>
+      colors != oldWidget.colors;
 }

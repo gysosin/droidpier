@@ -47,7 +47,8 @@ class AppGlyph extends StatelessWidget {
     final String shown = isPlaceholderLabel(app.label, app.packageName)
         ? displayNameFor(app.packageName)
         : app.label;
-    final double radius = size <= 28 ? DexRadius.control : DexRadius.card;
+    // One cliff, at the drawer's tile size: below it a glyph is a chip.
+    final double radius = size < 32 ? DexRadius.control : DexRadius.card;
 
     if (png != null && png.isNotEmpty) {
       return ClipRRect(

@@ -43,6 +43,32 @@ void main() {
   testWidgets('boot, list applications, open one, report the outcome', (
     WidgetTester tester,
   ) async {
+    // Refuse to run against the debug companion.
+    //
+    // With no packaged resources beside the executable — which is every run
+    // from a source checkout — `facade_factory_io` falls back to
+    // `android/companion/build/outputs/apk/debug/companion-debug.apk`. Pushing
+    // that installs a debug-signed companion, and the release build can then
+    // never update over it: Android refuses a signature change, and DroidPier
+    // deliberately will not uninstall for you. One run of this harness leaves
+    // the operator's phone unable to run the shipped app.
+    //
+    // It cost exactly that once. Now it stops instead.
+    final String? apk = Platform.environment['OPEN_DEX_COMPANION_APK'];
+    if (apk == null || apk.trim().isEmpty) {
+      say(
+        'REFUSED no OPEN_DEX_COMPANION_APK set. Without it this run would push '
+        'the debug-signed companion and leave the phone unable to install the '
+        'release build. Point it at a release APK, e.g. the one beside the '
+        'installed app under resources/android/companion.apk.',
+      );
+      fail(
+        'OPEN_DEX_COMPANION_APK must name a release-signed companion; see the '
+        'report file for why.',
+      );
+    }
+    say('COMPANION $apk');
+
     final OpenDexFacade facade = createFacade();
     addTearDown(facade.dispose);
 
@@ -130,7 +156,19 @@ void main() {
     }
 
     say('LAUNCH ${app.label} (${app.packageName})');
-    await facade.launchApplication(app.packageName);
+    final CommandResult<String> launched = await facade.launchApplication(
+      app.packageName,
+    );
+    // The result itself, not just its effect. A launch that is refused and a
+    // launch that succeeds but never produces a window look identical from the
+    // outside, and they need completely different investigations.
+    switch (launched) {
+      case CommandSuccess<String>(:final String value):
+        say('LAUNCH ok session=$value');
+      case CommandFailure<String>(:final OpenDexError error):
+        say('LAUNCH refused ${error.code.name}: ${error.message}');
+        say('LAUNCH detail=${error.technicalDetails ?? '(none)'}');
+    }
 
     // Give the stream a generous window to come up or fail.
     for (int i = 0; i < 60; i++) {

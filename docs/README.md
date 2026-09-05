@@ -18,6 +18,7 @@ complete distribution validation remain pending; see the release notes.
 | Dependency licenses and corresponding source | [Third-party software](THIRD_PARTY.md) |
 | Planned support | [Roadmap](ROADMAP.md) |
 | Proposed UI, companion and test work | [UI roadmap](UI_ROADMAP.md) |
+| Full UI specification for a redesign: every surface, state and token | [UI redesign brief](UI_REDESIGN_BRIEF.md) |
 | Changes and upgrade notes | [Changelog](../CHANGELOG.md) · [Beta notes](releases/0.1.0-beta.1.md) |
 | Contributing and maintainer contact | [Contributing](../CONTRIBUTING.md) · [Maintainers](MAINTAINERS.md) |
 | Reporting vulnerabilities and conduct concerns | [Security](../SECURITY.md) · [Code of conduct](../CODE_OF_CONDUCT.md) |

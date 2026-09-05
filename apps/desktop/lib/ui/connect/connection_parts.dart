@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 
@@ -141,7 +142,7 @@ class InlineError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(DexIcons.fault, size: 16, color: c.fault),
+            Icon(DexIcons.fault, size: DexIconSize.tray, color: c.fault),
             const SizedBox(width: DexSpace.sm),
             Expanded(
               child: Column(
@@ -151,14 +152,11 @@ class InlineError extends StatelessWidget {
                     error.message,
                     style: t.bodyMedium?.copyWith(color: c.text),
                   ),
-                  if (guidance ?? guidanceFor(error) case final String advice)
-                    ...<Widget>[
-                      const SizedBox(height: DexSpace.xs),
-                      Text(
-                        advice,
-                        style: t.bodySmall?.copyWith(color: c.muted),
-                      ),
-                    ],
+                  if (guidance ?? guidanceFor(error)
+                      case final String advice) ...<Widget>[
+                    const SizedBox(height: DexSpace.xs),
+                    Text(advice, style: t.bodySmall?.copyWith(color: c.muted)),
+                  ],
                 ],
               ),
             ),
@@ -183,7 +181,7 @@ class ConnectHint extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon ?? DexIcons.info, size: 14, color: c.muted),
+        Icon(icon ?? DexIcons.info, size: DexIconSize.chrome, color: c.muted),
         const SizedBox(width: DexSpace.sm),
         Expanded(
           child: Text(
@@ -471,7 +469,11 @@ class _Segment extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(icon, size: 15, color: selected ? c.signal : c.muted),
+                Icon(
+                  icon,
+                  size: DexIconSize.chrome,
+                  color: selected ? c.signal : c.muted,
+                ),
                 const SizedBox(width: DexSpace.sm),
                 Flexible(
                   child: Text(

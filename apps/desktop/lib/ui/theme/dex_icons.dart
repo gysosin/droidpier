@@ -149,35 +149,122 @@ abstract final class DexIcons {
   static const IconData flag = IconData(0xF2E5, fontFamily: 'Lucide');
   static const IconData tag = IconData(0xF521, fontFamily: 'Lucide');
   static const IconData filter = IconData(0xF2E0, fontFamily: 'Lucide');
-  static const IconData rotate = IconData(0xF492, fontFamily: 'Lucide'); // rotateCw
-  static const IconData trash = IconData(0xF546, fontFamily: 'Lucide'); // trash2
-  static const IconData volume = IconData(0xF585, fontFamily: 'Lucide'); // volume2
-  static const IconData chevronRight = IconData(0xF1FB, fontFamily: 'Lucide'); // chevronRight
-  static const IconData chevronDown = IconData(0xF1F5, fontFamily: 'Lucide'); // chevronDown
-  static const IconData externalLink = IconData(0xF29B, fontFamily: 'Lucide'); // externalLink
-  static const IconData shieldCheck = IconData(0xF4C1, fontFamily: 'Lucide'); // shieldCheck
-  static const IconData circleCheck = IconData(0xF1F1, fontFamily: 'Lucide'); // checkCircle2
-  static const IconData triangleAlert = IconData(0xF10D, fontFamily: 'Lucide'); // alertTriangle
-  static const IconData circleAlert = IconData(0xF10B, fontFamily: 'Lucide'); // alertCircle
-  static const IconData circleHelp = IconData(0xF359, fontFamily: 'Lucide'); // helpCircle
+  static const IconData rotate = IconData(
+    0xF492,
+    fontFamily: 'Lucide',
+  ); // rotateCw
+  static const IconData trash = IconData(
+    0xF546,
+    fontFamily: 'Lucide',
+  ); // trash2
+  static const IconData volume = IconData(
+    0xF585,
+    fontFamily: 'Lucide',
+  ); // volume2
+  static const IconData chevronRight = IconData(
+    0xF1FB,
+    fontFamily: 'Lucide',
+  ); // chevronRight
+  static const IconData chevronDown = IconData(
+    0xF1F5,
+    fontFamily: 'Lucide',
+  ); // chevronDown
+  static const IconData externalLink = IconData(
+    0xF29B,
+    fontFamily: 'Lucide',
+  ); // externalLink
+  static const IconData shieldCheck = IconData(
+    0xF4C1,
+    fontFamily: 'Lucide',
+  ); // shieldCheck
+  static const IconData circleCheck = IconData(
+    0xF1F1,
+    fontFamily: 'Lucide',
+  ); // checkCircle2
+  static const IconData triangleAlert = IconData(
+    0xF10D,
+    fontFamily: 'Lucide',
+  ); // alertTriangle
+  static const IconData circleAlert = IconData(
+    0xF10B,
+    fontFamily: 'Lucide',
+  ); // alertCircle
+  static const IconData circleHelp = IconData(
+    0xF359,
+    fontFamily: 'Lucide',
+  ); // helpCircle
   static const IconData house = IconData(0xF35E, fontFamily: 'Lucide'); // home
-  static const IconData ellipsis = IconData(0xF3ED, fontFamily: 'Lucide'); // moreHorizontal
-  static const IconData circleX = IconData(0xF59F, fontFamily: 'Lucide'); // xCircle
-  static const IconData badgeCheck = IconData(0xF179, fontFamily: 'Lucide'); // badgeCheck
-  static const IconData layoutDashboard = IconData(0xF389, fontFamily: 'Lucide'); // layoutDashboard
-  static const IconData panelLeft = IconData(0xF425, fontFamily: 'Lucide'); // panelLeft
-  static const IconData bellRing = IconData(0xF1A1, fontFamily: 'Lucide'); // bellRing
-  static const IconData circleDot = IconData(0xF20E, fontFamily: 'Lucide'); // circleDot
-  static const IconData layoutGrid = IconData(0xF38A, fontFamily: 'Lucide'); // layoutGrid
-  static const IconData share = IconData(0xF4BD, fontFamily: 'Lucide'); // share2
-  static const IconData fileText = IconData(0xF2D3, fontFamily: 'Lucide'); // fileText
-  static const IconData wifiOff = IconData(0xF597, fontFamily: 'Lucide'); // wifiOff
-  static const IconData refresh = IconData(0xF480, fontFamily: 'Lucide'); // refreshCw
-  static const IconData arrowUpDown = IconData(0xF160, fontFamily: 'Lucide'); // arrowUpDown
-  static const IconData hardDrive = IconData(0xF348, fontFamily: 'Lucide'); // hardDrive
-  static const IconData eyeOff = IconData(0xF29D, fontFamily: 'Lucide'); // eyeOff
-  static const IconData mapPin = IconData(0xF3C0, fontFamily: 'Lucide'); // mapPin
-  static const IconData messageSquare = IconData(0xF3CE, fontFamily: 'Lucide'); // messageSquare
-  static const IconData slidersHorizontal = IconData(0xF4DC, fontFamily: 'Lucide'); // slidersHorizontal
+  static const IconData ellipsis = IconData(
+    0xF3ED,
+    fontFamily: 'Lucide',
+  ); // moreHorizontal
+  static const IconData circleX = IconData(
+    0xF59F,
+    fontFamily: 'Lucide',
+  ); // xCircle
+  static const IconData badgeCheck = IconData(
+    0xF179,
+    fontFamily: 'Lucide',
+  ); // badgeCheck
+  static const IconData layoutDashboard = IconData(
+    0xF389,
+    fontFamily: 'Lucide',
+  ); // layoutDashboard
+  static const IconData panelLeft = IconData(
+    0xF425,
+    fontFamily: 'Lucide',
+  ); // panelLeft
+  static const IconData bellRing = IconData(
+    0xF1A1,
+    fontFamily: 'Lucide',
+  ); // bellRing
+  static const IconData circleDot = IconData(
+    0xF20E,
+    fontFamily: 'Lucide',
+  ); // circleDot
+  static const IconData layoutGrid = IconData(
+    0xF38A,
+    fontFamily: 'Lucide',
+  ); // layoutGrid
+  static const IconData share = IconData(
+    0xF4BD,
+    fontFamily: 'Lucide',
+  ); // share2
+  static const IconData fileText = IconData(
+    0xF2D3,
+    fontFamily: 'Lucide',
+  ); // fileText
+  static const IconData wifiOff = IconData(
+    0xF597,
+    fontFamily: 'Lucide',
+  ); // wifiOff
+  static const IconData refresh = IconData(
+    0xF480,
+    fontFamily: 'Lucide',
+  ); // refreshCw
+  static const IconData arrowUpDown = IconData(
+    0xF160,
+    fontFamily: 'Lucide',
+  ); // arrowUpDown
+  static const IconData hardDrive = IconData(
+    0xF348,
+    fontFamily: 'Lucide',
+  ); // hardDrive
+  static const IconData eyeOff = IconData(
+    0xF29D,
+    fontFamily: 'Lucide',
+  ); // eyeOff
+  static const IconData mapPin = IconData(
+    0xF3C0,
+    fontFamily: 'Lucide',
+  ); // mapPin
+  static const IconData messageSquare = IconData(
+    0xF3CE,
+    fontFamily: 'Lucide',
+  ); // messageSquare
+  static const IconData slidersHorizontal = IconData(
+    0xF4DC,
+    fontFamily: 'Lucide',
+  ); // slidersHorizontal
   static const IconData rotateCcw = IconData(0xF491, fontFamily: 'Lucide');
 }

@@ -148,9 +148,7 @@ class GlassBlurScope extends InheritedWidget {
 
   /// True when blur is permitted here — the default when no scope is present.
   static bool of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<GlassBlurScope>()
-          ?.enabled ??
+      context.dependOnInheritedWidgetOfExactType<GlassBlurScope>()?.enabled ??
       true;
 
   @override

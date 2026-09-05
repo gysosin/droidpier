@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:flutter/services.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 

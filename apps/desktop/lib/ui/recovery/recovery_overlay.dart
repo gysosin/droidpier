@@ -155,7 +155,7 @@ class _PhaseRing extends StatelessWidget {
         color: colour.withValues(alpha: 0.20),
         border: Border.all(color: colour, width: DexStroke.focusRing),
       ),
-      child: Icon(icon, size: 24, color: colour),
+      child: Icon(icon, size: DexIconSize.ring, color: colour),
     );
   }
 }

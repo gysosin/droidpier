@@ -243,7 +243,10 @@ WindowGeometry rotatedGeometry(
   double chrome = kWindowChrome,
 }) {
   final double contentWidth = current.width;
-  final double contentHeight = (current.height - chrome).clamp(1, double.infinity);
+  final double contentHeight = (current.height - chrome).clamp(
+    1,
+    double.infinity,
+  );
 
   double width = contentHeight;
   double height = contentWidth + chrome;
@@ -254,8 +257,7 @@ WindowGeometry rotatedGeometry(
   final double maxWidth = workspace.width;
   final double maxHeight = workspace.height;
   if (width > maxWidth || height > maxHeight) {
-    final double scale =
-        (maxWidth / width) < (maxHeight / height)
+    final double scale = (maxWidth / width) < (maxHeight / height)
         ? maxWidth / width
         : maxHeight / height;
     width *= scale;
@@ -282,5 +284,7 @@ WindowGeometry rotatedGeometry(
 ///
 /// Names the destination rather than the current state: a control labelled with
 /// what you already have is the ambiguous-expand-icon problem again.
-String rotateActionLabel(WindowGeometry current, {double chrome = kWindowChrome}) =>
-    (current.height - chrome) >= current.width ? 'Landscape' : 'Portrait';
+String rotateActionLabel(
+  WindowGeometry current, {
+  double chrome = kWindowChrome,
+}) => (current.height - chrome) >= current.width ? 'Landscape' : 'Portrait';

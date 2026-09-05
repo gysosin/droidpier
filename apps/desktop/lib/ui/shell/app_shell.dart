@@ -71,6 +71,7 @@ class AppShell extends StatefulWidget {
     required this.snapshot,
     required this.facade,
     this.now,
+    this.hostName,
     this.themeMode = ThemeMode.dark,
     this.onThemeChanged = _ignoreTheme,
     this.snapEnabled = true,
@@ -178,6 +179,10 @@ class AppShell extends StatefulWidget {
   /// clock that does not tick is broken, and it was.
   final DateTime? now;
 
+  /// This computer's name, for the companion view. Null in tests and the
+  /// preview, which then say "This computer".
+  final String? hostName;
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -221,6 +226,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
+    if (widget.snapshot.boot.isReady) _linkSince = DateTime.now();
     HardwareKeyboard.instance.addHandler(_onKey);
     if (widget.now == null) {
       // Every 10 s: the clock shows minutes, so a minute-long timer would drift
@@ -231,6 +237,19 @@ class _AppShellState extends State<AppShell> {
           setState(() => _tick = DateTime.now());
         }
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(AppShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The companion's uptime counts from the moment the link came up, and
+    // stops meaning anything when it drops.
+    final bool ready = widget.snapshot.boot.isReady;
+    if (ready && !oldWidget.snapshot.boot.isReady) {
+      _linkSince = DateTime.now();
+    } else if (!ready) {
+      _linkSince = null;
     }
   }
 
@@ -385,6 +404,9 @@ class _AppShellState extends State<AppShell> {
   /// The token specimen sheet. Deliberately reachable in the shipped
   /// product rather than only from the preview harness: a token that has
   /// drifted is easiest to see beside the ones it should match.
+  /// When the current link came up, for the companion's uptime readout.
+  DateTime? _linkSince;
+
   bool _tokensOpen = false;
 
   /// The companion app, rendered in a phone frame over the desk.
@@ -893,19 +915,21 @@ class _AppShellState extends State<AppShell> {
           Positioned(
             right: DexSpace.lg,
             bottom: 72 + DexSpace.md,
-            child: PhoneMirror(
-              snapshot: _s,
-              now: _now,
-              // Flat whenever a window is streaming. A blurred panel over a
-              // live texture re-blurs the scene on every decoded frame, which
-              // is the most expensive mistake available on this desk.
-              overVideo: _wm.windows.values.any(
-                (WorkspaceWindow w) =>
-                    w.session.status == WindowSessionStatus.streaming,
+            child: OverlayEntrance.card(
+              child: PhoneMirror(
+                snapshot: _s,
+                now: _now,
+                // Flat whenever a window is streaming. A blurred panel over a
+                // live texture re-blurs the scene on every decoded frame, which
+                // is the most expensive mistake available on this desk.
+                overVideo: _wm.windows.values.any(
+                  (WorkspaceWindow w) =>
+                      w.session.status == WindowSessionStatus.streaming,
+                ),
+                onClose: () => setState(() => _phoneMirrorOpen = false),
+                onLaunch: (AndroidApplication a) =>
+                    widget.facade.launchApplication(a.packageName),
               ),
-              onClose: () => setState(() => _phoneMirrorOpen = false),
-              onLaunch: (AndroidApplication a) =>
-                  widget.facade.launchApplication(a.packageName),
             ),
           ),
         // Bottom-left, clear of the taskbar and the tray it is reporting
@@ -1059,6 +1083,7 @@ class _AppShellState extends State<AppShell> {
     }
     if (_settingsOpen) {
       return _Overlay(
+        maxWidth: 672,
         onDismiss: () => setState(() => _settingsOpen = false),
         child: DeskSettings(
           snapEnabled: widget.snapEnabled,
@@ -1119,13 +1144,13 @@ class _AppShellState extends State<AppShell> {
     }
     if (_companionOpen) {
       return _Overlay(
-        maxWidth: 420,
+        bare: true,
         onDismiss: () => setState(() => _companionOpen = false),
-        child: Center(
-          child: CompanionView(
-            snapshot: _s,
-            onClose: () => setState(() => _companionOpen = false),
-          ),
+        child: CompanionView(
+          snapshot: _s,
+          hostName: widget.hostName,
+          linkSince: _linkSince,
+          onClose: () => setState(() => _companionOpen = false),
         ),
       );
     }
@@ -1220,7 +1245,12 @@ class _Overlay extends StatelessWidget {
     required this.child,
     required this.onDismiss,
     this.maxWidth = 880,
+    this.bare = false,
   });
+
+  /// The child is its own frame — the companion's phone — so no glass card
+  /// is drawn around it; it still enters like one.
+  final bool bare;
 
   /// The card's width. 880 fits the sheet and diagnostics; the palette is
   /// narrower in the reference, at 576.
@@ -1251,8 +1281,9 @@ class _Overlay extends StatelessWidget {
                 // slate-950 at 70% under a 12 px blur, as the reference
                 // scrims every modal: dark enough to retire the desk, light
                 // enough that its shapes still read through.
-                final Widget scrim = ColoredBox(
-                  color: DexGlass.of(context).scrim,
+                // The tint fades in; the blur under it does not need to.
+                final Widget scrim = OverlayEntrance.scrim(
+                  child: ColoredBox(color: DexGlass.of(context).scrim),
                 );
                 if (!GlassBlurScope.of(context)) return scrim;
                 const double sigma = _scrimSigma;
@@ -1265,27 +1296,24 @@ class _Overlay extends StatelessWidget {
           ),
         ),
         Center(
-          child: Padding(
-            padding: const EdgeInsets.all(DexSpace.xxl),
-            child: ConstrainedBox(
-              // 85% of the viewport, as the reference sizes every modal:
-              // a fixed 620 clipped settings mid-row on a tall screen.
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-              ),
-              // GlassPanel, like every other surface. This card used to
-              // hand-roll its own fill, its own hairline and its own blur — at
-              // 28 rather than the committed 24 — which made the one place
-              // that most needs the shared primitive the one place not using
-              // it. That is how a glass design drifts into eleven glasses.
-              child: GlassPanel(
-                radius: DexRadius.modal,
-                fill: DexGlass.of(context).substrate,
-                child: child,
-              ),
-            ),
-          ),
+          child: bare
+              ? OverlayEntrance.card(child: child)
+              : Padding(
+                  padding: const EdgeInsets.all(DexSpace.xxl),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: maxWidth,
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+                    ),
+                    child: OverlayEntrance.card(
+                      child: GlassPanel(
+                        radius: DexRadius.modal,
+                        fill: DexGlass.of(context).substrate,
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ),
         ),
       ],
     );

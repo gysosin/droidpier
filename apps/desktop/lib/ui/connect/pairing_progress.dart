@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../theme/dex_colors.dart';
@@ -146,17 +147,18 @@ class PairingProgressBody extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(DexIcons.wifiTethering, size: 18, color: c.signal),
+            Icon(
+              DexIcons.wifiTethering,
+              size: DexIconSize.tray,
+              color: c.signal,
+            ),
             const SizedBox(width: DexSpace.sm),
             Text('Connected over Wi-Fi', style: t.bodyLarge),
           ],
         ),
         if (device case final DeviceSummary d) ...<Widget>[
           const SizedBox(height: DexSpace.xs),
-          Text(
-            '${d.name}  ·  ${d.id}',
-            style: DexTheme.data(c, color: c.text),
-          ),
+          Text('${d.name}  ·  ${d.id}', style: DexTheme.data(c, color: c.text)),
         ],
         const SizedBox(height: DexSpace.sm),
         Text(

@@ -20,7 +20,11 @@ import 'shortcuts.dart';
 ///
 /// Adding a shortcut to `buildShortcuts` makes it appear here with no edit.
 class ShortcutSheet extends StatelessWidget {
-  const ShortcutSheet({required this.shortcuts, required this.onClose, super.key});
+  const ShortcutSheet({
+    required this.shortcuts,
+    required this.onClose,
+    super.key,
+  });
 
   final List<DexShortcut> shortcuts;
   final VoidCallback onClose;
@@ -65,7 +69,10 @@ class ShortcutSheet extends StatelessWidget {
             glass: glass,
           ),
         ),
-      Entrance(order: i, child: _EscapeLadder(colors: c, glass: glass)),
+      Entrance(
+        order: i,
+        child: _EscapeLadder(colors: c, glass: glass),
+      ),
     ];
 
     return Padding(
@@ -83,7 +90,11 @@ class ShortcutSheet extends StatelessWidget {
                   color: glass.fill,
                   borderRadius: BorderRadius.circular(DexRadius.control),
                 ),
-                child: Icon(DexIcons.keyboard, size: 18, color: c.signal),
+                child: Icon(
+                  DexIcons.keyboard,
+                  size: DexIconSize.tray,
+                  color: c.signal,
+                ),
               ),
               const SizedBox(width: DexSpace.md),
               Expanded(
@@ -106,7 +117,7 @@ class ShortcutSheet extends StatelessWidget {
               // did not arrive by keyboard.
               IconButton(
                 onPressed: onClose,
-                icon: const Icon(DexIcons.close, size: 18),
+                icon: const Icon(DexIcons.close, size: DexIconSize.tray),
                 color: c.muted,
                 tooltip: 'Close',
                 constraints: const BoxConstraints(

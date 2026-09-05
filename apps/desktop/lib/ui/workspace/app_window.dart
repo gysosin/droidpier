@@ -407,7 +407,11 @@ class _WindowButton extends StatelessWidget {
             // Draws small, but the target still clears the pointer minimum.
             width: DexHit.comfortable,
             height: 34,
-            child: Icon(icon, size: 14, color: danger ? c.fault : c.muted),
+            child: Icon(
+              icon,
+              size: DexIconSize.chrome,
+              color: danger ? c.fault : c.muted,
+            ),
           ),
         ),
       ),
@@ -629,7 +633,11 @@ class _Notice extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(DexIcons.triangleAlert, size: 40, color: colors.fault),
+              Icon(
+                DexIcons.triangleAlert,
+                size: DexIconSize.hero,
+                color: colors.fault,
+              ),
               const SizedBox(height: DexSpace.md),
               Text(title, style: t.bodyLarge),
               const SizedBox(height: DexSpace.xs),
@@ -664,7 +672,7 @@ class _Notice extends StatelessWidget {
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, DexHit.comfortable),
                   ),
-                  icon: const Icon(DexIcons.copy, size: 14),
+                  icon: const Icon(DexIcons.copy, size: DexIconSize.chrome),
                   label: const Text('Copy technical details'),
                 ),
                 Text(
@@ -1172,7 +1180,7 @@ class _StageChrome extends StatelessWidget {
                 child: IconButton(
                   onPressed: onExit,
                   color: Colors.white,
-                  iconSize: 20,
+                  iconSize: DexIconSize.control,
                   constraints: const BoxConstraints(
                     minWidth: DexHit.primary,
                     minHeight: DexHit.primary,

@@ -150,7 +150,7 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                     // attention rather than report a state.
                                     Icon(
                                       DexIcons.notifications,
-                                      size: 16,
+                                      size: DexIconSize.tray,
                                       color: c.warn,
                                     ),
                                     const SizedBox(width: DexSpace.sm),
@@ -205,7 +205,10 @@ class _NotificationCenterState extends State<NotificationCenter> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: <Widget>[
-                                      const Icon(DexIcons.trash, size: 14),
+                                      const Icon(
+                                        DexIcons.trash,
+                                        size: DexIconSize.chrome,
+                                      ),
                                       const SizedBox(width: DexSpace.xs),
                                       const Text('Clear all'),
                                     ],
@@ -622,7 +625,7 @@ class _Empty extends StatelessWidget {
         children: <Widget>[
           Icon(
             DexIcons.circleCheck,
-            size: 32,
+            size: DexIconSize.mark,
             color: colors.trace.withValues(alpha: 0.3),
           ),
           const SizedBox(height: DexSpace.sm),
@@ -670,7 +673,11 @@ class _CloseButton extends StatelessWidget {
                   width: DexStroke.hairline,
                 ),
               ),
-              child: Icon(DexIcons.close, size: 15, color: c.text),
+              child: Icon(
+                DexIcons.close,
+                size: DexIconSize.chrome,
+                color: c.text,
+              ),
             ),
           ),
         ),
@@ -718,7 +725,7 @@ class _DismissButton extends StatelessWidget {
               height: DexHit.minimum,
               child: Icon(
                 DexIcons.close,
-                size: 13,
+                size: DexIconSize.inline,
                 color: hovered && enabled ? c.text : c.muted,
               ),
             ),
