@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_dex_api/open_dex_api.dart';
 import 'package:open_android_dex/ui/desk/control_center.dart';
+import 'package:open_android_dex/ui/widgets/toggle.dart';
 import 'package:open_android_dex/ui/theme/dex_theme.dart';
 
 /// The shared clipboard is an opt-in with three preconditions.
@@ -54,8 +55,8 @@ void main() {
     }
   }
 
-  Switch theSwitch(WidgetTester tester) =>
-      tester.widget<Switch>(find.byType(Switch));
+  DexToggle theSwitch(WidgetTester tester) =>
+      tester.widget<DexToggle>(find.byType(DexToggle));
 
   testWidgets('it is off and unusable before the phone has reported in', (
     WidgetTester tester,
@@ -125,7 +126,7 @@ void main() {
     expect(find.text('Off — nothing is read from the phone'), findsOneWidget);
     expect(theSwitch(tester).onChanged, isNotNull);
 
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(DexToggle));
     await tester.pump();
     expect(toggles, <bool>[true]);
 
@@ -142,7 +143,7 @@ void main() {
     expect(find.text('ffmpeg -i in.mp4'), findsOneWidget);
 
     toggles.clear();
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(DexToggle));
     await tester.pump();
     expect(toggles, <bool>[false]);
   });

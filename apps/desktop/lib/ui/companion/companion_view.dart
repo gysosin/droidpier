@@ -6,36 +6,45 @@ import '../theme/dex_icons.dart';
 import '../theme/dex_theme.dart';
 import '../theme/dex_tokens.dart';
 
-/// The phone-side companion, as a review surface in the preview harness.
+/// The phone-side companion, drawn in a phone frame over the desk.
 ///
 /// The real companion lives in `android/` and is a Jetpack Compose app on
 /// Material 3 tokens, not on the desk's. This is a rendering of what it shows
 /// — the link state, the foreground notification, the permissions the phone
-/// has granted, how to pair — drawn inside a phone frame so a design review
-/// can see both halves of the product side by side. It is deliberately *not*
-/// shipped in the desktop app: a phone screen drawn on the desk would be a
-/// picture of a phone, and the product's rule is that the phone is the
-/// source of truth, never a picture of it.
+/// has granted, how to pair — inside a phone frame, reached from the header's
+/// Companion App door, as the reference reaches it. It draws on the
+/// companion's own Material 3 surfaces rather than the desk's glass: this is
+/// a view of the phone's app, and it should look like the phone's app.
 ///
 /// Everything with a number reads it from the snapshot. Where the snapshot
 /// carries nothing, the readout is an em dash, not a plausible value.
-class CompanionPreview extends StatefulWidget {
-  const CompanionPreview({
+class CompanionView extends StatefulWidget {
+  const CompanionView({
     required this.snapshot,
-    required this.onDisconnect,
+    required this.onClose,
     super.key,
   });
 
   final OpenDexSnapshot snapshot;
-  final VoidCallback onDisconnect;
+
+  /// Closes the view. The reference's "Disconnect Desktop Session" button does
+  /// exactly this too, so it is labelled for what it does here: Close.
+  final VoidCallback onClose;
 
   @override
-  State<CompanionPreview> createState() => _CompanionPreviewState();
+  State<CompanionView> createState() => _CompanionViewState();
 }
 
 enum _Tab { dashboard, permissions, pairing }
 
-class _CompanionPreviewState extends State<CompanionPreview> {
+/// The companion's Material 3 dark surfaces, as the reference sets them. They
+/// are the phone app's tokens, not the desk's, which is why they are literal.
+const Color _m3Background = Color(0xFF1C1B1F);
+const Color _m3Surface = Color(0xFF2B2930);
+const Color _m3OnSurface = Color(0xFFE6E1E5);
+const Color _m3Bezel = Color(0xFF1E293B);
+
+class _CompanionViewState extends State<CompanionView> {
   _Tab _tab = _Tab.dashboard;
 
   @override
@@ -53,12 +62,12 @@ class _CompanionPreviewState extends State<CompanionPreview> {
         height: 640,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: c.bg,
+            color: _m3Background,
             borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: c.line, width: 6),
+            border: Border.all(color: _m3Bezel, width: 8),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(28),
             child: Column(
               children: <Widget>[
                 // Status bar: the time and the charge are the phone's own,
@@ -132,7 +141,16 @@ class _CompanionPreviewState extends State<CompanionPreview> {
                           ],
                         ),
                       ),
-                      Icon(DexIcons.close, size: 16, color: c.muted),
+                      IconButton(
+                        onPressed: widget.onClose,
+                        icon: const Icon(DexIcons.close, size: 16),
+                        color: c.muted,
+                        tooltip: 'Close',
+                        constraints: const BoxConstraints(
+                          minWidth: DexHit.comfortable,
+                          minHeight: DexHit.comfortable,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -149,7 +167,7 @@ class _CompanionPreviewState extends State<CompanionPreview> {
                         snapshot: s,
                         device: device,
                         colors: c,
-                        onDisconnect: widget.onDisconnect,
+                        onClose: widget.onClose,
                       ),
                       _Tab.permissions => _Permissions(
                         permissions: s.permissions,
@@ -255,9 +273,12 @@ class _Card extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: DexSpace.md),
       padding: const EdgeInsets.all(DexSpace.lg),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(DexRadius.panel),
-        border: Border.all(color: colors.line, width: DexStroke.hairline),
+        color: _m3Surface,
+        borderRadius: BorderRadius.circular(DexRadius.modal),
+        border: Border.all(
+          color: _m3OnSurface.withValues(alpha: 0.05),
+          width: DexStroke.hairline,
+        ),
       ),
       child: child,
     );
@@ -269,13 +290,13 @@ class _Dashboard extends StatelessWidget {
     required this.snapshot,
     required this.device,
     required this.colors,
-    required this.onDisconnect,
+    required this.onClose,
   });
 
   final OpenDexSnapshot snapshot;
   final DeviceSummary? device;
   final DexColors colors;
-  final VoidCallback onDisconnect;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -400,15 +421,15 @@ class _Dashboard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: onDisconnect,
+              onPressed: onClose,
               style: FilledButton.styleFrom(
-                backgroundColor: colors.fault.withValues(alpha: 0.85),
-                foregroundColor: colors.bg,
+                backgroundColor: colors.fault,
+                foregroundColor: _m3Background,
                 minimumSize: const Size(0, DexHit.primary),
                 shape: const StadiumBorder(),
               ),
-              icon: const Icon(DexIcons.power, size: 16),
-              label: const Text('Disconnect Desktop Session'),
+              icon: const Icon(DexIcons.close, size: 16),
+              label: const Text('Close Companion View'),
             ),
           ),
       ],

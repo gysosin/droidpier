@@ -67,7 +67,7 @@ void main() {
     // The last section must be on screen, or the image is of a panel nobody
     // sees the bottom of.
     expect(
-      find.text('Scope'),
+      find.textContaining('Known limitation'),
       findsOneWidget,
       reason: 'the About group must fit above the fold',
     );

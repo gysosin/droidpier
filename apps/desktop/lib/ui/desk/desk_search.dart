@@ -62,10 +62,7 @@ class _SearchBarState extends State<_SearchBar> {
     return GlassPanel(
       radius: 26,
       stroke: Colors.transparent,
-      padding: const EdgeInsets.symmetric(
-        horizontal: DexSpace.md,
-        vertical: 2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: DexSpace.md, vertical: 2),
       child: Row(
         children: <Widget>[
           const _GoogleWordmark(),
@@ -75,16 +72,14 @@ class _SearchBarState extends State<_SearchBar> {
               controller: _controller,
               onSubmitted: (_) => _submit(),
               textInputAction: TextInputAction.search,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: c.text,
-              ),
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: c.text),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: widget.hint,
-                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: c.muted,
-                ),
+                hintStyle: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: c.muted),
               ),
             ),
           ),

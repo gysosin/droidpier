@@ -302,3 +302,31 @@ Each item is something visible. Tick it when the golden shows it.
   nowhere; ours exist.
 - `→` in user-visible strings: the bundled faces have no glyph for it. Use a
   chevron icon where the reference writes an arrow.
+
+## Second pass — from the reference's source (2026-09-05)
+
+Read after the first pass was judged "still not the same" on a real phone.
+What the source held that the captures could not show:
+
+- [x] The clock ticks once a second and **animates each hand** (`transition-transform`,
+  100 ms linear for seconds, 200 ms for the others); the minute hand creeps with the
+  seconds. Ours now glides the same way, and the shell's clock runs live.
+- [x] `transition-colors` (~150 ms) on nearly every control; `transition-all
+  duration-200` on the launcher key with `hover:scale-[1.02]` and a pressed
+  `scale-98` open state.
+- [x] Header pills (`px-2.5 py-1.5 rounded-[10px] bg-white/10 border-white/10`,
+  14 px coloured glyph, 12 px label) opening the token explorer, companion view,
+  phone mirror and boot screen. Ports as real doors; icon-only below 1180.
+- [x] Clock at `top-14 right-10`, widget column at `top-[365px] right-10`.
+- [x] Control centre `bottom-16 right-4 w-[360px] max-h-[85vh] rounded-[20px]`;
+  toggles `w-12 h-12` with amber (airplane, torch), trace (data) and signal (rest);
+  native range sliders; Shared Clipboard card; footer links.
+- [x] Notification centre `bottom-16 right-16 w-[380px] max-h-[80vh]`; a card per
+  sender with a header strip and `n items`; rows `p-2 rounded-[10px]`; dismiss
+  `opacity-0 group-hover:opacity-100`; `2m ago`; the reference's empty state.
+- [x] Settings: no boxed groups; `grid-cols-6` accents and `grid-cols-4` wallpapers;
+  40×24 switches; an About card; `max-h-[85vh]`.
+- [x] Window states' copy; mirror copy; explorer subtitle and toggle labels.
+- [ ] `animate-fade-in` / `animate-scale-up` are undefined in the reference: its
+  overlays appear instantly. Ours keep their entrance; nothing to port.
+- [ ] Wi-Fi SSID subline: still no SSID in the facade.

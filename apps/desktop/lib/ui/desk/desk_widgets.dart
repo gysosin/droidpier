@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../theme/dex_icons.dart';
+
 import 'package:open_dex_api/open_dex_api.dart';
 
 import '../motion/dex_motion.dart';
@@ -43,7 +44,8 @@ class NowPlayingWidget extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     final int? duration = media.durationMs;
     final int? position = media.positionMs;
-    final double? progress = duration == null || duration <= 0 || position == null
+    final double? progress =
+        duration == null || duration <= 0 || position == null
         ? null
         : (position / duration).clamp(0.0, 1.0);
 
@@ -349,7 +351,9 @@ class PhoneWidget extends StatelessWidget {
           Row(
             children: <Widget>[
               Icon(
-                telemetry.charging ? DexIcons.batteryCharging : DexIcons.battery,
+                telemetry.charging
+                    ? DexIcons.batteryCharging
+                    : DexIcons.battery,
                 size: 14,
                 color: gauge,
               ),
@@ -485,17 +489,15 @@ class _Tile extends StatelessWidget {
               children: <Widget>[
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.muted,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(color: colors.muted),
                 ),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colors.text,
-                  ),
+                  style: Theme.of(context).textTheme.labelMedium
+                      ?.copyWith(color: colors.text),
                 ),
               ],
             ),
@@ -587,7 +589,9 @@ class NotificationsWidget extends StatelessWidget {
           else
             for (int i = 0; i < shown.length; i++)
               Padding(
-                padding: EdgeInsets.only(bottom: i == shown.length - 1 ? 0 : DexSpace.sm),
+                padding: EdgeInsets.only(
+                  bottom: i == shown.length - 1 ? 0 : DexSpace.sm,
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(DexSpace.sm),
                   decoration: BoxDecoration(

@@ -84,6 +84,28 @@ click by click, rather than against its source. What changed on screen:
   is the dark glass desk, and following the platform put a light desk in
   front of anyone on a light system.
 
+- **From the reference's source, not its screenshots**: the clock's hands now
+  *glide* — the second hand 100 ms linear, hour and minute 200 ms eased, the
+  minute hand creeping with the seconds — instead of jumping, which is what
+  the reference's CSS transitions do on every tick; the header carries the
+  reference's four doors (*Tokens & Specs*, *Companion App*, *Phone
+  Mirror*, *Boot Screen*), and the clock and widget column sit where it puts
+  them; the control centre has 48 px toggles in the reference's colours,
+  plain 4 px sliders with no tick marks, a *Shared Clipboard* card and the
+  40×24 pill switch used everywhere now; the notification centre floats
+  bottom-right above the tray with a card per sender, `2m ago` times and a
+  dismiss that appears on hover; settings lose their boxed groups, gain
+  equal-width accent and wallpaper grids, an About card with the build in
+  signal and the audio caveat in amber, and modals run to 85 % of the
+  screen so nothing is cut mid-row; the launcher key presses in while the
+  launcher is up; window bodies say *Opening X…* and *Reconnecting to
+  phone…* with the reference's second lines; the mirror and the token
+  explorer carry its copy.
+- **The companion view is in the product now**, behind the header's door,
+  drawn on the companion's own Material 3 surfaces. Its big rose button is
+  labelled *Close Companion View* rather than the reference's *Disconnect
+  Desktop Session*, because that is what it does there too.
+
 Not shipped, and why: the reference's Wi-Fi SSID subline (the facade does
 not carry an SSID, and a placeholder would be a lie); its two-way Dark/Light
 theme control (System is a real setting here); its `Skip tour` / `Step n of

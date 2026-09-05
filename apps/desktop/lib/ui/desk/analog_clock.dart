@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'dart:ui' as ui;
 
+import '../motion/dex_motion.dart';
 import '../theme/dex_colors.dart';
 import '../theme/dex_glass.dart';
 import '../theme/dex_theme.dart';
@@ -11,22 +13,22 @@ import '../theme/glass.dart';
 
 /// The desk clock: a glass disc, twelve marks, and an accent second hand.
 ///
-/// Drawn to the reference's geometry, which is specified at 280px and scaled
-/// from there — twelve marks rather than sixty, hands of 62 / 92 / 108, a 2px
-/// second hand with an 18px counterbalance behind the pin, and a quiet
-/// DROIDPIER / DESK block set above centre.
+/// The reference's geometry at 280px — a 70% slate face under a 12px blur, an
+/// inset hairline, twelve marks with every third one long, hour and minute
+/// hands in ink, a signal second hand with an 18px counterbalance behind the
+/// pin, and a quiet DROIDPIER / DESK wordmark above centre.
 ///
-/// The face is glass, not a painted gradient. It used to be an opaque
-/// `#23272E` to `#0E1116` disc, which is the one thing on the desk that did
-/// not let the wallpaper through, and in light mode it stayed black.
+/// The hands *move*, and that is the whole feel of it. The reference ticks
+/// once a second and lets CSS carry each hand to its new angle — the second
+/// hand in 100ms, linear; the hour and minute hands in 200ms, eased — so the
+/// clock sweeps instead of jumping. This does the same: every tick starts a
+/// short animation from the previous angles to the new ones, and the minute
+/// hand creeps with the seconds as the reference's does. Between ticks nothing
+/// repaints. Reduced motion turns the glide off and the hands step.
 ///
-/// Painted rather than shipped as an image so it stays crisp at any size and
-/// follows the theme's signal colour for the second hand.
-///
-/// When [live], it runs its own one-second ticker and repaints only itself
-/// (wrapped in a `RepaintBoundary`), so the second hand is truly live without
-/// the whole shell — which ticks far more slowly — rebuilding behind it. When
-/// not live (tests, goldens) it paints the fixed [now] and never ticks.
+/// When [live], it runs its own one-second ticker; otherwise it follows [now]
+/// and animates when that changes (the shell feeds it a clock), or paints the
+/// fixed time (tests, goldens) and never ticks.
 class AnalogClock extends StatefulWidget {
   const AnalogClock({
     required this.now,
@@ -43,9 +45,21 @@ class AnalogClock extends StatefulWidget {
   State<AnalogClock> createState() => _AnalogClockState();
 }
 
-class _AnalogClockState extends State<AnalogClock> {
+class _AnalogClockState extends State<AnalogClock>
+    with SingleTickerProviderStateMixin {
   Timer? _timer;
-  late DateTime _now = widget.now;
+
+  /// The angles being left and the angles being reached. Between ticks they
+  /// are equal, and the painter draws [_to].
+  late _Hands _from = _Hands.of(widget.now);
+  late _Hands _to = _Hands.of(widget.now);
+
+  /// One glide per tick. 200ms is the reference's hour and minute transition;
+  /// the second hand uses the first half of it, which is its 100ms.
+  late final AnimationController _glide = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+  );
 
   @override
   void initState() {
@@ -61,20 +75,42 @@ class _AnalogClockState extends State<AnalogClock> {
     } else if (!widget.live) {
       _timer?.cancel();
       _timer = null;
-      _now = widget.now;
+      if (widget.now != oldWidget.now) _advanceTo(widget.now);
     }
   }
 
   void _startTicking() {
-    _now = DateTime.now();
+    _advanceTo(DateTime.now(), glide: false);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      if (mounted) _advanceTo(DateTime.now());
     });
   }
+
+  /// Moves the hands to [time]: with a glide when motion is on, in one step
+  /// when it is not. A glide that is still running is simply retargeted from
+  /// where the hands are now, so a late tick never snaps back.
+  void _advanceTo(DateTime time, {bool glide = true}) {
+    final _Hands next = _Hands.of(time);
+    if (next == _to) return;
+    final bool animate = glide && mounted && DexMotion.enabled(context);
+    setState(() {
+      _from = animate ? _current : next;
+      _to = next;
+    });
+    if (animate) {
+      _glide.forward(from: 0);
+    } else {
+      _glide.value = 1;
+    }
+  }
+
+  /// Where the hands are at this instant of the glide.
+  _Hands get _current => _Hands.lerp(_from, _to, _glide.value);
 
   @override
   void dispose() {
     _timer?.cancel();
+    _glide.dispose();
     super.dispose();
   }
 
@@ -85,6 +121,7 @@ class _AnalogClockState extends State<AnalogClock> {
     // the same reason every other panel does.
     final DexGlass glass = DexGlass.of(context);
     final bool blurred = GlassBlurScope.of(context);
+
     return RepaintBoundary(
       child: AspectRatio(
         aspectRatio: 1,
@@ -98,18 +135,22 @@ class _AnalogClockState extends State<AnalogClock> {
                 return Stack(
                   fit: StackFit.expand,
                   children: <Widget>[
-                    CustomPaint(
-                      painter: _ClockPainter(
-                        now: _now,
-                        signal: c.signal,
-                        // The dial is glass, so it flips with the theme like
-                        // every other panel. The reference hardcodes it dark,
-                        // which is part of its light mode being unfinished —
-                        // a near-black disc on pale paper is the single most
-                        // obvious thing wrong with that screen.
-                        face: glass.substrate,
-                        ink: c.text,
-                        seconds: widget.showSeconds,
+                    AnimatedBuilder(
+                      animation: _glide,
+                      builder: (BuildContext context, Widget? _) => CustomPaint(
+                        painter: _ClockPainter(
+                          hands: _Hands.lerp(_from, _to, _glide.value),
+                          signal: c.signal,
+                          // The dial is glass, so it flips with the theme like
+                          // every other panel. The reference hardcodes it
+                          // dark, which is part of its light mode being
+                          // unfinished — a near-black disc on pale paper is
+                          // the single most obvious thing wrong with that
+                          // screen.
+                          face: glass.substrate,
+                          ink: c.text,
+                          seconds: widget.showSeconds,
+                        ),
                       ),
                     ),
                     // Set above centre so the hands do not run through it.
@@ -120,14 +161,15 @@ class _AnalogClockState extends State<AnalogClock> {
                         children: <Widget>[
                           Text(
                             'DROIDPIER',
-                            style: DexTheme.data(
-                              c,
-                              size: 10 * k,
-                              color: c.text.withValues(alpha: 0.40),
-                            ).copyWith(
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 2 * k,
-                            ),
+                            style:
+                                DexTheme.data(
+                                  c,
+                                  size: 10 * k,
+                                  color: c.text.withValues(alpha: 0.40),
+                                ).copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 2 * k,
+                                ),
                           ),
                           Text(
                             'DESK',
@@ -151,7 +193,61 @@ class _AnalogClockState extends State<AnalogClock> {
   }
 }
 
-/// Blurs the wallpaper behind the dial when the desk allows it.
+/// The three hands as angles in radians, measured clockwise from twelve.
+///
+/// Kept as a value so a glide can interpolate between two of them, and so
+/// "the hands did not move" is one equality check rather than three.
+@immutable
+class _Hands {
+  const _Hands({
+    required this.hour,
+    required this.minute,
+    required this.second,
+  });
+
+  /// The reference's angles: the minute hand creeps with the seconds and the
+  /// hour hand with the minutes, so neither ever sits on a mark it has
+  /// already passed.
+  factory _Hands.of(DateTime t) => _Hands(
+    hour: (t.hour % 12 + t.minute / 60) * (2 * math.pi / 12),
+    minute: (t.minute + t.second / 60) * (2 * math.pi / 60),
+    second: t.second * (2 * math.pi / 60),
+  );
+
+  final double hour;
+  final double minute;
+  final double second;
+
+  /// Between [a] and [b], always turning clockwise — a hand crossing twelve
+  /// goes forward through it, never the long way back.
+  static _Hands lerp(_Hands a, _Hands b, double t) {
+    // The second hand takes the first half of the glide, linear, which is the
+    // reference's 100ms of its 200ms; the others use the whole of it, eased.
+    final double ts = (t * 2).clamp(0.0, 1.0);
+    final double te = Curves.easeOut.transform(t.clamp(0.0, 1.0));
+    return _Hands(
+      hour: _forward(a.hour, b.hour, te),
+      minute: _forward(a.minute, b.minute, te),
+      second: _forward(a.second, b.second, ts),
+    );
+  }
+
+  static double _forward(double from, double to, double t) {
+    final double delta = (to - from) % (2 * math.pi);
+    return from + delta * t;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is _Hands &&
+      other.hour == hour &&
+      other.minute == minute &&
+      other.second == second;
+
+  @override
+  int get hashCode => Object.hash(hour, minute, second);
+}
+
 class _Backdrop extends StatelessWidget {
   const _Backdrop({required this.blurred, required this.child});
 
@@ -170,22 +266,17 @@ class _Backdrop extends StatelessWidget {
 
 class _ClockPainter extends CustomPainter {
   _ClockPainter({
-    required this.now,
+    required this.hands,
     required this.signal,
     required this.face,
     required this.ink,
     required this.seconds,
   });
 
-  final DateTime now;
+  final _Hands hands;
   final Color signal;
-
-  /// The dial's own fill, from the theme's glass substrate.
   final Color face;
-
-  /// Marks, hands and the centre cap's ring.
   final Color ink;
-
   final bool seconds;
 
   @override
@@ -236,6 +327,7 @@ class _ClockPainter extends CustomPainter {
       );
     }
 
+    // Angles are clockwise from twelve; the canvas measures from three.
     void hand(
       double angle,
       double length,
@@ -243,9 +335,10 @@ class _ClockPainter extends CustomPainter {
       Color color, {
       double tail = 0,
     }) {
+      final double a = angle - math.pi / 2;
       canvas.drawLine(
-        center - Offset(math.cos(angle) * tail, math.sin(angle) * tail),
-        center + Offset(math.cos(angle) * length, math.sin(angle) * length),
+        center - Offset(math.cos(a) * tail, math.sin(a) * tail),
+        center + Offset(math.cos(a) * length, math.sin(a) * length),
         Paint()
           ..strokeCap = StrokeCap.round
           ..strokeWidth = width
@@ -253,17 +346,9 @@ class _ClockPainter extends CustomPainter {
       );
     }
 
-    final double hourAngle =
-        (now.hour % 12 + now.minute / 60) * math.pi / 6 - math.pi / 2;
-    final double minuteAngle =
-        (now.minute + now.second / 60) * math.pi / 30 - math.pi / 2;
-    hand(hourAngle, 62 * k, 6 * k, ink);
-    hand(minuteAngle, 92 * k, 4 * k, ink.withValues(alpha: 0.90));
-
-    if (seconds) {
-      final double secondAngle = now.second * math.pi / 30 - math.pi / 2;
-      hand(secondAngle, 108 * k, 2 * k, signal, tail: 18 * k);
-    }
+    hand(hands.hour, 62 * k, 6 * k, ink);
+    hand(hands.minute, 92 * k, 4 * k, ink.withValues(alpha: 0.90));
+    if (seconds) hand(hands.second, 108 * k, 2 * k, signal, tail: 18 * k);
 
     // Centre pin: a dark cap ringed in white, with the accent at its middle.
     canvas.drawCircle(center, 7 * k, Paint()..color = face);
@@ -280,8 +365,7 @@ class _ClockPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ClockPainter old) =>
-      old.now.minute != now.minute ||
-      old.now.second != now.second ||
+      old.hands != hands ||
       old.signal != signal ||
       old.face != face ||
       old.ink != ink ||

@@ -293,17 +293,16 @@ class _Placeholder extends StatelessWidget {
           ),
           const SizedBox(height: DexSpace.md),
           Text(
-            'Screen mirror',
+            name ?? 'Phone',
             textAlign: TextAlign.center,
             style: t.labelLarge?.copyWith(color: c.text),
           ),
           const SizedBox(height: DexSpace.xs),
           Text(
-            name == null
-                ? 'The phone\u2019s display appears here once it is casting.'
-                : '$name\u2019s display appears here once it is casting.',
+            'Physical device surface linked via ADB. Screen mirroring handled '
+            'in freeform windows.',
             textAlign: TextAlign.center,
-            style: t.bodySmall?.copyWith(color: c.muted),
+            style: DexTheme.data(c, size: 10),
           ),
         ],
       ),
