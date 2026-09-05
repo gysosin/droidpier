@@ -128,6 +128,7 @@ class WorkspaceIntents {
     required this.retry,
     this.fullscreen,
     this.sendPointer,
+    this.moveToWorkspace,
   });
 
   final ValueChanged<String> focus;
@@ -145,6 +146,10 @@ class WorkspaceIntents {
   /// Raw pointer input for the embedded surface, in surface pixels. Null while
   /// no backend is wired, in which case the surface consumes its own input.
   final void Function(String id, WindowPointerSample sample)? sendPointer;
+
+  /// Sends a window to another desk. Null where the host has no desks (a
+  /// test harness), in which case the menu offers none.
+  final void Function(String id, int workspace)? moveToWorkspace;
 }
 
 /// Where a window lands when dragged to an edge.

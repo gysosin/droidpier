@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Desks that do something, and tiles from the phone
+
+The four desk keys in the taskbar switched desks, but nothing could put a
+window on another desk and no key reached them. Now a window's title-bar
+menu offers *Move to desk n* for each desk it is not on, Ctrl+Alt+← and
+Ctrl+Alt+→ step between desks (wrapping at the ends), and the desk names
+the one it landed on, *Desk 2*, above the taskbar for under a second
+before removing itself entirely. The shortcut sheet lists the two keys.
+
+App icons on the desk were white discs on MIUI phones, whatever the app.
+The agent now reads each app's own icon resource before the launcher's
+themed drawable, so an adaptive icon arrives as its layers and a legacy
+icon as its tile, and the desk's rounded-square mask has something square
+to reveal. The launcher-themed drawable remains the fallback for a package
+whose resources will not load.
+
 ### The phone mirror is live
 
 The *Phone Mirror* door used to open a frame that said a live screen was not

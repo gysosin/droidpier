@@ -233,9 +233,9 @@ void main() {
     ShellShortcutHooks hooks({required bool keyboardIsFree}) =>
         ShellShortcutHooks(
           openPalette: () {},
-  isPaletteOpen: () => false,
-  closePalette: () {},
-  openSheet: () {},
+          isPaletteOpen: () => false,
+          closePalette: () {},
+          openSheet: () {},
           isSheetOpen: () => false,
           closeSheet: () {},
           keyboardIsFree: () => keyboardIsFree,
@@ -255,7 +255,78 @@ void main() {
           closeDeskSurfaces: () {},
           isConnectOpen: () => false,
           closeConnect: () {},
+          previousWorkspace: () {},
+          nextWorkspace: () {},
         );
+
+    test('arrow chips show the glyph, not the spelled-out key name', () {
+      const DexKeyStroke left = DexKeyStroke(
+        LogicalKeyboardKey.arrowLeft,
+        control: true,
+        alt: true,
+      );
+      expect(left.label, 'Ctrl+Alt+←');
+      expect(const DexKeyStroke(LogicalKeyboardKey.arrowRight).label, '→');
+    });
+
+    test('Ctrl+Alt+arrows move between desks, whoever has the keyboard', () {
+      var next = 0;
+      var previous = 0;
+      ShellShortcutHooks desks() => ShellShortcutHooks(
+        openPalette: () {},
+        isPaletteOpen: () => false,
+        closePalette: () {},
+        openSheet: () {},
+        isSheetOpen: () => false,
+        closeSheet: () {},
+        keyboardIsFree: () => false,
+        toggleDiagnostics: () {},
+        toggleHealthHud: () {},
+        toggleDrawer: () {},
+        toggleFullscreen: () {},
+        cycleFocus: () {},
+        cycleFocusBack: () {},
+        isFullscreen: () => false,
+        exitFullscreen: () {},
+        isDiagnosticsOpen: () => false,
+        closeDiagnostics: () {},
+        isSwitcherOpen: () => false,
+        cancelSwitch: () {},
+        isDeskSurfaceOpen: () => false,
+        closeDeskSurfaces: () {},
+        isConnectOpen: () => false,
+        closeConnect: () {},
+        previousWorkspace: () => previous++,
+        nextWorkspace: () => next++,
+      );
+      final List<DexShortcut> registry = buildShortcuts(desks());
+      matchShortcut(
+        registry,
+        LogicalKeyboardKey.arrowRight,
+        control: true,
+        shift: false,
+        alt: true,
+      )!.run();
+      matchShortcut(
+        registry,
+        LogicalKeyboardKey.arrowLeft,
+        control: true,
+        shift: false,
+        alt: true,
+      )!.run();
+      expect((next, previous), (1, 1));
+      // Plain arrows stay with whatever has focus.
+      expect(
+        matchShortcut(
+          registry,
+          LogicalKeyboardKey.arrowRight,
+          control: false,
+          shift: false,
+          alt: false,
+        ),
+        isNull,
+      );
+    });
 
     test('bare ? opens the sheet when nothing else owns the keyboard', () {
       final DexShortcut? hit = matchShortcut(

@@ -166,10 +166,11 @@ class _TitleBar extends StatelessWidget {
   /// The title-bar menu.
   ///
   /// Carries only what `WorkspaceIntents` can actually perform. The roadmap
-  /// also asked for "always on top" and "move to workspace"; there is no
-  /// always-on-top anywhere in the window API, and workspaces do not exist
-  /// yet, so neither ships — not even greyed out. A control that does nothing
-  /// is worse than no control.
+  /// also asked for "always on top"; there is no always-on-top anywhere in
+  /// the window API, so it does not ship — not even greyed out. A control
+  /// that does nothing is worse than no control. Move-to-desk ships because
+  /// the facade moves windows between desks; it lists the desks this window
+  /// is not on.
   void _showMenu(BuildContext context, Offset at) {
     final bool maximised = window.displayState == WindowDisplayState.maximised;
 
@@ -186,6 +187,16 @@ class _TitleBar extends StatelessWidget {
               onSelected: () =>
                   intents.move(window.id, snap.geometryIn(workspaceSize)),
             ),
+        if (intents.moveToWorkspace
+            case final void Function(String, int) send) ...<DexMenuAction>[
+          const DexMenuAction.separator(),
+          for (int n = 1; n <= kWorkspaceCount; n++)
+            if (n != window.session.workspace)
+              DexMenuAction(
+                label: 'Move to desk $n',
+                onSelected: () => send(window.id, n),
+              ),
+        ],
         const DexMenuAction.separator(),
         DexMenuAction(
           label: rotateActionLabel(window.geometry),

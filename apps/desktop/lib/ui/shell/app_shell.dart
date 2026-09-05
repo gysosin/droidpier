@@ -475,6 +475,8 @@ class _AppShellState extends State<AppShell> {
     setDisplayState: _wm.setDisplayState,
     close: (String id) => widget.facade.closeWindow(id),
     retry: (String id) => widget.facade.focusWindow(id),
+    moveToWorkspace: (String id, int n) =>
+        widget.facade.moveWindowToWorkspace(id, n),
     sendPointer: (String id, WindowPointerSample sample) =>
         unawaited(widget.facade.sendPointer(id, sample)),
   );
@@ -598,7 +600,18 @@ class _AppShellState extends State<AppShell> {
     }),
     isConnectOpen: () => _connectOpen,
     closeConnect: () => setState(() => _connectOpen = false),
+    previousWorkspace: () => _stepWorkspace(-1),
+    nextWorkspace: () => _stepWorkspace(1),
   );
+
+  /// Ctrl+Alt+←/→: the neighbouring desk, wrapping at either end so the
+  /// keys never dead-end. The desk names where it landed.
+  void _stepWorkspace(int delta) {
+    final int index = _s.currentWorkspace - 1 + delta;
+    final int next =
+        ((index % kWorkspaceCount) + kWorkspaceCount) % kWorkspaceCount + 1;
+    unawaited(widget.facade.selectWorkspace(next));
+  }
 
   /// App-global accelerators.
   ///

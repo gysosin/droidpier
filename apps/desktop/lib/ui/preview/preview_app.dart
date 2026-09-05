@@ -103,7 +103,16 @@ class _PreviewAppState extends State<PreviewApp> {
     closeDeskSurfaces: () {},
     isConnectOpen: () => false,
     closeConnect: () {},
+    previousWorkspace: () => _stepWorkspace(-1),
+    nextWorkspace: () => _stepWorkspace(1),
   );
+
+  void _stepWorkspace(int delta) {
+    final int index = _facade.snapshot.currentWorkspace - 1 + delta;
+    final int next =
+        ((index % kWorkspaceCount) + kWorkspaceCount) % kWorkspaceCount + 1;
+    _facade.selectWorkspace(next);
+  }
 
   Widget _surfaceFor(OpenDexSnapshot state) {
     switch (_surface) {

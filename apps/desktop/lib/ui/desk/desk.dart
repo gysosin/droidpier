@@ -10,6 +10,7 @@ import '../theme/dex_tokens.dart';
 import '../widgets/bench_backdrop.dart';
 import '../widgets/link_rail.dart';
 import '../workspace/window_model.dart';
+import 'desk_switch_label.dart';
 import 'analog_clock.dart';
 import 'control_center.dart';
 import 'desk_icons.dart';
@@ -247,6 +248,14 @@ class _DeskState extends State<Desk> {
             top: 0,
             bottom: _taskbarHeight,
             child: widget.workspace,
+          ),
+          // Names the desk after a switch, above the taskbar's keys, then
+          // removes itself; nothing of it stays to cost an idle frame.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: _taskbarHeight + DexSpace.xl,
+            child: DeskSwitchLabel(workspace: widget.currentWorkspace),
           ),
           // The segmented bottom bar spans the full width so the nav pill sits
           // left, the apps-grid button centres, and the tray sits right.

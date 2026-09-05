@@ -65,6 +65,12 @@ class DexKeyStroke {
     LogicalKeyboardKey.escape => 'Esc',
     LogicalKeyboardKey.tab => 'Tab',
     LogicalKeyboardKey.slash => '/',
+    // keyLabel spells these out ("Arrow Left"); the glyph is what a keycap
+    // shows and what the chip has room for.
+    LogicalKeyboardKey.arrowLeft => '←',
+    LogicalKeyboardKey.arrowRight => '→',
+    LogicalKeyboardKey.arrowUp => '↑',
+    LogicalKeyboardKey.arrowDown => '↓',
     _ => key.keyLabel,
   };
 }
@@ -143,6 +149,8 @@ class ShellShortcutHooks {
     required this.closeDeskSurfaces,
     required this.isConnectOpen,
     required this.closeConnect,
+    required this.previousWorkspace,
+    required this.nextWorkspace,
   });
 
   final void Function() openPalette;
@@ -184,6 +192,10 @@ class ShellShortcutHooks {
 
   final bool Function() isConnectOpen;
   final void Function() closeConnect;
+
+  /// Ctrl+Alt+←/→: the desk before and after the current one, wrapping.
+  final void Function() previousWorkspace;
+  final void Function() nextWorkspace;
 }
 
 bool _always() => true;
@@ -249,6 +261,28 @@ List<DexShortcut> buildShortcuts(ShellShortcutHooks hooks) => <DexShortcut>[
     group: DexShortcutGroup.windows,
     when: _always,
     run: hooks.cycleFocus,
+  ),
+  DexShortcut(
+    stroke: const DexKeyStroke(
+      LogicalKeyboardKey.arrowLeft,
+      control: true,
+      alt: true,
+    ),
+    label: 'Previous desk',
+    group: DexShortcutGroup.windows,
+    when: _always,
+    run: hooks.previousWorkspace,
+  ),
+  DexShortcut(
+    stroke: const DexKeyStroke(
+      LogicalKeyboardKey.arrowRight,
+      control: true,
+      alt: true,
+    ),
+    label: 'Next desk',
+    group: DexShortcutGroup.windows,
+    when: _always,
+    run: hooks.nextWorkspace,
   ),
   DexShortcut(
     stroke: const DexKeyStroke(

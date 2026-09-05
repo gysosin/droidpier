@@ -124,3 +124,17 @@ send, and a trailing `count` counts packets at the socket instead of decoding
 them, which separates "the phone sends few frames" from "the decoder loses
 them". A locked phone mirrors its lock screen and sends a frame only when
 that changes, so unlock it before reading a frame rate.
+
+## Device check for the app catalog and its icons
+
+`plugins/open_dex_platform/tool/catalog_probe.dart` boots the real agent and
+catalog components against the attached phone and writes every app's icon
+as a PNG, so an agent-side icon change can be judged by eye without the UI:
+
+```bash
+cd plugins/open_dex_platform
+dart run tool/catalog_probe.dart ~/.local/opt/droidpier/<version>/resources/scrcpy/adb \
+  ../../dist/open-dex-agent.jar /tmp/icons
+```
+
+Stop the desktop app first: two agents on one phone fight over the port.
