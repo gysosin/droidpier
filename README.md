@@ -47,16 +47,22 @@ releases. [Licenses and source details](docs/THIRD_PARTY.md)
 
 - A desktop workspace with an app drawer and multiple embedded Android app windows.
 - Move, resize, minimize, maximize, and close app windows.
+- Four desks: send a window to another from its title bar, or step between them
+  with `Ctrl + Alt + Left/Right`.
+- A live view of the phone's own screen on the desk, alongside the app windows.
+- Search from the desk, which opens in the phone's browser as another window.
 - Keyboard and pointer input, including Android navigation actions.
 - USB connections and Android wireless-debugging pairing.
 - Optional clipboard synchronization and notification integration.
 - Phone battery information, volume controls, and supported media actions.
 
 **Known limits:** audio is not forwarded to computer speakers; media controls do
-not imply audio playback. DRM-protected and secondary-display-restricted apps may
-not work. Android behavior varies by device, OS version, and manufacturer.
-60 FPS is not restored: the direct Linux pipeline measured roughly 39–47 displayed
-FPS on the tested computer/phone. Results vary with workload and hardware. See [compatibility](docs/COMPATIBILITY.md).
+not imply audio playback. The phone-screen view is view-only: it shows what the
+phone is showing, and input goes to the app windows instead. DRM-protected and
+secondary-display-restricted apps may not work. Android behavior varies by
+device, OS version, and manufacturer. 60 FPS is not restored: the direct Linux
+pipeline measured roughly 39–47 displayed FPS on the tested computer/phone.
+Results vary with workload and hardware. See [compatibility](docs/COMPATIBILITY.md).
 
 ## First connection
 
