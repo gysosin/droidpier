@@ -116,6 +116,39 @@ class WindowBackendExit {
   final String? details;
 }
 
+/// One live stream of the phone's own display, as the backend sees it.
+class MirrorBackendSession {
+  const MirrorBackendSession({required this.id, required this.surface});
+  final String id;
+  final WindowSurface surface;
+}
+
+class MirrorBackendExit {
+  const MirrorBackendExit({
+    required this.sessionId,
+    required this.exitCode,
+    this.details,
+  });
+  final String sessionId;
+  final int exitCode;
+  final String? details;
+}
+
+/// Streams the phone's display 0 to a desktop texture, view only.
+///
+/// Kept apart from [WindowGateway]: a window is a virtual display the desk
+/// creates, sizes and drives, while the mirror follows a display the phone
+/// owns. Different lifetime, no input, and one at a time.
+abstract interface class DisplayMirrorGateway {
+  Stream<MirrorBackendExit> get exits;
+
+  /// A replacement surface after the phone rotates; the id is unchanged.
+  Stream<MirrorBackendSession> get surfaceUpdates;
+  Future<MirrorBackendSession> start(DeviceSummary device);
+  Future<void> stop(String sessionId);
+  Future<void> dispose();
+}
+
 class WindowBackendTelemetry {
   const WindowBackendTelemetry({
     required this.sessionId,

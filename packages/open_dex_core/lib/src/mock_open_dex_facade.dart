@@ -333,6 +333,25 @@ class MockOpenDexFacade implements OpenDexFacade {
       isWebUrl(url) ? const CommandSuccess(null) : _invalidUrl;
 
   @override
+  Future<VoidResult> startDisplayMirror() async {
+    _emit(
+      _snapshot.copyWith(
+        displayMirror: const DisplayMirrorState(
+          status: DisplayMirrorStatus.unavailable,
+          error: _noPhoneToMirror,
+        ),
+      ),
+    );
+    return const CommandFailure(_noPhoneToMirror);
+  }
+
+  @override
+  Future<VoidResult> stopDisplayMirror() async {
+    _emit(_snapshot.copyWith(displayMirror: const DisplayMirrorState()));
+    return const CommandSuccess(null);
+  }
+
+  @override
   Future<VoidResult> sendPointer(
     String sessionId,
     WindowPointerSample sample,
@@ -760,6 +779,14 @@ class MockOpenDexFacade implements OpenDexFacade {
       message: 'That zoom level is outside the range a window can be drawn at.',
       capability: 'window-management',
     ),
+  );
+
+  /// The preview renders every surface without a device; the mirror frame is
+  /// the one that has to say so, because it has nothing else to show.
+  static const _noPhoneToMirror = OpenDexError(
+    code: OpenDexErrorCode.capabilityUnavailable,
+    message: 'The preview has no phone to mirror.',
+    capability: 'display-mirror',
   );
 
   static const _invalidUrl = CommandFailure<void>(

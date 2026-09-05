@@ -140,6 +140,61 @@ class WindowSurface {
   final WindowPixelSize pixelSize;
 }
 
+/// Whether the phone's own screen is being streamed to the desk.
+enum DisplayMirrorStatus {
+  /// Nothing requested; the mirror frame shows its placeholder.
+  idle,
+
+  /// The stream was requested and has not produced a frame yet.
+  starting,
+
+  /// Frames are arriving on [DisplayMirrorState.surface].
+  streaming,
+
+  /// The stream could not start or stopped on its own;
+  /// [DisplayMirrorState.error] says why and whether a retry is worth it.
+  failed,
+
+  /// This build or device cannot mirror at all. Not retryable.
+  unavailable,
+}
+
+/// The phone's real screen on the desk: one per device, view only.
+///
+/// Distinct from the windows. Those are virtual displays the desk creates,
+/// sizes and drives; this follows the phone's own display, which the phone
+/// keeps driving. Different lifetime, no input, and the phone can rotate it.
+class DisplayMirrorState {
+  const DisplayMirrorState({
+    this.status = DisplayMirrorStatus.idle,
+    this.surface,
+    this.error,
+  });
+
+  final DisplayMirrorStatus status;
+
+  /// The texture holding the phone's frames, present only while streaming.
+  final WindowSurface? surface;
+  final OpenDexError? error;
+
+  /// True only when there is a surface to draw. A `streaming` status with no
+  /// surface is a contradiction the UI must never render.
+  bool get isStreaming =>
+      status == DisplayMirrorStatus.streaming && surface != null;
+
+  DisplayMirrorState copyWith({
+    DisplayMirrorStatus? status,
+    Object? surface = _unset,
+    Object? error = _unset,
+  }) => DisplayMirrorState(
+    status: status ?? this.status,
+    surface: identical(surface, _unset)
+        ? this.surface
+        : surface as WindowSurface?,
+    error: identical(error, _unset) ? this.error : error as OpenDexError?,
+  );
+}
+
 enum WindowPointerPhase { down, move, up, cancel, scroll }
 
 /// Pointer coordinates are native surface pixels, not Flutter logical pixels.
@@ -491,6 +546,7 @@ class OpenDexSnapshot {
     this.wirelessDiscovery = const WirelessDiscoveryState(),
     this.wirelessPairing = const WirelessPairingState(),
     this.currentWorkspace = 1,
+    this.displayMirror = const DisplayMirrorState(),
   });
 
   final BootState boot;
@@ -513,6 +569,7 @@ class OpenDexSnapshot {
 
   /// The virtual desktop currently on screen. 1-based, see [kWorkspaceCount].
   final int currentWorkspace;
+  final DisplayMirrorState displayMirror;
 
   OpenDexSnapshot copyWith({
     BootState? boot,
@@ -533,6 +590,7 @@ class OpenDexSnapshot {
     WirelessDiscoveryState? wirelessDiscovery,
     WirelessPairingState? wirelessPairing,
     int? currentWorkspace,
+    DisplayMirrorState? displayMirror,
   }) => OpenDexSnapshot(
     boot: boot ?? this.boot,
     deviceStatus: deviceStatus ?? this.deviceStatus,
@@ -554,6 +612,7 @@ class OpenDexSnapshot {
     wirelessDiscovery: wirelessDiscovery ?? this.wirelessDiscovery,
     wirelessPairing: wirelessPairing ?? this.wirelessPairing,
     currentWorkspace: currentWorkspace ?? this.currentWorkspace,
+    displayMirror: displayMirror ?? this.displayMirror,
   );
 }
 

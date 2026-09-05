@@ -16,6 +16,36 @@ void main() {
     expect(snapshot.devices, isEmpty);
     expect(snapshot.windows, isEmpty);
     expect(snapshot.recovery.phase, RecoveryPhase.idle);
+    expect(snapshot.displayMirror.status, DisplayMirrorStatus.idle);
+    expect(snapshot.displayMirror.surface, isNull);
+    expect(snapshot.displayMirror.isStreaming, isFalse);
+  });
+
+  test('the display mirror streams only with a surface to draw', () {
+    const surface = WindowSurface(
+      textureId: 7,
+      pixelSize: WindowPixelSize(width: 540, height: 1170),
+    );
+    const streaming = DisplayMirrorState(
+      status: DisplayMirrorStatus.streaming,
+      surface: surface,
+    );
+    expect(streaming.isStreaming, isTrue);
+    expect(
+      const DisplayMirrorState(
+        status: DisplayMirrorStatus.streaming,
+      ).isStreaming,
+      isFalse,
+    );
+    final stopped = streaming.copyWith(
+      status: DisplayMirrorStatus.idle,
+      surface: null,
+    );
+    expect(stopped.surface, isNull);
+    expect(
+      streaming.copyWith(status: DisplayMirrorStatus.failed).surface,
+      surface,
+    );
   });
 
   test('command failures expose user-safe recovery metadata', () {

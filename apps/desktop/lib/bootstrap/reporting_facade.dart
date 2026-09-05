@@ -101,6 +101,17 @@ class ReportingOpenDexFacade implements OpenDexFacade {
   Future<VoidResult> openUrl(String url) => _report(delegate.openUrl(url));
 
   @override
+  Future<VoidResult> startDisplayMirror() => _report(
+    delegate.startDisplayMirror(),
+    // The mirror frame shows its own state; a banner would say it twice.
+    reportCapabilityGaps: false,
+  );
+
+  @override
+  Future<VoidResult> stopDisplayMirror() =>
+      _report(delegate.stopDisplayMirror());
+
+  @override
   Future<VoidResult> sendPointer(
     String sessionId,
     WindowPointerSample sample,

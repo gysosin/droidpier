@@ -398,6 +398,18 @@ class _AppShellState extends State<AppShell> {
   /// hardware rather than a second workspace, and it costs screen space.
   bool _phoneMirrorOpen = false;
 
+  /// The mirror frame is a request to the phone, not a local toggle: opening
+  /// it starts the screen stream and closing it, by any door, stops it.
+  void _setPhoneMirror(bool open) {
+    if (open == _phoneMirrorOpen) return;
+    setState(() => _phoneMirrorOpen = open);
+    unawaited(
+      open
+          ? widget.facade.startDisplayMirror()
+          : widget.facade.stopDisplayMirror(),
+    );
+  }
+
   /// The keyboard cheat sheet. Ctrl+/, F1, or a bare ? when nothing is typing.
   bool _sheetOpen = false;
 
@@ -520,7 +532,7 @@ class _AppShellState extends State<AppShell> {
       DexCommandEntry(
         title: 'Toggle the phone mirror',
         keywords: const <String>['phone', 'hardware', 'dock', 'mirror'],
-        run: () => setState(() => _phoneMirrorOpen = !_phoneMirrorOpen),
+        run: () => _setPhoneMirror(!_phoneMirrorOpen),
       ),
       DexCommandEntry(
         title: 'Toggle the health readout',
@@ -926,9 +938,10 @@ class _AppShellState extends State<AppShell> {
                   (WorkspaceWindow w) =>
                       w.session.status == WindowSessionStatus.streaming,
                 ),
-                onClose: () => setState(() => _phoneMirrorOpen = false),
+                onClose: () => _setPhoneMirror(false),
                 onLaunch: (AndroidApplication a) =>
                     widget.facade.launchApplication(a.packageName),
+                onRetry: () => unawaited(widget.facade.startDisplayMirror()),
               ),
             ),
           ),
@@ -1005,8 +1018,7 @@ class _AppShellState extends State<AppShell> {
             onManagePhones: () => setState(() => _connectOpen = true),
             onOpenTokens: () => setState(() => _tokensOpen = true),
             onOpenCompanion: () => setState(() => _companionOpen = true),
-            onToggleMirror: () =>
-                setState(() => _phoneMirrorOpen = !_phoneMirrorOpen),
+            onToggleMirror: () => _setPhoneMirror(!_phoneMirrorOpen),
             onOpenBoot: () => setState(() => _bootViewOpen = true),
             launcherOpen: _drawerOpen,
             onOpenSettings: () => setState(() {

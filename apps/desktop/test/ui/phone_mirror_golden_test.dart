@@ -71,6 +71,7 @@ void main() {
                 snapshot: facade.snapshot,
                 now: DateTime.utc(2026, 8, 25, 14, 30),
                 onClose: () {},
+                onRetry: () {},
                 onLaunch: (_) {},
                 overVideo: overVideo,
               ),

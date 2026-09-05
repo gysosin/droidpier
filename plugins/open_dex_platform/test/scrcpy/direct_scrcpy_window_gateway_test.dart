@@ -7,13 +7,15 @@ import 'package:open_dex_core/open_dex_core.dart';
 import 'package:open_dex_platform/open_dex_platform.dart';
 import 'package:test/test.dart';
 
+import 'scrcpy_fakes.dart';
+
 void main() {
   test(
     'launch overlaps app start and waits for the authoritative first frame',
     () async {
       final server = _FakeServerStarter();
-      final decoders = _FakeDecoderStarter();
-      final textures = _FakeTextureHost();
+      final decoders = FakeDecoderStarter();
+      final textures = FakeTextureHost();
       final createdDisplays = <int>[];
       final gateway = DirectScrcpyWindowGateway(
         serverStarter: server,
@@ -21,7 +23,7 @@ void main() {
         serverJarPath: '/runtime/scrcpy-server',
         ffmpegExecutable: '/runtime/ffmpeg',
         textureHost: textures,
-        processExecutor: const _FakeExecutor(),
+        processExecutor: const FakeExecutor(),
         surfaceRetireDelay: Duration.zero,
         onDisplayCreated: (_, displayId) async =>
             createdDisplays.add(displayId),
@@ -35,7 +37,7 @@ void main() {
         _application,
         sessionId: 'direct-test-1',
       );
-      await _waitUntil(() => textures.waited.contains(91));
+      await waitUntil(() => textures.waited.contains(91));
       expect(createdDisplays, [44]);
       expect(
         await server.firstControlMessage.timeout(const Duration(seconds: 1)),
@@ -69,15 +71,15 @@ void main() {
     'resize waits for authoritative size and first replacement frame',
     () async {
       final server = _FakeServerStarter();
-      final decoders = _FakeDecoderStarter();
-      final textures = _FakeTextureHost();
+      final decoders = FakeDecoderStarter();
+      final textures = FakeTextureHost();
       final gateway = DirectScrcpyWindowGateway(
         serverStarter: server,
         decoderStarter: decoders,
         serverJarPath: '/runtime/scrcpy-server',
         ffmpegExecutable: '/runtime/ffmpeg',
         textureHost: textures,
-        processExecutor: const _FakeExecutor(),
+        processExecutor: const FakeExecutor(),
         surfaceRetireDelay: Duration.zero,
       );
       addTearDown(gateway.dispose);
@@ -91,11 +93,11 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       server.sendVideo([
-        _session(width: 656, height: 1280, clientResized: true),
-        _packet(config: true, bytes: [0, 0, 0, 1, 103, 2]),
-        _packet(key: true, bytes: [0, 0, 0, 1, 101, 2]),
+        sessionMeta(width: 656, height: 1280, clientResized: true),
+        videoPacket(config: true, bytes: [0, 0, 0, 1, 103, 2]),
+        videoPacket(key: true, bytes: [0, 0, 0, 1, 101, 2]),
       ]);
-      await _waitUntil(() => textures.waited.contains(92));
+      await waitUntil(() => textures.waited.contains(92));
       var resizeCompleted = false;
       unawaited(resizedFuture.then((_) => resizeCompleted = true));
       await Future<void>.delayed(Duration.zero);
@@ -125,11 +127,11 @@ void main() {
     final server = _FakeServerStarter();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
-      decoderStarter: _FakeDecoderStarter(),
+      decoderStarter: FakeDecoderStarter(),
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
-      textureHost: _FakeTextureHost(),
-      processExecutor: const _FakeExecutor(),
+      textureHost: FakeTextureHost(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
@@ -137,9 +139,9 @@ void main() {
     final update = gateway.surfaceUpdates.first;
 
     server.sendVideo([
-      _session(width: 1280, height: 720),
-      _packet(config: true, bytes: [0, 0, 0, 1, 103, 3]),
-      _packet(key: true, bytes: [0, 0, 0, 1, 101, 3]),
+      sessionMeta(width: 1280, height: 720),
+      videoPacket(config: true, bytes: [0, 0, 0, 1, 103, 3]),
+      videoPacket(key: true, bytes: [0, 0, 0, 1, 101, 3]),
     ]);
 
     expect(
@@ -153,14 +155,14 @@ void main() {
 
   test('server death publishes exit 21 and cleans the session', () async {
     final server = _FakeServerStarter();
-    final textures = _FakeTextureHost();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
-      decoderStarter: _FakeDecoderStarter(),
+      decoderStarter: FakeDecoderStarter(),
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
@@ -180,21 +182,21 @@ void main() {
 
   test('decoder restarts once with CONFIG then publishes exit 22', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
+    final decoders = FakeDecoderStarter();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
-      textureHost: _FakeTextureHost(),
-      processExecutor: const _FakeExecutor(),
+      textureHost: FakeTextureHost(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
     final session = await gateway.launch(_device, _application);
 
     decoders.decoders.first.fail(1);
-    await _waitUntil(
+    await waitUntil(
       () => decoders.decoders.length == 2 && server.controlBytes.contains(17),
     );
     expect(decoders.decoders.last.initialConfig?.isConfig, isTrue);
@@ -214,17 +216,17 @@ void main() {
     final server = _FakeServerStarter();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
-      decoderStarter: _FakeDecoderStarter(),
+      decoderStarter: FakeDecoderStarter(),
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
-      textureHost: _FakeTextureHost(),
-      processExecutor: const _FakeExecutor(),
+      textureHost: FakeTextureHost(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
     final session = await gateway.launch(_device, _application);
     await server.firstControlMessage;
-    await _waitUntil(
+    await waitUntil(
       () =>
           server.controlBytes.length >=
           ScrcpyControlMessages.startApp(_application.packageName).length,
@@ -265,7 +267,7 @@ void main() {
         logicalKeyId: 0,
       ),
     );
-    await _waitUntil(() => server.controlBytes.length >= offset + 66);
+    await waitUntil(() => server.controlBytes.length >= offset + 66);
 
     expect(server.controlBytes.sublist(offset), [
       ...ScrcpyControlMessages.injectTouch(
@@ -289,15 +291,15 @@ void main() {
 
   test('close stops decoder, texture, sockets, and server handle', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
+    final decoders = FakeDecoderStarter();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
@@ -311,14 +313,14 @@ void main() {
   });
 
   test('telemetry separates produced, presented, and dropped rates', () async {
-    final textures = _FakeTextureHost();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: _FakeServerStarter(),
-      decoderStarter: _FakeDecoderStarter(),
+      decoderStarter: FakeDecoderStarter(),
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       telemetryInterval: const Duration(milliseconds: 1),
       surfaceRetireDelay: Duration.zero,
     );
@@ -344,15 +346,15 @@ void main() {
 
   test('a portrait phone gets a portrait display request', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
+    final decoders = FakeDecoderStarter();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
       // A portrait-natural phone. The display must be created portrait so the
       // launcher and portrait apps start upright rather than rotated 90°.
@@ -363,7 +365,7 @@ void main() {
     textures.frameGates[91] = firstFrame;
 
     final launch = gateway.launch(_device, _application, sessionId: 'ori-1');
-    await _waitUntil(() => textures.waited.contains(91));
+    await waitUntil(() => textures.waited.contains(91));
     firstFrame.complete();
     await launch;
 
@@ -378,15 +380,15 @@ void main() {
 
   test('a landscape-natural device gets a landscape display request', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
+    final decoders = FakeDecoderStarter();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
       adb: _FakeAdb('Physical size: 1920x1080'),
     );
@@ -395,7 +397,7 @@ void main() {
     textures.frameGates[91] = firstFrame;
 
     final launch = gateway.launch(_device, _application, sessionId: 'ori-2');
-    await _waitUntil(() => textures.waited.contains(91));
+    await waitUntil(() => textures.waited.contains(91));
     firstFrame.complete();
     await launch;
 
@@ -408,15 +410,15 @@ void main() {
 
   test('without adb, the display falls back to the default size', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
+    final decoders = FakeDecoderStarter();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
       initialPixelSize: const WindowPixelSize(width: 1280, height: 896),
       // No adb: orientation cannot be read, so the default stands.
@@ -426,7 +428,7 @@ void main() {
     textures.frameGates[91] = firstFrame;
 
     final launch = gateway.launch(_device, _application, sessionId: 'ori-3');
-    await _waitUntil(() => textures.waited.contains(91));
+    await waitUntil(() => textures.waited.contains(91));
     firstFrame.complete();
     await launch;
 
@@ -434,104 +436,106 @@ void main() {
     expect(server.capturedDisplaySize!.height, 896);
   });
 
-  test('backspace and Ctrl+C are sent as keycodes, plain text as text', () async {
-    final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
-    final gateway = DirectScrcpyWindowGateway(
-      serverStarter: server,
-      decoderStarter: decoders,
-      serverJarPath: '/runtime/scrcpy-server',
-      ffmpegExecutable: '/runtime/ffmpeg',
-      textureHost: textures,
-      processExecutor: const _FakeExecutor(),
-      surfaceRetireDelay: Duration.zero,
-    );
-    addTearDown(gateway.dispose);
-    final launched = await gateway.launch(_device, _application);
-    await server.firstControlMessage;
-    final String sid = launched.id;
+  test(
+    'backspace and Ctrl+C are sent as keycodes, plain text as text',
+    () async {
+      final server = _FakeServerStarter();
+      final decoders = FakeDecoderStarter();
+      final textures = FakeTextureHost();
+      final gateway = DirectScrcpyWindowGateway(
+        serverStarter: server,
+        decoderStarter: decoders,
+        serverJarPath: '/runtime/scrcpy-server',
+        ffmpegExecutable: '/runtime/ffmpeg',
+        textureHost: textures,
+        processExecutor: const FakeExecutor(),
+        surfaceRetireDelay: Duration.zero,
+      );
+      addTearDown(gateway.dispose);
+      final launched = await gateway.launch(_device, _application);
+      await server.firstControlMessage;
+      final String sid = launched.id;
 
-    Future<List<int>> delta(Future<void> Function() act) async {
-      final int before = server.controlBytes.length;
-      await act();
-      await _waitUntil(() => server.controlBytes.length > before);
-      return server.controlBytes.sublist(before);
-    }
+      Future<List<int>> delta(Future<void> Function() act) async {
+        final int before = server.controlBytes.length;
+        await act();
+        await waitUntil(() => server.controlBytes.length > before);
+        return server.controlBytes.sublist(before);
+      }
 
-    // Backspace: character is the control code U+0008, but it must land as a
-    // KEYCODE_DEL (67) keycode, not as typed text.
-    final List<int> back = await delta(
-      () => gateway.sendKey(
-        sid,
-        const WindowKeySample(
-          phase: WindowKeyPhase.down,
-          physicalKeyId: 0x0007002a,
-          logicalKeyId: 0,
-          character: '\b',
+      // Backspace: character is the control code U+0008, but it must land as a
+      // KEYCODE_DEL (67) keycode, not as typed text.
+      final List<int> back = await delta(
+        () => gateway.sendKey(
+          sid,
+          const WindowKeySample(
+            phase: WindowKeyPhase.down,
+            physicalKeyId: 0x0007002a,
+            logicalKeyId: 0,
+            character: '\b',
+          ),
         ),
-      ),
-    );
-    expect(
-      back,
-      ScrcpyControlMessages.injectKey(
-        action: ScrcpyKeyAction.down,
-        keycode: 67,
-      ),
-      reason: 'backspace must be a keycode, not injected text',
-    );
-
-    // Ctrl+C: a letter, but with Ctrl held it is a command — a KEYCODE_C (31)
-    // with the CTRL meta bit, not the character c.
-    final List<int> copy = await delta(
-      () => gateway.sendKey(
-        sid,
-        const WindowKeySample(
-          phase: WindowKeyPhase.down,
-          physicalKeyId: 0x00070006,
-          logicalKeyId: 0,
-          character: 'c',
-          ctrl: true,
+      );
+      expect(
+        back,
+        ScrcpyControlMessages.injectKey(
+          action: ScrcpyKeyAction.down,
+          keycode: 67,
         ),
-      ),
-    );
-    expect(
-      copy,
-      ScrcpyControlMessages.injectKey(
-        action: ScrcpyKeyAction.down,
-        keycode: 31,
-        metaState: 0x1000,
-      ),
-      reason: 'Ctrl+C must carry the CTRL meta bit as a keycode',
-    );
+        reason: 'backspace must be a keycode, not injected text',
+      );
 
-    // A plain letter with no modifier is typed text (INJECT_TEXT, type 1).
-    final List<int> typed = await delta(
-      () => gateway.sendKey(
-        sid,
-        const WindowKeySample(
-          phase: WindowKeyPhase.down,
-          physicalKeyId: 0x00070007,
-          logicalKeyId: 0,
-          character: 'd',
+      // Ctrl+C: a letter, but with Ctrl held it is a command — a KEYCODE_C (31)
+      // with the CTRL meta bit, not the character c.
+      final List<int> copy = await delta(
+        () => gateway.sendKey(
+          sid,
+          const WindowKeySample(
+            phase: WindowKeyPhase.down,
+            physicalKeyId: 0x00070006,
+            logicalKeyId: 0,
+            character: 'c',
+            ctrl: true,
+          ),
         ),
-      ),
-    );
-    expect(typed.first, 1, reason: 'plain text uses INJECT_TEXT (type 1)');
-  });
+      );
+      expect(
+        copy,
+        ScrcpyControlMessages.injectKey(
+          action: ScrcpyKeyAction.down,
+          keycode: 31,
+          metaState: 0x1000,
+        ),
+        reason: 'Ctrl+C must carry the CTRL meta bit as a keycode',
+      );
 
+      // A plain letter with no modifier is typed text (INJECT_TEXT, type 1).
+      final List<int> typed = await delta(
+        () => gateway.sendKey(
+          sid,
+          const WindowKeySample(
+            phase: WindowKeyPhase.down,
+            physicalKeyId: 0x00070007,
+            logicalKeyId: 0,
+            character: 'd',
+          ),
+        ),
+      );
+      expect(typed.first, 1, reason: 'plain text uses INJECT_TEXT (type 1)');
+    },
+  );
 
   test('right-click sends Android Back, not a touch', () async {
     final server = _FakeServerStarter();
-    final decoders = _FakeDecoderStarter();
-    final textures = _FakeTextureHost();
+    final decoders = FakeDecoderStarter();
+    final textures = FakeTextureHost();
     final gateway = DirectScrcpyWindowGateway(
       serverStarter: server,
       decoderStarter: decoders,
       serverJarPath: '/runtime/scrcpy-server',
       ffmpegExecutable: '/runtime/ffmpeg',
       textureHost: textures,
-      processExecutor: const _FakeExecutor(),
+      processExecutor: const FakeExecutor(),
       surfaceRetireDelay: Duration.zero,
     );
     addTearDown(gateway.dispose);
@@ -542,7 +546,7 @@ void main() {
     Future<List<int>> delta(Future<void> Function() act) async {
       final int before = server.controlBytes.length;
       await act();
-      await _waitUntil(() => server.controlBytes.length > before);
+      await waitUntil(() => server.controlBytes.length > before);
       return server.controlBytes.sublist(before);
     }
 
@@ -559,20 +563,16 @@ void main() {
         ),
       ),
     );
-    expect(
-      press,
-      <int>[
-        ...ScrcpyControlMessages.injectKey(
-          action: ScrcpyKeyAction.down,
-          keycode: 4,
-        ),
-        ...ScrcpyControlMessages.injectKey(
-          action: ScrcpyKeyAction.up,
-          keycode: 4,
-        ),
-      ],
-      reason: 'right-click is Back down+up, no INJECT_TOUCH',
-    );
+    expect(press, <int>[
+      ...ScrcpyControlMessages.injectKey(
+        action: ScrcpyKeyAction.down,
+        keycode: 4,
+      ),
+      ...ScrcpyControlMessages.injectKey(
+        action: ScrcpyKeyAction.up,
+        keycode: 4,
+      ),
+    ], reason: 'right-click is Back down+up, no INJECT_TOUCH');
 
     // The release of that same right gesture is swallowed — no bytes at all.
     final int before = server.controlBytes.length;
@@ -586,7 +586,11 @@ void main() {
       ),
     );
     await Future<void>.delayed(const Duration(milliseconds: 20));
-    expect(server.controlBytes.length, before, reason: 'right release is swallowed');
+    expect(
+      server.controlBytes.length,
+      before,
+      reason: 'right release is swallowed',
+    );
   });
 }
 
@@ -613,7 +617,7 @@ const _application = AndroidApplication(
 
 class _FakeServerStarter implements ScrcpyServerStarter {
   final _controlBytes = Completer<List<int>>();
-  final _handle = _FakeServerHandle();
+  final _handle = FakeServerHandle();
   Socket? _video;
   Socket? _control;
   final controlBytes = <int>[];
@@ -623,7 +627,7 @@ class _FakeServerStarter implements ScrcpyServerStarter {
 
   Future<List<int>> get firstControlMessage => _controlBytes.future;
 
-  _FakeServerHandle get handle => _handle;
+  FakeServerHandle get handle => _handle;
 
   @override
   Future<ScrcpyServerSession> start({
@@ -646,10 +650,10 @@ class _FakeServerStarter implements ScrcpyServerStarter {
       }
     });
     _video!.add(
-      _videoBytes([
-        _session(width: 832, height: 1280),
-        _packet(config: true, bytes: [0, 0, 0, 1, 103]),
-        _packet(key: true, bytes: [0, 0, 0, 1, 101]),
+      videoBytes([
+        sessionMeta(width: 832, height: 1280),
+        videoPacket(config: true, bytes: [0, 0, 0, 1, 103]),
+        videoPacket(key: true, bytes: [0, 0, 0, 1, 101]),
       ]),
     );
     await _video!.flush();
@@ -665,189 +669,6 @@ class _FakeServerStarter implements ScrcpyServerStarter {
   }
 }
 
-class _FakeServerHandle implements ScrcpyServerSession {
-  final _exitCode = Completer<int>();
-  bool stopped = false;
-
-  @override
-  Future<int> get displayId async => 44;
-
-  @override
-  Future<int> get exitCode => _exitCode.future;
-
-  @override
-  List<String> get stderrTail => const [];
-
-  @override
-  Future<void> stop() async {
-    stopped = true;
-    if (!_exitCode.isCompleted) _exitCode.complete(0);
-  }
-
-  void fail(int code) {
-    if (!_exitCode.isCompleted) _exitCode.complete(code);
-  }
-}
-
-class _FakeDecoderStarter implements H264DecoderStarter {
-  final decoders = <_FakeDecoder>[];
-
-  _FakeDecoder get decoder => decoders.single;
-
-  @override
-  Future<H264Decoder> start({
-    required String ffmpegPath,
-    required String fifoPath,
-    required Future<void> Function() resetVideo,
-    ScrcpyVideoPacket? latestConfig,
-  }) async {
-    final decoder = _FakeDecoder();
-    decoder.initialConfig = latestConfig;
-    decoders.add(decoder);
-    return decoder;
-  }
-}
-
-class _FakeDecoder implements H264Decoder {
-  final _exitCode = Completer<int>();
-  final packets = <ScrcpyVideoPacket>[];
-  ScrcpyVideoPacket? initialConfig;
-  bool stopped = false;
-  List<String> output = const <String>[];
-
-  @override
-  Future<int> get exitCode => _exitCode.future;
-
-  @override
-  List<String> get outputTail => output;
-
-  @override
-  void feed(ScrcpyVideoPacket packet) => packets.add(packet);
-
-  @override
-  Future<void> get idle async {}
-
-  @override
-  Future<void> stop() async {
-    stopped = true;
-    if (!_exitCode.isCompleted) _exitCode.complete(0);
-  }
-
-  void fail(int code) {
-    if (!_exitCode.isCompleted) _exitCode.complete(code);
-  }
-}
-
-class _FakeTextureHost implements WindowTextureHost {
-  final createdSizes = <WindowPixelSize>[];
-  final waited = <int>[];
-  final closed = <int>[];
-  final frameGates = <int, Completer<void>>{};
-  var _nextTexture = 91;
-  int frames = 1;
-  int presentedFrames = 1;
-  int droppedFrames = 0;
-
-  @override
-  Future<int> createRawRgbaTexture({
-    required String fifoPath,
-    required WindowPixelSize pixelSize,
-  }) async {
-    createdSizes.add(pixelSize);
-    return _nextTexture++;
-  }
-
-  @override
-  Future<void> waitForFirstFrame(
-    int textureId, {
-    required Duration timeout,
-  }) async {
-    waited.add(textureId);
-    await frameGates[textureId]?.future;
-  }
-
-  @override
-  Future<WindowTextureStats> stats(int textureId) async => WindowTextureStats(
-    frames: frames,
-    presentedFrames: presentedFrames,
-    lastFrameMonotonicUs: 0,
-    centerLuma: 0,
-    probeLuma: 0,
-    droppedFrames: droppedFrames,
-  );
-
-  @override
-  Future<void> closeTexture(int textureId) async => closed.add(textureId);
-}
-
-class _FakeExecutor implements ProcessExecutor {
-  const _FakeExecutor();
-
-  @override
-  Future<ProcessOutput> run(
-    String executable,
-    List<String> arguments, {
-    Duration timeout = const Duration(seconds: 15),
-    String? input,
-  }) async => const ProcessOutput(exitCode: 0, stdout: '', stderr: '');
-}
-
-Uint8List _videoBytes(List<List<int>> messages) {
-  final name = Uint8List(64);
-  name.setRange(0, 5, 'Phone'.codeUnits);
-  final bytes = BytesBuilder(copy: false)
-    ..add(name)
-    ..add(_u32(0x68323634));
-  for (final message in messages) {
-    bytes.add(message);
-  }
-  return bytes.takeBytes();
-}
-
-Uint8List _session({
-  required int width,
-  required int height,
-  bool clientResized = false,
-}) =>
-    (BytesBuilder(copy: false)
-          ..add([0x80, 0, 0, clientResized ? 1 : 0])
-          ..add(_u32(width))
-          ..add(_u32(height)))
-        .takeBytes();
-
-Uint8List _packet({
-  bool config = false,
-  bool key = false,
-  required List<int> bytes,
-}) =>
-    (BytesBuilder(copy: false)
-          ..add(_u64((config ? 1 << 62 : 0) | (key ? 1 << 61 : 0)))
-          ..add(_u32(bytes.length))
-          ..add(bytes))
-        .takeBytes();
-
-Uint8List _u32(int value) => Uint8List.fromList(
-  [
-    value >> 24,
-    value >> 16,
-    value >> 8,
-    value,
-  ].map((byte) => byte & 0xff).toList(),
-);
-
-Uint8List _u64(int value) => Uint8List.fromList(
-  [
-    value >> 56,
-    value >> 48,
-    value >> 40,
-    value >> 32,
-    value >> 24,
-    value >> 16,
-    value >> 8,
-    value,
-  ].map((byte) => byte & 0xff).toList(),
-);
-
 bool _containsSequence(List<int> source, List<int> pattern) {
   for (var start = 0; start + pattern.length <= source.length; start++) {
     var matches = true;
@@ -860,12 +681,4 @@ bool _containsSequence(List<int> source, List<int> pattern) {
     if (matches) return true;
   }
   return false;
-}
-
-Future<void> _waitUntil(bool Function() condition) async {
-  for (var attempt = 0; attempt < 100; attempt++) {
-    if (condition()) return;
-    await Future<void>.delayed(const Duration(milliseconds: 1));
-  }
-  throw TimeoutException('The test condition did not become true.');
 }

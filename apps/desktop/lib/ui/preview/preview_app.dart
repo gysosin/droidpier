@@ -257,6 +257,7 @@ class _PreviewAppState extends State<PreviewApp> {
               onClose: () {},
               onLaunch: (AndroidApplication a) =>
                   _facade.launchApplication(a.packageName),
+              onRetry: () => _facade.startDisplayMirror(),
             ),
           ),
         );
