@@ -15,11 +15,10 @@ import '../theme/glass.dart';
 ///
 /// Two things are true at once and the widget has to be honest about both: the
 /// phone is a *device* whose real state we know (battery, radios, apps), and
-/// its *screen* is something we cannot draw until the backend gives us a
-/// surface. So this renders the hardware faithfully — frame, status bar,
-/// radios, battery, app grid, gesture pill — and says plainly, inside the
-/// frame, that the live screen is not available yet. It does not fake a
-/// screenshot.
+/// its *screen* is whatever [OpenDexSnapshot.displayMirror] holds. While a
+/// surface is streaming, the screen is the phone's own frames, view only.
+/// Otherwise the frame says plainly why not — connecting, failed with a
+/// retry, or a build that cannot mirror — and never fakes a screenshot.
 ///
 /// Docked bottom-right above the taskbar, following the reference.
 class PhoneMirror extends StatelessWidget {
@@ -28,6 +27,7 @@ class PhoneMirror extends StatelessWidget {
     required this.now,
     required this.onClose,
     required this.onLaunch,
+    required this.onRetry,
     this.width = 240,
     this.overVideo = false,
     super.key,
@@ -37,6 +37,9 @@ class PhoneMirror extends StatelessWidget {
   final DateTime now;
   final VoidCallback onClose;
   final ValueChanged<AndroidApplication> onLaunch;
+
+  /// Asks for the stream again after it failed.
+  final VoidCallback onRetry;
   final double width;
 
   /// True while an app window is streaming beneath this one.
@@ -55,6 +58,7 @@ class PhoneMirror extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DexGlass glass = DexGlass.of(context);
+    final DisplayMirrorState mirror = snapshot.displayMirror;
 
     return Semantics(
       container: true,
@@ -67,7 +71,10 @@ class PhoneMirror extends StatelessWidget {
           radius: 36,
           fill: glass.substrate,
           stroke: glass.strokeStrong,
-          blurred: !overVideo,
+          // Flat while the phone's own frames are arriving, for the same
+          // reason as over a window: a blur above a live texture re-blurs the
+          // desk on every decoded frame.
+          blurred: !overVideo && !mirror.isStreaming,
           padding: const EdgeInsets.all(DexSpace.sm),
           child: AspectRatio(
             aspectRatio: 9 / 18.5,
@@ -95,7 +102,18 @@ class PhoneMirror extends StatelessWidget {
                       // casts, the honest thing to show inside the frame is
                       // that nothing is being shown — not an invented grid
                       // of apps the phone may not have.
-                      Expanded(child: _Placeholder(snapshot: snapshot)),
+
+                      // The phone's frames when there are any; otherwise the
+                      // reason there are none. Never an invented home screen.
+                      Expanded(
+                        child: mirror.isStreaming
+                            ? _Screen(surface: mirror.surface!)
+                            : _Placeholder(
+                                snapshot: snapshot,
+                                mirror: mirror,
+                                onRetry: onRetry,
+                              ),
+                      ),
                       const _GesturePill(),
                     ],
                   ),
@@ -264,18 +282,61 @@ String _clock(DateTime now) {
   return '$h:${now.minute.toString().padLeft(2, '0')}';
 }
 
-/// What the frame holds before there is a stream to hold.
+/// The phone's frames, letterboxed to their own aspect inside the frame.
+///
+/// The texture is a repaint boundary of its own, so a new frame rasterises
+/// nothing but itself; the bars either side are plain black, as on a phone
+/// showing video the wrong way round.
+class _Screen extends StatelessWidget {
+  const _Screen({required this.surface});
+
+  final WindowSurface surface;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: Colors.black,
+    child: Center(
+      child: AspectRatio(
+        aspectRatio: surface.pixelSize.width / surface.pixelSize.height,
+        child: Texture(
+          textureId: surface.textureId,
+          filterQuality: FilterQuality.low,
+        ),
+      ),
+    ),
+  );
+}
+
+/// What the frame holds when there is no stream to hold, and why.
 class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.snapshot});
+  const _Placeholder({
+    required this.snapshot,
+    required this.mirror,
+    required this.onRetry,
+  });
 
   final OpenDexSnapshot snapshot;
+  final DisplayMirrorState mirror;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final DexColors c = Theme.of(context).extension<DexColors>()!;
     final TextTheme t = Theme.of(context).textTheme;
     final String? name = snapshot.selectedDevice?.name;
-
+    final OpenDexError? error = mirror.error;
+    final bool failed = mirror.status == DisplayMirrorStatus.failed;
+    final String message = switch (mirror.status) {
+      DisplayMirrorStatus.idle =>
+        "The phone's screen appears here once the mirror starts.",
+      DisplayMirrorStatus.starting ||
+      DisplayMirrorStatus.streaming => "Connecting to the phone's screen…",
+      DisplayMirrorStatus.failed =>
+        error?.message ?? 'The phone screen stream stopped.',
+      DisplayMirrorStatus.unavailable =>
+        error?.message ?? 'This build cannot mirror the phone.',
+    };
+    final bool canRetry = failed && (error?.retryable ?? true);
     return Padding(
       padding: const EdgeInsets.all(DexSpace.lg),
       child: Column(
@@ -290,9 +351,9 @@ class _Placeholder extends StatelessWidget {
               border: Border.all(color: c.line, width: DexStroke.hairline),
             ),
             child: Icon(
-              DexIcons.portrait,
+              failed ? DexIcons.circleAlert : DexIcons.portrait,
               size: DexIconSize.control,
-              color: c.muted,
+              color: failed ? c.fault : c.muted,
             ),
           ),
           const SizedBox(height: DexSpace.md),
@@ -303,11 +364,14 @@ class _Placeholder extends StatelessWidget {
           ),
           const SizedBox(height: DexSpace.xs),
           Text(
-            'Physical device surface linked via ADB. Screen mirroring handled '
-            'in freeform windows.',
+            message,
             textAlign: TextAlign.center,
             style: DexTheme.data(c, size: 10),
           ),
+          if (canRetry) ...<Widget>[
+            const SizedBox(height: DexSpace.md),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
         ],
       ),
     );

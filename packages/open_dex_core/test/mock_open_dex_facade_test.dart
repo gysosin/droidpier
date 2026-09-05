@@ -59,22 +59,26 @@ void main() {
     expect((await facade.dismissAllNotifications()).isSuccess, isTrue);
   });
 
-  test('selecting a workspace moves the desk, and refuses one that is not there',
-      () async {
-    final facade = MockOpenDexFacade();
-    addTearDown(facade.dispose);
+  test(
+    'selecting a workspace moves the desk, and refuses one that is not there',
+    () async {
+      final facade = MockOpenDexFacade();
+      addTearDown(facade.dispose);
 
-    expect(facade.snapshot.currentWorkspace, 1);
-    expect((await facade.selectWorkspace(3)).isSuccess, isTrue);
-    expect(facade.snapshot.currentWorkspace, 3);
+      expect(facade.snapshot.currentWorkspace, 1);
+      expect((await facade.selectWorkspace(3)).isSuccess, isTrue);
+      expect(facade.snapshot.currentWorkspace, 3);
 
-    // Out of range is refused rather than clamped: a taskbar that asked for
-    // workspace 9 has a bug, and silently landing on 4 would hide it.
-    expect((await facade.selectWorkspace(0)).isSuccess, isFalse);
-    expect((await facade.selectWorkspace(kWorkspaceCount + 1)).isSuccess,
-        isFalse);
-    expect(facade.snapshot.currentWorkspace, 3);
-  });
+      // Out of range is refused rather than clamped: a taskbar that asked for
+      // workspace 9 has a bug, and silently landing on 4 would hide it.
+      expect((await facade.selectWorkspace(0)).isSuccess, isFalse);
+      expect(
+        (await facade.selectWorkspace(kWorkspaceCount + 1)).isSuccess,
+        isFalse,
+      );
+      expect(facade.snapshot.currentWorkspace, 3);
+    },
+  );
 
   test('a launched app lands on the workspace you are looking at', () async {
     final facade = MockOpenDexFacade();
@@ -100,8 +104,10 @@ void main() {
     expect(facade.snapshot.windows.single.workspace, 2);
 
     expect((await facade.moveWindowToWorkspace(id, 99)).isSuccess, isFalse);
-    expect((await facade.moveWindowToWorkspace('no-such-window', 2)).isSuccess,
-        isFalse);
+    expect(
+      (await facade.moveWindowToWorkspace('no-such-window', 2)).isSuccess,
+      isFalse,
+    );
     expect(facade.snapshot.windows.single.workspace, 2);
   });
 
@@ -116,43 +122,60 @@ void main() {
     expect((await facade.setWindowScale(id, 1.25)).isSuccess, isTrue);
     expect(facade.snapshot.windows.single.scale, 1.25);
 
-    for (final rejected in <double>[0, -1, 0.4, 3.1, double.nan,
-        double.infinity]) {
-      expect((await facade.setWindowScale(id, rejected)).isSuccess, isFalse,
-          reason: 'scale $rejected must be refused');
+    for (final rejected in <double>[
+      0,
+      -1,
+      0.4,
+      3.1,
+      double.nan,
+      double.infinity,
+    ]) {
+      expect(
+        (await facade.setWindowScale(id, rejected)).isSuccess,
+        isFalse,
+        reason: 'scale $rejected must be refused',
+      );
     }
     expect(facade.snapshot.windows.single.scale, 1.25);
   });
 
-  test('rotating a window swaps its geometry, and rotating back restores it',
-      () async {
-    final facade = MockOpenDexFacade();
-    addTearDown(facade.dispose);
+  test(
+    'rotating a window swaps its geometry, and rotating back restores it',
+    () async {
+      final facade = MockOpenDexFacade();
+      addTearDown(facade.dispose);
 
-    final launch = await facade.launchApplication('com.android.chrome');
-    final id = (launch as CommandSuccess<String>).value;
-    final portrait = facade.snapshot.windows.single.geometry;
-    expect(facade.snapshot.windows.single.isLandscape, isFalse);
+      final launch = await facade.launchApplication('com.android.chrome');
+      final id = (launch as CommandSuccess<String>).value;
+      final portrait = facade.snapshot.windows.single.geometry;
+      expect(facade.snapshot.windows.single.isLandscape, isFalse);
 
-    expect((await facade.setWindowOrientation(id, landscape: true)).isSuccess,
-        isTrue);
-    final landscape = facade.snapshot.windows.single;
-    expect(landscape.isLandscape, isTrue);
-    expect(landscape.geometry.width, portrait.height);
-    expect(landscape.geometry.height, portrait.width);
+      expect(
+        (await facade.setWindowOrientation(id, landscape: true)).isSuccess,
+        isTrue,
+      );
+      final landscape = facade.snapshot.windows.single;
+      expect(landscape.isLandscape, isTrue);
+      expect(landscape.geometry.width, portrait.height);
+      expect(landscape.geometry.height, portrait.width);
 
-    expect((await facade.setWindowOrientation(id, landscape: false)).isSuccess,
-        isTrue);
-    expect(facade.snapshot.windows.single.geometry.width, portrait.width);
-    expect(facade.snapshot.windows.single.geometry.height, portrait.height);
-  });
+      expect(
+        (await facade.setWindowOrientation(id, landscape: false)).isSuccess,
+        isTrue,
+      );
+      expect(facade.snapshot.windows.single.geometry.width, portrait.width);
+      expect(facade.snapshot.windows.single.geometry.height, portrait.height);
+    },
+  );
 
   test('openUrl accepts web addresses and refuses everything else', () async {
     final facade = MockOpenDexFacade();
     addTearDown(facade.dispose);
 
-    expect((await facade.openUrl('https://example.com/search?q=a')).isSuccess,
-        isTrue);
+    expect(
+      (await facade.openUrl('https://example.com/search?q=a')).isSuccess,
+      isTrue,
+    );
     expect((await facade.openUrl('http://example.com')).isSuccess, isTrue);
 
     // The desk search feeds this, and a package label or notification body can
@@ -167,8 +190,23 @@ void main() {
       '',
       'not a url',
     ]) {
-      expect((await facade.openUrl(rejected)).isSuccess, isFalse,
-          reason: '"$rejected" must be refused');
+      expect(
+        (await facade.openUrl(rejected)).isSuccess,
+        isFalse,
+        reason: '"$rejected" must be refused',
+      );
     }
+  });
+
+  test('the preview has no phone to mirror, and says so', () async {
+    final facade = MockOpenDexFacade();
+    final result = await facade.startDisplayMirror();
+    expect(result, isA<CommandFailure<void>>());
+    final state = facade.snapshot.displayMirror;
+    expect(state.status, DisplayMirrorStatus.unavailable);
+    expect(state.error?.message, 'The preview has no phone to mirror.');
+    expect(state.surface, isNull);
+    expect(await facade.stopDisplayMirror(), isA<CommandSuccess<void>>());
+    expect(facade.snapshot.displayMirror.status, DisplayMirrorStatus.idle);
   });
 }

@@ -104,6 +104,61 @@ void main() {
     );
   });
 
+  test('starts a mirror of the phone display with no display wait', () async {
+    final runtime = await Directory.systemTemp.createTemp(
+      'open-dex-scrcpy-launcher-test-',
+    );
+    addTearDown(() async => runtime.delete(recursive: true));
+    final jar = File('${runtime.path}/scrcpy-server')..createSync();
+    final executor = _FakeExecutor()..remoteHash = _hashA;
+    final processLauncher = _FakeLauncher();
+    final launcher = ScrcpyServerLauncher(
+      adb: AdbClient(executable: '/tools/adb', executor: executor),
+      processLauncher: processLauncher,
+    );
+
+    final handle = await launcher.startMirror(
+      device: device,
+      serverJarPath: jar.path,
+      hostPort: 41234,
+      scid: '1234abcd',
+    );
+
+    expect(processLauncher.arguments, [
+      '-s',
+      'device-1',
+      'shell',
+      'CLASSPATH=/data/local/tmp/scrcpy-server.jar',
+      'app_process',
+      '/',
+      'com.genymobile.scrcpy.Server',
+      '4.1',
+      'scid=1234abcd',
+      'log_level=info',
+      'video=true',
+      'audio=false',
+      // View only: one socket, no control channel, nothing to inject.
+      'control=false',
+      'video_codec=h264',
+      'video_bit_rate=4000000',
+      'max_fps=30',
+      'max_size=1080',
+      'send_device_meta=true',
+      'send_frame_meta=true',
+      'send_stream_meta=true',
+      'send_dummy_byte=false',
+      'cleanup=true',
+      'power_on=false',
+      'stay_awake=false',
+      'show_touches=false',
+      'clipboard_autosync=false',
+    ]);
+    // Display 0 is the phone's own. scrcpy prints no "New display" line for
+    // it, so the handle must not sit in the five-second wait the windows use.
+    expect(await handle.displayId.timeout(const Duration(milliseconds: 50)), 0);
+    await handle.stop();
+  });
+
   test('pushes only when the device jar hash differs', () async {
     final runtime = await Directory.systemTemp.createTemp(
       'open-dex-scrcpy-hash-test-',

@@ -230,7 +230,7 @@ void main() {
     await settle();
     await tester.tap(find.text('Phone Mirror'));
     await settle();
-    expect(find.textContaining('linked via ADB'), findsOneWidget);
+    expect(find.textContaining('once the mirror starts'), findsOneWidget);
     await tester.tap(find.text('Phone Mirror'));
     await settle();
     expect(find.textContaining('linked via ADB'), findsNothing);

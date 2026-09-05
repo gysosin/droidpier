@@ -25,7 +25,8 @@ class DisplayOrientation {
     required WindowPixelSize landscape,
     required WindowPixelSize fallback,
   }) {
-    final match = _physicalLine.firstMatch(wmSizeOutput) ??
+    final match =
+        _physicalLine.firstMatch(wmSizeOutput) ??
         _anySize.firstMatch(wmSizeOutput);
     if (match == null) return fallback;
     final int width = int.parse(match.group(1)!);

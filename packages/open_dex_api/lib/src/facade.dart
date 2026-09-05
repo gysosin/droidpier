@@ -103,5 +103,16 @@ abstract interface class OpenDexFacade {
   /// reaches a process directly, and so the scheme is validated in one place.
   Future<VoidResult> openUrl(String url);
 
+  /// Streams the phone's own screen to the desk, view only.
+  ///
+  /// Progress lands on [OpenDexSnapshot.displayMirror] rather than only in
+  /// the result, because the stream outlives the call: the phone can rotate
+  /// it, and it can die. A call while already starting or streaming is a
+  /// no-op that succeeds.
+  Future<VoidResult> startDisplayMirror();
+
+  /// Ends the screen stream and releases its surface.
+  Future<VoidResult> stopDisplayMirror();
+
   Future<void> dispose();
 }

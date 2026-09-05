@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+### The phone mirror is live
+
+The *Phone Mirror* door used to open a frame that said a live screen was not
+available. It now streams the phone's own display into that frame, view
+only: scrcpy-server mirrors display 0, its long side capped at 1080 px
+(about 500 px wide for a portrait phone) at 30 fps, over a single video
+socket, decoded through the same pipeline the app windows use.
+The frame follows the phone when it rotates, letterboxing to the new
+aspect, and says plainly what it is doing when it cannot show frames:
+*Connecting…* while the stream comes up, the reason and a *Retry* when it
+fails or stops, and a one-line explanation in builds that cannot mirror
+(the preview harness is one). Opening the frame starts the stream; closing
+it by any door stops it, and disconnecting the phone stops it with the
+windows.
+
+Deliberately not in this change:
+
+- **Touch in the mirror.** The stream is opened with no control socket, so
+  nothing on the desk can inject into the phone's own screen. That is the
+  decision, not a gap: the mirror shows the phone, the windows drive it.
+- **A decoder restart.** The windows restart a dead decoder once and ask the
+  phone for a fresh key frame; without a control channel the mirror cannot
+  ask, so a dead decoder ends the mirror with a retry offered instead of
+  decoding garbage.
+- **A blur over the live frame.** The phone frame goes flat while
+  streaming, as it already did over a streaming window, because a blur
+  above a texture re-blurs the desk on every one of its frames. The
+  frame-cost test now pins this for the mirror too.
+
 ### Desktop UI brought to the reference design, surface by surface
 
 Compared against the running reference implementation, page by page and

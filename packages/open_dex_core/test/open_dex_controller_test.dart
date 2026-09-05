@@ -759,6 +759,201 @@ void main() {
       expect(clipboard.writes, 1);
     },
   );
+  group('display mirror', () {
+    Future<OpenDexController> connected(FakeDisplayMirrorGateway mirror) async {
+      final controller = OpenDexController(
+        deviceGateway: FakeDeviceGateway(),
+        components: [
+          FakeBootComponent('agent'),
+          FakeBootComponent('companion'),
+          FakeCatalogComponent(),
+        ],
+        displayMirrorGateway: mirror,
+        surfaceRetireDelay: Duration.zero,
+      );
+      addTearDown(controller.dispose);
+      await controller.discoverDevices();
+      await controller.connectSelectedDevice();
+      return controller;
+    }
+
+    test('starts, streams the phone surface, then stops', () async {
+      final mirror = FakeDisplayMirrorGateway();
+      final controller = await connected(mirror);
+      mirror.startGate = Completer<void>();
+      final start = controller.startDisplayMirror();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        controller.snapshot.displayMirror.status,
+        DisplayMirrorStatus.starting,
+      );
+      mirror.startGate!.complete();
+      expect(await start, isA<CommandSuccess<void>>());
+      final state = controller.snapshot.displayMirror;
+      expect(state.status, DisplayMirrorStatus.streaming);
+      expect(state.surface?.textureId, 1);
+      expect(state.surface?.pixelSize.height, 1170);
+      expect(mirror.started, [FakeDeviceGateway.device.id]);
+
+      // The surface leaves the snapshot before the texture is released, the
+      // same retire order the windows use, so the desk never paints a freed
+      // texture.
+      mirror.onStop = (_) => expect(
+        controller.snapshot.displayMirror.status,
+        DisplayMirrorStatus.idle,
+      );
+      expect(await controller.stopDisplayMirror(), isA<CommandSuccess<void>>());
+      expect(controller.snapshot.displayMirror.surface, isNull);
+      expect(mirror.stopped, ['mirror-1']);
+    });
+
+    test(
+      'a second start while streaming does not open a second stream',
+      () async {
+        final mirror = FakeDisplayMirrorGateway();
+        final controller = await connected(mirror);
+        await controller.startDisplayMirror();
+        await controller.startDisplayMirror();
+        expect(mirror.started, hasLength(1));
+      },
+    );
+
+    test('a backend failure is reported on the state, not thrown', () async {
+      final mirror = FakeDisplayMirrorGateway()
+        ..failure = const BackendFailure(
+          OpenDexError(
+            code: OpenDexErrorCode.capabilityUnavailable,
+            message: 'The phone refused the screen stream.',
+            retryable: true,
+            capability: 'display-mirror',
+          ),
+        );
+      final controller = await connected(mirror);
+      final result = await controller.startDisplayMirror();
+      expect(result, isA<CommandFailure<void>>());
+      final state = controller.snapshot.displayMirror;
+      expect(state.status, DisplayMirrorStatus.failed);
+      expect(state.error?.message, 'The phone refused the screen stream.');
+      expect(state.surface, isNull);
+      // Retry works from failed.
+      mirror.failure = null;
+      await controller.startDisplayMirror();
+      expect(
+        controller.snapshot.displayMirror.status,
+        DisplayMirrorStatus.streaming,
+      );
+    });
+
+    test(
+      'a stream that dies is failed; one that ends cleanly is idle',
+      () async {
+        final mirror = FakeDisplayMirrorGateway();
+        final controller = await connected(mirror);
+        await controller.startDisplayMirror();
+        mirror.emitExit('mirror-1', 21, details: 'server gone');
+        final state = controller.snapshot.displayMirror;
+        expect(state.status, DisplayMirrorStatus.failed);
+        expect(state.error?.retryable, isTrue);
+        expect(state.error?.technicalDetails, 'server gone');
+        expect(state.surface, isNull);
+
+        await controller.startDisplayMirror();
+        mirror.emitExit('mirror-2', 0);
+        expect(
+          controller.snapshot.displayMirror.status,
+          DisplayMirrorStatus.idle,
+        );
+        // Stopping after the backend already ended does not call the gateway.
+        await controller.stopDisplayMirror();
+        expect(mirror.stopped, isEmpty);
+      },
+    );
+
+    test('a rotated phone swaps the surface in place', () async {
+      final mirror = FakeDisplayMirrorGateway();
+      final controller = await connected(mirror);
+      await controller.startDisplayMirror();
+      mirror.emitSurface(
+        const MirrorBackendSession(
+          id: 'mirror-1',
+          surface: WindowSurface(
+            textureId: 9,
+            pixelSize: WindowPixelSize(width: 1170, height: 540),
+          ),
+        ),
+      );
+      final state = controller.snapshot.displayMirror;
+      expect(state.status, DisplayMirrorStatus.streaming);
+      expect(state.surface?.textureId, 9);
+      expect(state.surface?.pixelSize.width, 1170);
+      // A stale session's update is ignored.
+      mirror.emitSurface(
+        const MirrorBackendSession(
+          id: 'mirror-0',
+          surface: WindowSurface(
+            textureId: 3,
+            pixelSize: WindowPixelSize(width: 1, height: 1),
+          ),
+        ),
+      );
+      expect(controller.snapshot.displayMirror.surface?.textureId, 9);
+    });
+
+    test(
+      'disconnecting stops the mirror with the rest of the runtime',
+      () async {
+        final mirror = FakeDisplayMirrorGateway();
+        final controller = await connected(mirror);
+        await controller.startDisplayMirror();
+        await controller.disconnect();
+        expect(mirror.stopped, ['mirror-1']);
+        expect(
+          controller.snapshot.displayMirror.status,
+          DisplayMirrorStatus.idle,
+        );
+        expect(controller.snapshot.displayMirror.surface, isNull);
+      },
+    );
+
+    test('without a mirror gateway the state says so', () async {
+      final controller = OpenDexController(
+        deviceGateway: FakeDeviceGateway(),
+        components: [
+          FakeBootComponent('agent'),
+          FakeBootComponent('companion'),
+          FakeCatalogComponent(),
+        ],
+      );
+      addTearDown(controller.dispose);
+      await controller.discoverDevices();
+      await controller.connectSelectedDevice();
+      final result = await controller.startDisplayMirror();
+      expect(result, isA<CommandFailure<void>>());
+      final state = controller.snapshot.displayMirror;
+      expect(state.status, DisplayMirrorStatus.unavailable);
+      expect(state.error?.capability, 'display-mirror');
+    });
+
+    test(
+      'before the phone is linked, starting fails and stays retryable',
+      () async {
+        final mirror = FakeDisplayMirrorGateway();
+        final controller = OpenDexController(
+          deviceGateway: FakeDeviceGateway(),
+          displayMirrorGateway: mirror,
+        );
+        addTearDown(controller.dispose);
+        final result = await controller.startDisplayMirror();
+        expect(result, isA<CommandFailure<void>>());
+        expect(
+          controller.snapshot.displayMirror.status,
+          DisplayMirrorStatus.failed,
+        );
+        expect(controller.snapshot.displayMirror.error?.retryable, isTrue);
+        expect(mirror.started, isEmpty);
+      },
+    );
+  });
 }
 
 class FakeDeviceGateway implements DeviceGateway {
@@ -1069,5 +1264,63 @@ class FakeClipboardGateway implements ClipboardGateway {
       syncEnabled: clipboard.syncEnabled,
       availability: ClipboardAvailability.available,
     );
+  }
+}
+
+class FakeDisplayMirrorGateway implements DisplayMirrorGateway {
+  final _exits = StreamController<MirrorBackendExit>.broadcast(sync: true);
+  final _surfaces = StreamController<MirrorBackendSession>.broadcast(
+    sync: true,
+  );
+  final started = <String>[];
+  final stopped = <String>[];
+  BackendFailure? failure;
+  Completer<void>? startGate;
+  void Function(String sessionId)? onStop;
+  int _sequence = 0;
+
+  @override
+  Stream<MirrorBackendExit> get exits => _exits.stream;
+
+  @override
+  Stream<MirrorBackendSession> get surfaceUpdates => _surfaces.stream;
+
+  void emitExit(String sessionId, int exitCode, {String? details}) =>
+      _exits.add(
+        MirrorBackendExit(
+          sessionId: sessionId,
+          exitCode: exitCode,
+          details: details,
+        ),
+      );
+
+  void emitSurface(MirrorBackendSession session) => _surfaces.add(session);
+
+  @override
+  Future<MirrorBackendSession> start(DeviceSummary device) async {
+    await startGate?.future;
+    final failure = this.failure;
+    if (failure != null) throw failure;
+    started.add(device.id);
+    final sequence = ++_sequence;
+    return MirrorBackendSession(
+      id: 'mirror-$sequence',
+      surface: WindowSurface(
+        textureId: sequence,
+        pixelSize: const WindowPixelSize(width: 540, height: 1170),
+      ),
+    );
+  }
+
+  @override
+  Future<void> stop(String sessionId) async {
+    onStop?.call(sessionId);
+    stopped.add(sessionId);
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _exits.close();
+    await _surfaces.close();
   }
 }

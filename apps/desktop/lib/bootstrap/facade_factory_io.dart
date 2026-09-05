@@ -109,6 +109,16 @@ OpenDexFacade _createFacade({
       clipboard,
     ],
     windowGateway: windowGateway,
+    // The phone's own screen, on the direct pipeline whichever window backend
+    // is selected: the mirror has no legacy path, and if the pipeline's
+    // prerequisites are missing it fails inside its own frame with the reason.
+    displayMirrorGateway: DirectScrcpyDisplayMirrorGateway(
+      mirrorStarter: ScrcpyServerLauncher(adb: adb),
+      decoderStarter: const SystemH264DecoderStarter(),
+      serverJarPath: '$scrcpyDirectory/scrcpy-server',
+      ffmpegExecutable: ffmpegExecutable,
+      textureHost: textureHost,
+    ),
     deviceCommandGateway: commands,
     permissionGateway: commands,
     notificationGateway: companion,

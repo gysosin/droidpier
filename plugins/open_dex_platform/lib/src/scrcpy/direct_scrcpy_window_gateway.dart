@@ -7,6 +7,7 @@ import 'package:open_dex_core/open_dex_core.dart';
 
 import '../process_executor.dart';
 import '../adb_client.dart';
+import 'decoder_surface.dart';
 import 'display_orientation.dart';
 import 'h264_decoder_process.dart';
 import 'scrcpy_control_channel.dart';
@@ -76,6 +77,12 @@ class DirectScrcpyWindowGateway
       StreamController<WindowBackendTelemetry>.broadcast(sync: true);
   final StreamController<WindowBackendSession> _surfaceUpdates =
       StreamController<WindowBackendSession>.broadcast(sync: true);
+  late final DecoderSurfaceOpener _surfaces = DecoderSurfaceOpener(
+    textureHost: textureHost,
+    decoderStarter: decoderStarter,
+    ffmpegExecutable: ffmpegExecutable,
+    processExecutor: processExecutor,
+  );
   final Map<String, _DirectSession> _sessions = {};
   final Set<Future<void>> _retirements = {};
   final Random _random = Random.secure();
@@ -110,7 +117,7 @@ class DirectScrcpyWindowGateway
     ScrcpyVideoStream? video;
     StreamIterator<ScrcpyVideoEvent>? events;
     ScrcpyControlChannel? control;
-    _DecoderSurface? surface;
+    DecoderSurface? surface;
     try {
       listener = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       accepts = StreamIterator<Socket>(listener);
@@ -279,54 +286,16 @@ class DirectScrcpyWindowGateway
     }
   }
 
-  Future<_DecoderSurface> _startDecoderSurface(
+  Future<DecoderSurface> _startDecoderSurface(
     WindowPixelSize size,
     ScrcpyVideoPacket config,
     ScrcpyControlChannel control,
-  ) async {
-    final directory = await Directory.systemTemp.createTemp('open-dex-direct-');
-    final fifoPath = Platform.isWindows
-        ? r'\\.\pipe\droidpier-' +
-              directory.uri.pathSegments.where((s) => s.isNotEmpty).last
-        : '${directory.path}/frames.rgba';
-    // The Windows texture plugin owns its named-pipe server. POSIX pipes are
-    // created here before native registration so the reader never sees a file.
-    if (!Platform.isWindows) {
-      final fifo = await processExecutor.run('/usr/bin/mkfifo', [
-        '-m',
-        '600',
-        fifoPath,
-      ], timeout: const Duration(seconds: 3));
-      if (!fifo.succeeded) {
-        await directory.delete(recursive: true);
-        throw _failure('The direct decoder frame pipe could not be created.');
-      }
-    }
-    int? textureId;
-    try {
-      textureId = await textureHost.createRawRgbaTexture(
-        fifoPath: fifoPath,
-        pixelSize: size,
-      );
-      final decoder = await decoderStarter.start(
-        ffmpegPath: ffmpegExecutable,
-        fifoPath: fifoPath,
-        latestConfig: config,
-        resetVideo: control.resetVideo,
-      );
-      return _DecoderSurface(
-        directory: directory,
-        fifoPath: fifoPath,
-        textureId: textureId,
-        pixelSize: size,
-        decoder: decoder,
-      );
-    } on Object {
-      if (textureId != null) await textureHost.closeTexture(textureId);
-      await directory.delete(recursive: true);
-      rethrow;
-    }
-  }
+  ) => _surfaces.open(
+    size,
+    config,
+    resetVideo: control.resetVideo,
+    onFailure: _failure,
+  );
 
   Future<ScrcpySessionMeta> _nextSessionMeta(
     StreamIterator<ScrcpyVideoEvent> events,
@@ -426,7 +395,7 @@ class DirectScrcpyWindowGateway
 
   Future<void> _activateReplacement(
     _DirectSession session,
-    _DecoderSurface replacement,
+    DecoderSurface replacement,
   ) async {
     try {
       await textureHost.waitForFirstFrame(
@@ -483,7 +452,7 @@ class DirectScrcpyWindowGateway
     );
   }
 
-  void _watchDecoder(_DirectSession session, _DecoderSurface surface) {
+  void _watchDecoder(_DirectSession session, DecoderSurface surface) {
     final watched = surface.decoder;
     unawaited(
       watched.exitCode.then(
@@ -494,7 +463,7 @@ class DirectScrcpyWindowGateway
 
   Future<void> _handleDecoderExit(
     _DirectSession session,
-    _DecoderSurface surface,
+    DecoderSurface surface,
     H264Decoder watched,
     int _,
   ) async {
@@ -632,7 +601,7 @@ class DirectScrcpyWindowGateway
     required ScrcpyVideoStream? video,
     required StreamIterator<ScrcpyVideoEvent>? events,
     required ScrcpyControlChannel? control,
-    required _DecoderSurface? surface,
+    required DecoderSurface? surface,
   }) async {
     if (accepts != null) await _bestEffort(accepts.cancel);
     if (events != null) await _bestEffort(events.cancel);
@@ -948,33 +917,6 @@ extension on ScrcpySessionMeta {
       WindowPixelSize(width: width, height: height);
 }
 
-class _DecoderSurface {
-  _DecoderSurface({
-    required this.directory,
-    required this.fifoPath,
-    required this.textureId,
-    required this.pixelSize,
-    required this.decoder,
-  });
-
-  final Directory directory;
-  final int textureId;
-  final WindowPixelSize pixelSize;
-  H264Decoder decoder;
-  int restartCount = 0;
-
-  final String fifoPath;
-
-  WindowSurface get windowSurface =>
-      WindowSurface(textureId: textureId, pixelSize: pixelSize);
-
-  Future<void> dispose(WindowTextureHost textureHost) async {
-    await decoder.stop();
-    await textureHost.closeTexture(textureId);
-    if (await directory.exists()) await directory.delete(recursive: true);
-  }
-}
-
 class _DirectSession {
   _DirectSession({
     required this.id,
@@ -999,10 +941,10 @@ class _DirectSession {
   final ScrcpyVideoStream video;
   final StreamIterator<ScrcpyVideoEvent> events;
   final ScrcpyControlChannel control;
-  _DecoderSurface surface;
+  DecoderSurface surface;
   ScrcpyVideoPacket latestConfig;
   ScrcpySessionMeta? pendingMeta;
-  _DecoderSurface? replacement;
+  DecoderSurface? replacement;
   bool replacementActivating = false;
   Completer<WindowBackendSession>? resizeCompletion;
   Timer? telemetryTimer;

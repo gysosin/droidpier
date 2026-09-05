@@ -17,6 +17,7 @@ class OpenDexController implements OpenDexFacade {
     ClipboardGateway? clipboardGateway,
     WirelessDiscoveryGateway? wirelessDiscoveryGateway,
     UrlLauncherGateway? urlLauncherGateway,
+    DisplayMirrorGateway? displayMirrorGateway,
     int reconnectAttempts = 3,
     Duration reconnectDelay = const Duration(seconds: 1),
     Duration surfaceRetireDelay = const Duration(milliseconds: 34),
@@ -35,6 +36,7 @@ class OpenDexController implements OpenDexFacade {
                : null),
        _clipboardGateway = clipboardGateway,
        _urlLauncherGateway = urlLauncherGateway,
+       _displayMirrorGateway = displayMirrorGateway,
        _reconnectAttempts = reconnectAttempts,
        _reconnectDelay = reconnectDelay,
        _surfaceRetireDelay = surfaceRetireDelay,
@@ -60,6 +62,10 @@ class OpenDexController implements OpenDexFacade {
     }
     _windowExits = windowGateway?.exits.listen(_handleWindowExit);
     _windowTelemetry = windowGateway?.telemetry.listen(_handleWindowTelemetry);
+    _mirrorExits = displayMirrorGateway?.exits.listen(_handleMirrorExit);
+    _mirrorSurfaces = displayMirrorGateway?.surfaceUpdates.listen(
+      _handleMirrorSurface,
+    );
     if (windowGateway is WindowSurfaceUpdateGateway) {
       _windowSurfaces = (windowGateway as WindowSurfaceUpdateGateway)
           .surfaceUpdates
@@ -77,6 +83,7 @@ class OpenDexController implements OpenDexFacade {
   final WirelessDeviceGateway? _wirelessDeviceGateway;
   final ClipboardGateway? _clipboardGateway;
   final UrlLauncherGateway? _urlLauncherGateway;
+  final DisplayMirrorGateway? _displayMirrorGateway;
   final int _reconnectAttempts;
   final Duration _reconnectDelay;
   final Duration _surfaceRetireDelay;
@@ -85,6 +92,11 @@ class OpenDexController implements OpenDexFacade {
   StreamSubscription<WindowBackendExit>? _windowExits;
   StreamSubscription<WindowBackendTelemetry>? _windowTelemetry;
   StreamSubscription<WindowBackendSession>? _windowSurfaces;
+  StreamSubscription<MirrorBackendExit>? _mirrorExits;
+  StreamSubscription<MirrorBackendSession>? _mirrorSurfaces;
+
+  /// The backend id of the running screen mirror, null when there is none.
+  String? _mirrorSessionId;
   final List<StreamSubscription<BackendStateUpdate>> _backendSubscriptions = [];
   final List<StreamSubscription<void>> _disconnectSubscriptions = [];
   bool _userDisconnectRequested = false;
@@ -339,17 +351,24 @@ class OpenDexController implements OpenDexFacade {
     final device = _snapshot.selectedDevice;
     _emit(_snapshot.copyWith(clipboard: const ClipboardState()));
     final closingWindows = [..._snapshot.windows];
-    if (closingWindows.isNotEmpty) {
+    final closingMirror = _mirrorSessionId;
+    _mirrorSessionId = null;
+    if (closingWindows.isNotEmpty || closingMirror != null) {
       _emit(
         _snapshot.copyWith(
           windows: const [],
           telemetry: _withoutFramesPerSecond(_snapshot.telemetry),
+          displayMirror: const DisplayMirrorState(),
         ),
       );
       await _delay(_surfaceRetireDelay);
     }
     if (device != null) {
-      await _stopRuntime(device, windows: closingWindows);
+      await _stopRuntime(
+        device,
+        windows: closingWindows,
+        mirrorSessionId: closingMirror,
+      );
     }
     _emit(
       _snapshot.copyWith(
@@ -360,6 +379,7 @@ class OpenDexController implements OpenDexFacade {
         windows: const [],
         recovery: const RecoveryState(),
         agentStatus: AgentConnectionStatus.unavailable,
+        displayMirror: const DisplayMirrorState(),
       ),
     );
     return const CommandSuccess(null);
@@ -722,6 +742,145 @@ class OpenDexController implements OpenDexFacade {
       (w) => w.copyWith(isLandscape: landscape, geometry: rotated),
     );
     return moveWindow(sessionId, rotated);
+  }
+
+  @override
+  Future<VoidResult> startDisplayMirror() async {
+    final gateway = _displayMirrorGateway;
+    if (gateway == null) {
+      final failure = _unsupported<void>('display-mirror');
+      _emit(
+        _snapshot.copyWith(
+          displayMirror: DisplayMirrorState(
+            status: DisplayMirrorStatus.unavailable,
+            error: failure.error,
+          ),
+        ),
+      );
+      return failure;
+    }
+    final device = _snapshot.selectedDevice;
+    if (device == null || !_snapshot.boot.isReady) {
+      const error = OpenDexError(
+        code: OpenDexErrorCode.connectionFailed,
+        message: 'Link the phone before mirroring its screen.',
+        retryable: true,
+        capability: 'display-mirror',
+      );
+      _emit(
+        _snapshot.copyWith(
+          displayMirror: const DisplayMirrorState(
+            status: DisplayMirrorStatus.failed,
+            error: error,
+          ),
+        ),
+      );
+      return const CommandFailure(error);
+    }
+    final current = _snapshot.displayMirror.status;
+    if (current == DisplayMirrorStatus.starting ||
+        current == DisplayMirrorStatus.streaming) {
+      return const CommandSuccess(null);
+    }
+    _emit(
+      _snapshot.copyWith(
+        displayMirror: const DisplayMirrorState(
+          status: DisplayMirrorStatus.starting,
+        ),
+      ),
+    );
+    try {
+      final session = await gateway.start(device);
+      if (_snapshot.displayMirror.status != DisplayMirrorStatus.starting) {
+        // Stopped, or the link dropped, while the stream was coming up.
+        await gateway.stop(session.id);
+        return const CommandSuccess(null);
+      }
+      _mirrorSessionId = session.id;
+      _emit(
+        _snapshot.copyWith(
+          displayMirror: DisplayMirrorState(
+            status: DisplayMirrorStatus.streaming,
+            surface: session.surface,
+          ),
+        ),
+      );
+      return const CommandSuccess(null);
+    } on BackendFailure catch (failure) {
+      _failMirror(failure.error);
+      return CommandFailure(failure.error);
+    } on Object catch (error) {
+      final failure = _unexpected(error);
+      _failMirror(failure);
+      return CommandFailure(failure);
+    }
+  }
+
+  @override
+  Future<VoidResult> stopDisplayMirror() async {
+    final gateway = _displayMirrorGateway;
+    final sessionId = _mirrorSessionId;
+    _mirrorSessionId = null;
+    if (_snapshot.displayMirror.status != DisplayMirrorStatus.unavailable) {
+      _emit(_snapshot.copyWith(displayMirror: const DisplayMirrorState()));
+    }
+    if (gateway == null || sessionId == null) {
+      return const CommandSuccess(null);
+    }
+    try {
+      // The surface has left the snapshot; give the desk a frame to stop
+      // drawing it before the texture is released, as closeWindow does.
+      await _delay(_surfaceRetireDelay);
+      await gateway.stop(sessionId);
+      return const CommandSuccess(null);
+    } on BackendFailure catch (failure) {
+      return CommandFailure(failure.error);
+    } on Object catch (error) {
+      return CommandFailure(_unexpected(error));
+    }
+  }
+
+  void _failMirror(OpenDexError error) {
+    _mirrorSessionId = null;
+    _emit(
+      _snapshot.copyWith(
+        displayMirror: DisplayMirrorState(
+          status: DisplayMirrorStatus.failed,
+          error: error,
+        ),
+      ),
+    );
+  }
+
+  void _handleMirrorExit(MirrorBackendExit exit) {
+    if (exit.sessionId != _mirrorSessionId) return;
+    _mirrorSessionId = null;
+    if (exit.exitCode == 0) {
+      _emit(_snapshot.copyWith(displayMirror: const DisplayMirrorState()));
+      return;
+    }
+    _failMirror(
+      OpenDexError(
+        code: OpenDexErrorCode.connectionFailed,
+        message: 'The phone screen stream stopped.',
+        retryable: true,
+        capability: 'display-mirror',
+        technicalDetails:
+            exit.details ?? 'display mirror exit code ${exit.exitCode}',
+      ),
+    );
+  }
+
+  void _handleMirrorSurface(MirrorBackendSession session) {
+    if (session.id != _mirrorSessionId) return;
+    if (_snapshot.displayMirror.status != DisplayMirrorStatus.streaming) return;
+    _emit(
+      _snapshot.copyWith(
+        displayMirror: _snapshot.displayMirror.copyWith(
+          surface: session.surface,
+        ),
+      ),
+    );
   }
 
   @override
@@ -1387,7 +1546,10 @@ class OpenDexController implements OpenDexFacade {
     await _windowExits?.cancel();
     await _windowTelemetry?.cancel();
     await _windowSurfaces?.cancel();
+    await _mirrorExits?.cancel();
+    await _mirrorSurfaces?.cancel();
     await _windowGateway?.dispose();
+    await _displayMirrorGateway?.dispose();
     await _states.close();
   }
 
@@ -1520,8 +1682,22 @@ class OpenDexController implements OpenDexFacade {
   Future<void> _stopRuntime(
     DeviceSummary device, {
     List<WindowSessionState>? windows,
+    String? mirrorSessionId,
   }) async {
     await _clearBackendSubscriptions();
+    final mirror = _displayMirrorGateway;
+    final mirrorId = mirrorSessionId ?? _mirrorSessionId;
+    _mirrorSessionId = null;
+    if (mirror != null && mirrorId != null) {
+      if (_snapshot.displayMirror.surface != null) {
+        _emit(_snapshot.copyWith(displayMirror: const DisplayMirrorState()));
+      }
+      try {
+        await mirror.stop(mirrorId);
+      } on Object {
+        // The mirror is gone either way; the windows still need closing.
+      }
+    }
     final gateway = _windowGateway;
     if (gateway != null) {
       for (final window in windows ?? [..._snapshot.windows]) {

@@ -81,6 +81,20 @@ Arrow **Up** and **Down** move the selection, **Enter** opens it.
 **Pinning.** Right-click any app and choose *Pin to top* to give it a row of its
 own above the rest.
 
+## Phone mirror
+
+*Phone Mirror* in the desk header opens a phone-shaped frame at the bottom
+right that shows the phone's own screen, live. It is view only: what the
+phone displays appears here, and it rotates with the phone, but taps and
+keys go to the app windows, not to the mirror. Close the frame with its
+dot or the header pill to stop the stream; disconnecting the phone stops it
+too.
+
+The frame says what it is doing when it has no picture to show. *Connecting*
+means the stream is starting. If the stream stops, the frame gives the
+reason and a *Retry*. If the phone's screen is off, the mirror shows black,
+as the phone does: it never draws a screen the phone is not showing.
+
 ## Wireless pairing
 
 Android 11 or later normally exposes **Developer options → Wireless debugging**.

@@ -20,6 +20,7 @@ void main() {
     Future<void> pumpMirror(
       WidgetTester tester, {
       required bool overVideo,
+      DisplayMirrorState mirror = const DisplayMirrorState(),
     }) async {
       final MockOpenDexFacade facade = MockOpenDexFacade(
         scenario: MockScenario.ready,
@@ -33,10 +34,11 @@ void main() {
           theme: DexTheme.dark(),
           home: Scaffold(
             body: PhoneMirror(
-              snapshot: facade.snapshot,
+              snapshot: facade.snapshot.copyWith(displayMirror: mirror),
               now: DateTime.utc(2026, 8, 25, 14),
               onClose: () {},
               onLaunch: (_) {},
+              onRetry: () {},
               overVideo: overVideo,
             ),
           ),
@@ -46,6 +48,30 @@ void main() {
         await tester.pump(const Duration(milliseconds: 120));
       }
     }
+
+    testWidgets('a live mirror is flat, whatever is behind it', (
+      WidgetTester tester,
+    ) async {
+      await pumpMirror(
+        tester,
+        overVideo: false,
+        mirror: const DisplayMirrorState(
+          status: DisplayMirrorStatus.streaming,
+          surface: WindowSurface(
+            textureId: 9,
+            pixelSize: WindowPixelSize(width: 540, height: 1170),
+          ),
+        ),
+      );
+      expect(find.byType(Texture), findsOneWidget);
+      expect(
+        blurs(),
+        findsNothing,
+        reason:
+            'the phone paints thirty frames a second into this frame; a blur '
+            'above them re-blurs the desk on every one',
+      );
+    });
 
     testWidgets('the phone mirror blurs over a static wallpaper', (
       WidgetTester tester,

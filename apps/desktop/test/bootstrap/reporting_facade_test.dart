@@ -33,9 +33,7 @@ void main() {
   test('a real failure on a notification action is still reported', () async {
     final errors = <OpenDexError>[];
     final facade = ReportingOpenDexFacade(
-      delegate: _FakeDelegate(
-        dismiss: const CommandFailure<void>(realFailure),
-      ),
+      delegate: _FakeDelegate(dismiss: const CommandFailure<void>(realFailure)),
       onError: errors.add,
     );
 
@@ -57,13 +55,36 @@ void main() {
 
     expect(errors, <OpenDexError>[capabilityGap]);
   });
+
+  test(
+    'a mirror the build lacks stays inside its frame, not a banner',
+    () async {
+      final errors = <OpenDexError>[];
+      final facade = ReportingOpenDexFacade(
+        delegate: _FakeDelegate(
+          mirror: const CommandFailure<void>(capabilityGap),
+        ),
+        onError: errors.add,
+      );
+
+      final result = await facade.startDisplayMirror();
+
+      expect(result.isSuccess, isFalse);
+      expect(errors, isEmpty);
+    },
+  );
 }
 
 class _FakeDelegate implements OpenDexFacade {
-  _FakeDelegate({this.dismiss, this.launch});
+  _FakeDelegate({this.dismiss, this.launch, this.mirror});
 
   final VoidResult? dismiss;
   final CommandResult<String>? launch;
+  final VoidResult? mirror;
+
+  @override
+  Future<VoidResult> startDisplayMirror() async =>
+      mirror ?? const CommandSuccess<void>(null);
 
   @override
   Future<VoidResult> dismissNotification(String notificationId) async =>

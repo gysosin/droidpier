@@ -351,5 +351,10 @@ what each item became. Approved as a plan first; delivered in steps.
 - [ ] Real app tiles from the phone (the agent resolves icons from each app's
   own resources; MIUI hands out themed discs today).
 - [ ] Workspaces: move-to-desk in the window menu, Ctrl+Alt+←/→, desk label.
-- [ ] Live phone mirror (backend capability).
+- [x] **Live phone mirror.** `startDisplayMirror` / `stopDisplayMirror` on
+  the facade, `DisplayMirrorState` on the snapshot, a `DisplayMirrorGateway`
+  port, and `DirectScrcpyDisplayMirrorGateway` streaming display 0 (long side
+  1080 px, 30 fps, no control socket) through the shared decoder surface. The frame
+  draws the texture flat, follows rotation, and reports connecting, failed
+  with retry, and unavailable states honestly. View only, by decision.
 - [ ] Desk search opens on the phone (backend capability).
